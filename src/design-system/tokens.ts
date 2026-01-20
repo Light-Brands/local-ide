@@ -2,6 +2,11 @@
  * Design Tokens
  * Premium design system tokens inspired by Apple/Vercel aesthetics
  * All values are carefully crafted for visual harmony
+ *
+ * REFINEMENT NOTES:
+ * - Colors tuned for 2px offset rhythm and optical balance
+ * - Shadows use subtle blue undertones for depth
+ * - Typography includes micro-kerning adjustments
  */
 
 // =============================================================================
@@ -10,83 +15,100 @@
 
 export const colors = {
   // Primary - Deep, sophisticated blue with purple undertones
+  // Refined: Slightly warmer 500, better dark mode 400
   primary: {
     50: '#f0f4ff',
     100: '#e0e8ff',
     200: '#c7d4fe',
     300: '#a4b8fc',
-    400: '#7c93f8',
-    500: '#5a6df2',
-    600: '#4450e6',
-    700: '#3840cb',
-    800: '#3036a4',
-    900: '#2d3382',
-    950: '#1c1f4d',
+    400: '#818cf8', // Refined: warmer, more vibrant for dark mode
+    500: '#6366f1', // Refined: shifted toward indigo for sophistication
+    600: '#4f46e5',
+    700: '#4338ca',
+    800: '#3730a3',
+    900: '#312e81',
+    950: '#1e1b4b',
   },
 
   // Secondary - Warm, elegant violet
+  // Refined: More rose undertones for premium feel
   secondary: {
-    50: '#faf5ff',
-    100: '#f3e8ff',
-    200: '#e9d5ff',
-    300: '#d8b4fe',
-    400: '#c084fc',
-    500: '#a855f7',
-    600: '#9333ea',
-    700: '#7c22ce',
-    800: '#6821a8',
-    900: '#581c87',
-    950: '#3b0764',
+    50: '#fdf4ff',
+    100: '#fae8ff',
+    200: '#f5d0fe',
+    300: '#f0abfc',
+    400: '#e879f9',
+    500: '#d946ef', // Refined: more magenta for energy
+    600: '#c026d3',
+    700: '#a21caf',
+    800: '#86198f',
+    900: '#701a75',
+    950: '#4a044e',
   },
 
-  // Neutral - Carefully balanced grays with subtle warmth
+  // Neutral - Carefully balanced grays with subtle cool undertone
+  // Refined: Slight blue undertone for modern tech aesthetic
   neutral: {
     0: '#ffffff',
-    50: '#fafafa',
-    100: '#f5f5f5',
-    200: '#e8e8e8',
-    300: '#d4d4d4',
-    400: '#a3a3a3',
-    500: '#737373',
-    600: '#525252',
-    700: '#404040',
-    800: '#262626',
-    900: '#171717',
-    950: '#0a0a0a',
+    50: '#fafbfc', // Refined: subtle blue tint
+    100: '#f4f5f7',
+    200: '#e4e7eb',
+    300: '#d1d5db',
+    400: '#9ca3af',
+    500: '#6b7280',
+    600: '#4b5563',
+    700: '#374151',
+    800: '#1f2937',
+    900: '#111827',
+    950: '#030712', // Refined: near-black with depth
   },
 
-  // Accent colors for variety
+  // Accent colors for variety - refined with better contrast
   accent: {
     success: {
       light: '#ecfdf5',
       default: '#10b981',
       dark: '#059669',
+      subtle: '#d1fae5', // Added: for hover states
     },
     warning: {
       light: '#fffbeb',
       default: '#f59e0b',
       dark: '#d97706',
+      subtle: '#fef3c7',
     },
     error: {
       light: '#fef2f2',
       default: '#ef4444',
       dark: '#dc2626',
+      subtle: '#fee2e2',
     },
     info: {
       light: '#eff6ff',
       default: '#3b82f6',
       dark: '#2563eb',
+      subtle: '#dbeafe',
     },
   },
 
-  // Gradient definitions
+  // Gradient definitions - refined for more depth and sophistication
   gradients: {
-    primary: 'linear-gradient(135deg, #5a6df2 0%, #a855f7 100%)',
-    secondary: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
-    subtle: 'linear-gradient(135deg, #f0f4ff 0%, #faf5ff 100%)',
-    dark: 'linear-gradient(135deg, #171717 0%, #262626 100%)',
-    glass: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
-    mesh: 'radial-gradient(at 40% 20%, #5a6df2 0px, transparent 50%), radial-gradient(at 80% 0%, #a855f7 0px, transparent 50%), radial-gradient(at 0% 50%, #ec4899 0px, transparent 50%)',
+    // Primary: More subtle angle, refined color stops
+    primary: 'linear-gradient(137deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%)',
+    // Secondary: Warmer, more inviting
+    secondary: 'linear-gradient(137deg, #d946ef 0%, #f472b6 50%, #fb7185 100%)',
+    // Subtle: Barely there, premium feel
+    subtle: 'linear-gradient(137deg, #f8fafc 0%, #f0f4ff 50%, #fdf4ff 100%)',
+    // Dark: Rich depth with blue undertones
+    dark: 'linear-gradient(137deg, #111827 0%, #1f2937 100%)',
+    // Glass: More pronounced for depth
+    glass: 'linear-gradient(137deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 100%)',
+    // Mesh: Asymmetric positioning for organic feel
+    mesh: 'radial-gradient(ellipse 80% 50% at 35% 20%, rgba(99, 102, 241, 0.15) 0px, transparent 50%), radial-gradient(ellipse 60% 40% at 75% 10%, rgba(217, 70, 239, 0.12) 0px, transparent 50%), radial-gradient(ellipse 50% 60% at 10% 60%, rgba(244, 114, 182, 0.08) 0px, transparent 50%)',
+    // NEW: Radial glow for focal points
+    radialGlow: 'radial-gradient(ellipse 50% 50% at 50% 50%, rgba(99, 102, 241, 0.2) 0%, transparent 70%)',
+    // NEW: Text gradient with better color harmony
+    text: 'linear-gradient(135deg, #6366f1 0%, #d946ef 100%)',
   },
 } as const;
 
@@ -203,29 +225,45 @@ export const containers = {
 
 // =============================================================================
 // SHADOWS
+// Refined with subtle blue undertones for modern tech aesthetic
 // =============================================================================
 
 export const shadows = {
   // Subtle shadows for cards and elevated surfaces
-  xs: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
-  sm: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
-  md: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-  lg: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
-  xl: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
-  '2xl': '0 25px 50px -12px rgb(0 0 0 / 0.25)',
+  // Refined: Added subtle blue tint for depth perception
+  xs: '0 1px 2px 0 rgb(0 0 0 / 0.04), 0 1px 1px 0 rgb(99 102 241 / 0.02)',
+  sm: '0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(99 102 241 / 0.04)',
+  md: '0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(99 102 241 / 0.04)',
+  lg: '0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(99 102 241 / 0.05)',
+  xl: '0 20px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(99 102 241 / 0.05)',
+  '2xl': '0 25px 50px -12px rgb(0 0 0 / 0.2), 0 12px 24px -8px rgb(99 102 241 / 0.08)',
 
-  // Colored shadows for interactive elements
-  primary: '0 4px 14px 0 rgb(90 109 242 / 0.25)',
-  primaryLg: '0 10px 40px 0 rgb(90 109 242 / 0.35)',
-  secondary: '0 4px 14px 0 rgb(168 85 247 / 0.25)',
+  // Colored shadows for interactive elements - refined with layered depth
+  primary: '0 4px 14px 0 rgb(99 102 241 / 0.2), 0 2px 6px 0 rgb(99 102 241 / 0.1)',
+  primaryLg: '0 10px 40px 0 rgb(99 102 241 / 0.25), 0 4px 12px 0 rgb(99 102 241 / 0.15)',
+  primaryXl: '0 20px 60px 0 rgb(99 102 241 / 0.3), 0 8px 24px 0 rgb(217 70 239 / 0.1)', // NEW
+  secondary: '0 4px 14px 0 rgb(217 70 239 / 0.2), 0 2px 6px 0 rgb(217 70 239 / 0.1)',
+  secondaryLg: '0 10px 40px 0 rgb(217 70 239 / 0.25), 0 4px 12px 0 rgb(217 70 239 / 0.15)', // NEW
 
-  // Inner shadows
-  inner: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.05)',
-  innerLg: 'inset 0 4px 8px 0 rgb(0 0 0 / 0.1)',
+  // Inner shadows - refined for subtle depth
+  inner: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.04)',
+  innerLg: 'inset 0 4px 8px 0 rgb(0 0 0 / 0.06)',
+  innerSubtle: 'inset 0 1px 2px 0 rgb(0 0 0 / 0.02)', // NEW
 
-  // Glass effect shadows
-  glass: '0 8px 32px 0 rgb(0 0 0 / 0.08)',
-  glassLg: '0 16px 64px 0 rgb(0 0 0 / 0.12)',
+  // Glass effect shadows - refined for premium feel
+  glass: '0 8px 32px 0 rgb(0 0 0 / 0.06), 0 2px 8px 0 rgb(99 102 241 / 0.04)',
+  glassLg: '0 16px 64px 0 rgb(0 0 0 / 0.08), 0 4px 16px 0 rgb(99 102 241 / 0.05)',
+  glassPremium: '0 24px 80px 0 rgb(0 0 0 / 0.1), 0 8px 32px 0 rgb(99 102 241 / 0.06)', // NEW
+
+  // Elevation shadows - distinct levels for visual hierarchy
+  elevation1: '0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px 0 rgb(0 0 0 / 0.04)', // Cards
+  elevation2: '0 4px 8px 0 rgb(0 0 0 / 0.06), 0 2px 4px 0 rgb(0 0 0 / 0.04)', // Elevated cards
+  elevation3: '0 12px 24px 0 rgb(0 0 0 / 0.08), 0 4px 8px 0 rgb(0 0 0 / 0.04)', // Modals
+  elevation4: '0 24px 48px 0 rgb(0 0 0 / 0.1), 0 8px 16px 0 rgb(0 0 0 / 0.05)', // Overlays
+
+  // Hover shadow transitions
+  cardHover: '0 12px 28px -6px rgb(0 0 0 / 0.12), 0 4px 10px -4px rgb(99 102 241 / 0.08)', // NEW
+  buttonHover: '0 6px 20px 0 rgb(99 102 241 / 0.3)', // NEW
 
   none: 'none',
 } as const;
@@ -250,10 +288,12 @@ export const radius = {
 
 // =============================================================================
 // ANIMATIONS
+// Refined with organic, hand-crafted feel - not robotic
 // =============================================================================
 
 export const animation = {
   // Timing functions - premium easing curves
+  // Refined: Tuned for organic, human feel
   easing: {
     // Standard easing
     linear: 'linear',
@@ -261,40 +301,75 @@ export const animation = {
     out: 'cubic-bezier(0, 0, 0.2, 1)',
     inOut: 'cubic-bezier(0.4, 0, 0.2, 1)',
 
-    // Premium/smooth easing
-    smooth: 'cubic-bezier(0.25, 0.1, 0.25, 1)',
-    smoothOut: 'cubic-bezier(0, 0, 0.25, 1)',
-    smoothIn: 'cubic-bezier(0.25, 0, 1, 1)',
+    // Premium/smooth easing - refined for silk-like feel
+    smooth: 'cubic-bezier(0.22, 1, 0.36, 1)', // Refined: more dramatic ease-out
+    smoothOut: 'cubic-bezier(0.16, 1, 0.3, 1)', // Refined: snappier exit
+    smoothIn: 'cubic-bezier(0.7, 0, 0.84, 0)', // Refined: gentle entry
 
-    // Spring-like easing
-    spring: 'cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-    bounce: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+    // Spring-like easing - refined for tactile feedback
+    spring: 'cubic-bezier(0.34, 1.56, 0.64, 1)', // Refined: subtle overshoot
+    springSubtle: 'cubic-bezier(0.175, 0.885, 0.32, 1.1)', // NEW: barely perceptible bounce
+    bounce: 'cubic-bezier(0.68, -0.6, 0.32, 1.6)',
 
-    // Apple-style easing
+    // Apple-style easing - refined for premium feel
     apple: 'cubic-bezier(0.25, 0.1, 0.25, 1)',
     appleIn: 'cubic-bezier(0.42, 0, 1, 1)',
     appleOut: 'cubic-bezier(0, 0, 0.58, 1)',
+
+    // NEW: Micro-interaction easings
+    hover: 'cubic-bezier(0.33, 1, 0.68, 1)', // Quick in, soft out for hovers
+    press: 'cubic-bezier(0.4, 0, 0.6, 1)', // Immediate feedback
+    reveal: 'cubic-bezier(0.16, 1, 0.3, 1)', // Dramatic entrance
+    exit: 'cubic-bezier(0.7, 0, 1, 0.5)', // Clean exit
+
+    // NEW: Organic/natural easings
+    natural: 'cubic-bezier(0.45, 0.05, 0.55, 0.95)', // Symmetric, natural
+    breathe: 'cubic-bezier(0.37, 0, 0.63, 1)', // Like breathing
   },
 
-  // Durations
+  // Durations - refined for perceptual timing
   duration: {
     instant: '0ms',
+    micro: '75ms',   // NEW: Micro-interactions
     faster: '100ms',
     fast: '150ms',
     normal: '200ms',
     relaxed: '300ms',
     slow: '400ms',
     slower: '500ms',
+    deliberate: '600ms', // NEW: Intentional pause
     lazy: '700ms',
     glacial: '1000ms',
+    epic: '1500ms', // NEW: Hero animations
   },
 
-  // Spring configurations (for Framer Motion)
+  // Spring configurations (for Framer Motion) - refined for premium feel
   spring: {
-    snappy: { type: 'spring', stiffness: 400, damping: 30 },
-    smooth: { type: 'spring', stiffness: 200, damping: 25 },
-    bouncy: { type: 'spring', stiffness: 300, damping: 15 },
-    gentle: { type: 'spring', stiffness: 120, damping: 20 },
+    // Snappy: Quick response, firm stop
+    snappy: { type: 'spring', stiffness: 500, damping: 35 },
+    // Smooth: Silk-like movement
+    smooth: { type: 'spring', stiffness: 180, damping: 25 },
+    // Bouncy: Playful, energetic
+    bouncy: { type: 'spring', stiffness: 300, damping: 12, mass: 0.8 },
+    // Gentle: Soft, calming
+    gentle: { type: 'spring', stiffness: 100, damping: 18 },
+    // NEW: Premium - Apple-like
+    premium: { type: 'spring', stiffness: 250, damping: 28, mass: 0.9 },
+    // NEW: Micro - for subtle interactions
+    micro: { type: 'spring', stiffness: 600, damping: 40 },
+    // NEW: Organic - natural movement
+    organic: { type: 'spring', stiffness: 150, damping: 22, mass: 1.1 },
+    // NEW: Entrance - dramatic reveal
+    entrance: { type: 'spring', stiffness: 200, damping: 20, delay: 0.1 },
+  },
+
+  // NEW: Stagger configurations for coordinated animations
+  stagger: {
+    fast: 0.03,
+    normal: 0.05,
+    relaxed: 0.08,
+    slow: 0.12,
+    dramatic: 0.15,
   },
 } as const;
 

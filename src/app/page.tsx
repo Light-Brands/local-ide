@@ -3,6 +3,7 @@
 import { useRef, useEffect } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { motion } from 'framer-motion';
 import {
   Zap,
   Shield,
@@ -28,19 +29,33 @@ if (typeof window !== 'undefined') {
 
 export default function Home() {
   const featuresRef = useRef<HTMLElement>(null);
+  const statsRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Animate features on scroll
+      // Animate features on scroll with staggered reveal
       gsap.from('.feature-card', {
-        y: 60,
+        y: 48,
         opacity: 0,
-        duration: 0.8,
-        stagger: 0.1,
+        duration: 0.7,
+        stagger: 0.08,
         ease: 'power3.out',
         scrollTrigger: {
           trigger: featuresRef.current,
           start: 'top 80%',
+        },
+      });
+
+      // Animate stats with counter effect
+      gsap.from('.stat-item', {
+        y: 32,
+        opacity: 0,
+        duration: 0.6,
+        stagger: 0.1,
+        ease: 'power3.out',
+        scrollTrigger: {
+          trigger: statsRef.current,
+          start: 'top 85%',
         },
       });
     });
@@ -169,36 +184,57 @@ export default function Home() {
           trustedBy={{
             label: 'Trusted by developers at',
             logos: [
-              <span key={1} className="text-neutral-400 font-semibold">Vercel</span>,
-              <span key={2} className="text-neutral-400 font-semibold">Stripe</span>,
-              <span key={3} className="text-neutral-400 font-semibold">Linear</span>,
-              <span key={4} className="text-neutral-400 font-semibold">Notion</span>,
+              <span key={1} className="text-neutral-400 font-semibold tracking-tight">Vercel</span>,
+              <span key={2} className="text-neutral-400 font-semibold tracking-tight">Stripe</span>,
+              <span key={3} className="text-neutral-400 font-semibold tracking-tight">Linear</span>,
+              <span key={4} className="text-neutral-400 font-semibold tracking-tight">Notion</span>,
             ],
           }}
         />
 
-        {/* Features Section */}
+        {/* Features Section - Refined with asymmetric header alignment */}
         <section
           ref={featuresRef}
-          className="section-padding bg-white dark:bg-neutral-950"
+          className="section-padding bg-white dark:bg-neutral-950 relative overflow-hidden"
         >
-          <div className="container-premium">
-            {/* Section Header */}
-            <div className="max-w-3xl mx-auto text-center mb-16">
-              <span className="inline-block text-sm font-semibold text-primary-500 uppercase tracking-wider mb-4">
+          {/* Subtle background accent */}
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary-500/[0.02] dark:bg-primary-400/[0.03] rounded-full blur-[120px] -translate-y-1/2 translate-x-1/3" />
+
+          <div className="container-premium relative">
+            {/* Section Header - Refined with left-aligned option for variation */}
+            <div className="max-w-2xl mb-14 lg:mb-16">
+              <motion.span
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5 }}
+                className="inline-block text-sm font-semibold text-primary-600 dark:text-primary-400 uppercase tracking-wider mb-3"
+              >
                 Features
-              </span>
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-neutral-900 dark:text-white mb-6">
+              </motion.span>
+              <motion.h2
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                className="text-3xl md:text-4xl lg:text-[2.75rem] font-bold tracking-tight text-neutral-900 dark:text-white mb-4 leading-tight"
+              >
                 Everything you need to build premium sites
-              </h2>
-              <p className="text-lg text-neutral-600 dark:text-neutral-400">
+              </motion.h2>
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="text-lg text-neutral-600 dark:text-neutral-400 leading-relaxed"
+              >
                 A carefully crafted foundation that helps you build beautiful,
                 performant websites without starting from scratch.
-              </p>
+              </motion.p>
             </div>
 
-            {/* Features Grid */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+            {/* Features Grid - Refined with asymmetric gap */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
               {features.map((feature, index) => (
                 <div key={index} className="feature-card">
                   <FeatureCard
@@ -213,120 +249,200 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Stats Section */}
-        <section className="py-16 bg-neutral-50 dark:bg-neutral-900">
+        {/* Stats Section - Refined with better visual hierarchy */}
+        <section
+          ref={statsRef}
+          className="py-16 lg:py-20 bg-neutral-50 dark:bg-neutral-900/50 border-y border-neutral-200/50 dark:border-neutral-800/50"
+        >
           <div className="container-premium">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
               {[
-                { value: '10k+', label: 'Downloads' },
-                { value: '90+', label: 'Lighthouse Score' },
-                { value: '50+', label: 'Components' },
-                { value: '4.9', label: 'Rating' },
+                { value: '10k+', label: 'Downloads', suffix: '' },
+                { value: '90+', label: 'Lighthouse Score', suffix: '' },
+                { value: '50+', label: 'Components', suffix: '' },
+                { value: '4.9', label: 'Rating', suffix: '/5' },
               ].map((stat, index) => (
-                <div key={index} className="text-center">
-                  <div className="text-4xl md:text-5xl font-bold text-neutral-900 dark:text-white mb-2">
+                <motion.div
+                  key={index}
+                  className="stat-item text-center"
+                  whileHover={{ y: -2 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="text-4xl md:text-5xl font-bold text-neutral-900 dark:text-white mb-1.5 tracking-tight">
                     {stat.value}
+                    <span className="text-neutral-400 text-2xl md:text-3xl">{stat.suffix}</span>
                   </div>
-                  <div className="text-sm text-neutral-500 dark:text-neutral-400">
+                  <div className="text-sm text-neutral-500 dark:text-neutral-400 font-medium">
                     {stat.label}
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Code Preview Section */}
+        {/* Code Preview Section - Refined with better balance */}
         <section className="section-padding bg-white dark:bg-neutral-950">
           <div className="container-premium">
-            <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-              <div>
-                <span className="inline-block text-sm font-semibold text-primary-500 uppercase tracking-wider mb-4">
+            <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 xl:gap-20 items-center">
+              {/* Content */}
+              <motion.div
+                initial={{ opacity: 0, x: -24 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <span className="inline-block text-sm font-semibold text-primary-600 dark:text-primary-400 uppercase tracking-wider mb-3">
                   Developer Experience
                 </span>
-                <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-neutral-900 dark:text-white mb-6">
+                <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-neutral-900 dark:text-white mb-5 leading-tight">
                   Build with confidence using our design tokens
                 </h2>
-                <p className="text-lg text-neutral-600 dark:text-neutral-400 mb-8">
+                <p className="text-lg text-neutral-600 dark:text-neutral-400 mb-8 leading-relaxed">
                   Never hardcode colors or spacing again. Our design system ensures
                   consistency across your entire application with a single source of truth.
                 </p>
-                <ul className="space-y-4 mb-8">
+                <ul className="space-y-3.5 mb-8">
                   {[
                     'Semantic color variables for light/dark mode',
                     'Consistent spacing based on 4px/8px grid',
                     'Premium typography with perfect hierarchy',
                     'Pre-configured animations and transitions',
                   ].map((item, index) => (
-                    <li key={index} className="flex items-center gap-3">
-                      <div className="w-5 h-5 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                        <Star className="w-3 h-3 text-primary-500" />
+                    <motion.li
+                      key={index}
+                      initial={{ opacity: 0, x: -16 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: index * 0.08, duration: 0.4 }}
+                      className="flex items-center gap-3"
+                    >
+                      <div className="w-5 h-5 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center flex-shrink-0">
+                        <Star className="w-3 h-3 text-primary-600 dark:text-primary-400" />
                       </div>
                       <span className="text-neutral-700 dark:text-neutral-300">{item}</span>
-                    </li>
+                    </motion.li>
                   ))}
                 </ul>
-                <Button href="#" variant="primary" icon={<ArrowRight />}>
+                <Button href="#" variant="primary" icon={<ArrowRight className="w-4 h-4" />}>
                   View Documentation
                 </Button>
-              </div>
+              </motion.div>
 
-              {/* Code Block */}
-              <div className={cn(
-                'rounded-2xl overflow-hidden',
-                'bg-neutral-900 dark:bg-neutral-950',
-                'border border-neutral-800',
-                'shadow-2xl'
-              )}>
-                <div className="flex items-center gap-2 px-4 py-3 border-b border-neutral-800">
-                  <div className="w-3 h-3 rounded-full bg-red-500" />
-                  <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                  <div className="w-3 h-3 rounded-full bg-green-500" />
-                  <span className="ml-4 text-sm text-neutral-500">tokens.ts</span>
+              {/* Code Block - Refined styling */}
+              <motion.div
+                initial={{ opacity: 0, x: 24 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+                className={cn(
+                  'rounded-2xl overflow-hidden',
+                  'bg-[#0d1117] dark:bg-neutral-950',
+                  'border border-neutral-800/80',
+                  'shadow-2xl shadow-neutral-900/20'
+                )}
+              >
+                {/* Window controls */}
+                <div className="flex items-center gap-2 px-4 py-3.5 border-b border-neutral-800/80 bg-neutral-900/50">
+                  <div className="flex gap-2">
+                    <div className="w-3 h-3 rounded-full bg-[#ff5f56]" />
+                    <div className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
+                    <div className="w-3 h-3 rounded-full bg-[#27c93f]" />
+                  </div>
+                  <span className="ml-4 text-sm text-neutral-500 font-mono">tokens.ts</span>
                 </div>
-                <pre className="p-6 text-sm overflow-x-auto">
-                  <code className="text-neutral-300">
-{`export const colors = {
-  primary: {
-    50: '#f0f4ff',
-    500: '#5a6df2',
-    900: '#2d3382',
-  },
-  // Semantic colors
-  background: 'var(--color-neutral-0)',
-  foreground: 'var(--color-neutral-900)',
-};
-
-export const spacing = {
-  4: '1rem',    // 16px
-  6: '1.5rem',  // 24px
-  8: '2rem',    // 32px
-};`}
+                {/* Code content */}
+                <pre className="p-5 text-sm overflow-x-auto scrollbar-thin">
+                  <code className="text-neutral-300 font-mono leading-relaxed">
+                    <span className="text-[#ff7b72]">export const</span>{' '}
+                    <span className="text-[#d2a8ff]">colors</span>{' '}
+                    <span className="text-neutral-500">=</span> {'{'}
+                    {'\n'}
+                    {'  '}
+                    <span className="text-[#79c0ff]">primary</span>
+                    <span className="text-neutral-500">:</span> {'{'}
+                    {'\n'}
+                    {'    '}
+                    <span className="text-[#79c0ff]">50</span>
+                    <span className="text-neutral-500">:</span>{' '}
+                    <span className="text-[#a5d6ff]">&apos;#f0f4ff&apos;</span>
+                    <span className="text-neutral-500">,</span>
+                    {'\n'}
+                    {'    '}
+                    <span className="text-[#79c0ff]">500</span>
+                    <span className="text-neutral-500">:</span>{' '}
+                    <span className="text-[#a5d6ff]">&apos;#6366f1&apos;</span>
+                    <span className="text-neutral-500">,</span>
+                    {'\n'}
+                    {'    '}
+                    <span className="text-[#79c0ff]">900</span>
+                    <span className="text-neutral-500">:</span>{' '}
+                    <span className="text-[#a5d6ff]">&apos;#312e81&apos;</span>
+                    <span className="text-neutral-500">,</span>
+                    {'\n'}
+                    {'  '}
+                    {'}'}
+                    <span className="text-neutral-500">,</span>
+                    {'\n'}
+                    {'  '}
+                    <span className="text-neutral-500">{'// Semantic colors'}</span>
+                    {'\n'}
+                    {'  '}
+                    <span className="text-[#79c0ff]">background</span>
+                    <span className="text-neutral-500">:</span>{' '}
+                    <span className="text-[#a5d6ff]">&apos;var(--color-neutral-0)&apos;</span>
+                    <span className="text-neutral-500">,</span>
+                    {'\n'}
+                    {'  '}
+                    <span className="text-[#79c0ff]">foreground</span>
+                    <span className="text-neutral-500">:</span>{' '}
+                    <span className="text-[#a5d6ff]">&apos;var(--color-neutral-900)&apos;</span>
+                    <span className="text-neutral-500">,</span>
+                    {'\n'}
+                    {'}'}<span className="text-neutral-500">;</span>
                   </code>
                 </pre>
-              </div>
+              </motion.div>
             </div>
           </div>
         </section>
 
-        {/* Pricing Section */}
-        <section className="section-padding bg-neutral-50 dark:bg-neutral-900">
+        {/* Pricing Section - Refined spacing */}
+        <section className="section-padding bg-neutral-50 dark:bg-neutral-900/50">
           <div className="container-premium">
-            {/* Section Header */}
-            <div className="max-w-3xl mx-auto text-center mb-16">
-              <span className="inline-block text-sm font-semibold text-primary-500 uppercase tracking-wider mb-4">
+            {/* Section Header - Centered for pricing */}
+            <div className="max-w-2xl mx-auto text-center mb-12 lg:mb-14">
+              <motion.span
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5 }}
+                className="inline-block text-sm font-semibold text-primary-600 dark:text-primary-400 uppercase tracking-wider mb-3"
+              >
                 Pricing
-              </span>
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-neutral-900 dark:text-white mb-6">
+              </motion.span>
+              <motion.h2
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                className="text-3xl md:text-4xl lg:text-[2.75rem] font-bold tracking-tight text-neutral-900 dark:text-white mb-4"
+              >
                 Simple, transparent pricing
-              </h2>
-              <p className="text-lg text-neutral-600 dark:text-neutral-400">
+              </motion.h2>
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="text-lg text-neutral-600 dark:text-neutral-400"
+              >
                 Choose the plan that works best for you. All plans include lifetime access.
-              </p>
+              </motion.p>
             </div>
 
             {/* Pricing Grid */}
-            <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
               {pricingPlans.map((plan, index) => (
                 <PricingCard key={index} {...plan} />
               ))}
@@ -334,21 +450,36 @@ export const spacing = {
           </div>
         </section>
 
-        {/* Testimonials Section */}
-        <section className="section-padding bg-white dark:bg-neutral-950">
-          <div className="container-premium">
+        {/* Testimonials Section - Refined */}
+        <section className="section-padding bg-white dark:bg-neutral-950 relative overflow-hidden">
+          {/* Background accent */}
+          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-secondary-500/[0.02] dark:bg-secondary-400/[0.03] rounded-full blur-[100px] translate-y-1/2 -translate-x-1/3" />
+
+          <div className="container-premium relative">
             {/* Section Header */}
-            <div className="max-w-3xl mx-auto text-center mb-16">
-              <span className="inline-block text-sm font-semibold text-primary-500 uppercase tracking-wider mb-4">
+            <div className="max-w-2xl mx-auto text-center mb-12 lg:mb-14">
+              <motion.span
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5 }}
+                className="inline-block text-sm font-semibold text-primary-600 dark:text-primary-400 uppercase tracking-wider mb-3"
+              >
                 Testimonials
-              </span>
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-neutral-900 dark:text-white mb-6">
+              </motion.span>
+              <motion.h2
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                className="text-3xl md:text-4xl lg:text-[2.75rem] font-bold tracking-tight text-neutral-900 dark:text-white"
+              >
                 Loved by developers worldwide
-              </h2>
+              </motion.h2>
             </div>
 
             {/* Testimonials Grid */}
-            <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
+            <div className="grid md:grid-cols-3 gap-5 lg:gap-6">
               {testimonials.map((testimonial, index) => (
                 <TestimonialCard key={index} {...testimonial} />
               ))}
