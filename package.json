@@ -17,6 +17,7 @@
     "clsx": "^2.1.1",
     "framer-motion": "^12.27.1",
     "gsap": "^3.14.2",
+    "html2canvas": "^1.4.1",
     "lucide-react": "^0.562.0",
     "next": "16.1.4",
     "react": "19.2.3",
@@ -31,6 +32,6 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.4",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "5.9.3"
   }
 }
