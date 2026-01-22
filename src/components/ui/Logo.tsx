@@ -8,47 +8,32 @@ interface LogoProps {
   href?: string;
   className?: string;
   size?: 'sm' | 'md' | 'lg';
-  showText?: boolean;
-  textClassName?: string;
   onClick?: () => void;
 }
 
 const sizeMap = {
-  sm: { image: 120, text: 'text-base' },
-  md: { image: 160, text: 'text-xl' },
-  lg: { image: 240, text: 'text-2xl' },
+  sm: { image: 120 },
+  md: { image: 160 },
+  lg: { image: 240 },
 };
 
 export function Logo({
   href = '/',
   className,
   size = 'md',
-  showText = false,
-  textClassName,
   onClick,
 }: LogoProps) {
   const sizes = sizeMap[size];
   const logoContent = (
     <div className={cn('flex items-center gap-2', className)}>
       <Image
-        src="/oracle-logo.webp"
-        alt="Oracle"
+        src="/lb-logo.svg"
+        alt="Light Brands"
         width={sizes.image}
-        height={sizes.image}
+        height={Math.round(sizes.image * 0.15)}
         className="object-contain invert dark:invert-0 transition-all duration-200"
         priority
       />
-      {showText && (
-        <span
-          className={cn(
-            'font-bold text-neutral-900 dark:text-white tracking-tight',
-            sizes.text,
-            textClassName
-          )}
-        >
-          Oracle
-        </span>
-      )}
     </div>
   );
 

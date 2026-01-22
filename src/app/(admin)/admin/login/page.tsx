@@ -91,7 +91,7 @@ export default function AdminLoginPage() {
           </div>
 
           <div className="flex items-center gap-4 text-sm text-white/60">
-            <span>© {new Date().getFullYear()} Oracle</span>
+            <span>© {new Date().getFullYear()} Light Brands</span>
             <span>•</span>
             <a href="/" className="hover:text-white transition-colors">Back to site</a>
           </div>

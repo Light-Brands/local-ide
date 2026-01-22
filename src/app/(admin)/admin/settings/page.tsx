@@ -523,7 +523,7 @@ export default function SettingsPage() {
                     </label>
                     <input
                       type="text"
-                      defaultValue="Oracle"
+                      defaultValue="Light Brands"
                       disabled={isDemo}
                       className={cn(
                         'w-full px-4 py-2.5 rounded-lg',
@@ -561,7 +561,7 @@ export default function SettingsPage() {
                     </label>
                     <input
                       type="url"
-                      defaultValue="https://oracle.dev"
+                      defaultValue="https://lightbrands.dev"
                       disabled={isDemo}
                       className={cn(
                         'w-full px-4 py-2.5 rounded-lg',
