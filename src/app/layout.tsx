@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { siteConfig, generateOrganizationSchema, JsonLd } from '@/lib/seo';
 import { ThemeProvider } from '@/lib/theme';
+import { FeedbackSystem } from '@/components/feedback';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -98,7 +99,9 @@ export default function RootLayout({
         className={`${inter.variable} font-sans antialiased bg-background text-foreground`}
       >
         <ThemeProvider>
-          {children}
+          <FeedbackSystem>
+            {children}
+          </FeedbackSystem>
         </ThemeProvider>
       </body>
     </html>

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,6 +13,16 @@ import {
   BarChart3,
   MessageSquare,
   X,
+  Terminal,
+  ListTodo,
+  Bug,
+  Bot,
+  Code2,
+  ChevronDown,
+  Sparkles,
+  Layers,
+  Tags,
+  FolderOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Logo } from '@/components/ui/Logo';
@@ -25,12 +36,26 @@ interface AdminSidebarProps {
 
 const navItems = [
   { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-  { label: 'Content', href: '/admin/content', icon: FileText },
-  { label: 'Media', href: '/admin/media', icon: Image },
   { label: 'Users', href: '/admin/users', icon: Users },
   { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
   { label: 'Feedback', href: '/admin/feedback', icon: MessageSquare },
   { label: 'Settings', href: '/admin/settings', icon: Settings },
+];
+
+const contentMediaItems = [
+  { label: 'Overview', href: '/admin/content', icon: Layers },
+  { label: 'Posts', href: '/admin/content/posts', icon: FileText },
+  { label: 'Media Library', href: '/admin/content/media', icon: Image },
+  { label: 'AI Generator', href: '/admin/content/generator', icon: Sparkles },
+  { label: 'Batch Queue', href: '/admin/content/batch', icon: FolderOpen },
+  { label: 'Categories', href: '/admin/content/categories', icon: Tags },
+];
+
+const devToolsItems = [
+  { label: 'Dev Dashboard', href: '/admin/dev', icon: Terminal },
+  { label: 'Tracker', href: '/admin/dev/tracker', icon: ListTodo },
+  { label: 'Dev Feedback', href: '/admin/dev/feedback', icon: Bug },
+  { label: 'AutoDev', href: '/admin/dev/autodev', icon: Bot },
 ];
 
 export function AdminSidebar({
@@ -40,6 +65,18 @@ export function AdminSidebar({
   isDemo,
 }: AdminSidebarProps) {
   const pathname = usePathname();
+  const [devToolsExpanded, setDevToolsExpanded] = useState(true);
+  const [contentMediaExpanded, setContentMediaExpanded] = useState(true);
+
+  // Auto-expand sections when on their routes
+  useEffect(() => {
+    if (pathname.startsWith('/admin/dev')) {
+      setDevToolsExpanded(true);
+    }
+    if (pathname.startsWith('/admin/content')) {
+      setContentMediaExpanded(true);
+    }
+  }, [pathname]);
 
   const NavItem = ({
     item,
@@ -130,9 +167,118 @@ export function AdminSidebar({
 
         {/* Navigation */}
         <nav className="flex-1 p-2.5 space-y-1 overflow-y-auto admin-scrollbar">
-          {navItems.map((item) => (
+          {/* Dashboard */}
+          <NavItem item={navItems[0]} showLabel={isOpen} />
+
+          {/* Content & Media Section */}
+          <div className="space-y-1">
+            {/* Section Header */}
+            <button
+              onClick={() => setContentMediaExpanded(!contentMediaExpanded)}
+              className={cn(
+                'w-full flex items-center gap-2 px-3 py-2 rounded-xl',
+                'text-neutral-500 dark:text-neutral-400',
+                'hover:bg-neutral-100 dark:hover:bg-neutral-800',
+                'transition-colors duration-200',
+                isOpen ? 'justify-between' : 'justify-center'
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <FileText className="w-[18px] h-[18px] flex-shrink-0" strokeWidth={2} />
+                {isOpen && (
+                  <span className="text-[11px] font-semibold uppercase tracking-wider">
+                    Content
+                  </span>
+                )}
+              </div>
+              {isOpen && (
+                <motion.div
+                  animate={{ rotate: contentMediaExpanded ? 0 : -90 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </motion.div>
+              )}
+            </button>
+
+            {/* Content & Media Items */}
+            <AnimatePresence initial={false}>
+              {(contentMediaExpanded || !isOpen) && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                  className="overflow-hidden"
+                >
+                  <div className="space-y-1">
+                    {contentMediaItems.map((item) => (
+                      <NavItem key={item.href} item={item} showLabel={isOpen} />
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Other nav items */}
+          {navItems.slice(1).map((item) => (
             <NavItem key={item.href} item={item} showLabel={isOpen} />
           ))}
+
+          {/* Divider */}
+          <div className="my-3 mx-2 border-t border-neutral-200/60 dark:border-neutral-800" />
+
+          {/* Developer Tools Section */}
+          <div className="space-y-1">
+            {/* Section Header */}
+            <button
+              onClick={() => setDevToolsExpanded(!devToolsExpanded)}
+              className={cn(
+                'w-full flex items-center gap-2 px-3 py-2 rounded-xl',
+                'text-neutral-500 dark:text-neutral-400',
+                'hover:bg-neutral-100 dark:hover:bg-neutral-800',
+                'transition-colors duration-200',
+                isOpen ? 'justify-between' : 'justify-center'
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <Code2 className="w-[18px] h-[18px] flex-shrink-0" strokeWidth={2} />
+                {isOpen && (
+                  <span className="text-[11px] font-semibold uppercase tracking-wider">
+                    Developer
+                  </span>
+                )}
+              </div>
+              {isOpen && (
+                <motion.div
+                  animate={{ rotate: devToolsExpanded ? 0 : -90 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </motion.div>
+              )}
+            </button>
+
+            {/* Dev Tools Items */}
+            <AnimatePresence initial={false}>
+              {(devToolsExpanded || !isOpen) && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                  className="overflow-hidden"
+                >
+                  <div className="space-y-1">
+                    {devToolsItems.map((item) => (
+                      <NavItem key={item.href} item={item} showLabel={isOpen} />
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </nav>
 
         {/* Demo badge */}
@@ -210,7 +356,62 @@ export function AdminSidebar({
 
             {/* Mobile navigation */}
             <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-              {navItems.map((item) => (
+              {/* Dashboard */}
+              <NavItem item={navItems[0]} showLabel={true} onClick={onMobileClose} />
+
+              {/* Content & Media Section */}
+              <div className="space-y-1">
+                {/* Section Header */}
+                <button
+                  onClick={() => setContentMediaExpanded(!contentMediaExpanded)}
+                  className={cn(
+                    'w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl',
+                    'text-neutral-500 dark:text-neutral-400',
+                    'hover:bg-neutral-100 dark:hover:bg-neutral-800',
+                    'transition-colors duration-200'
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-[18px] h-[18px] flex-shrink-0" strokeWidth={2} />
+                    <span className="text-[11px] font-semibold uppercase tracking-wider">
+                      Content & Media
+                    </span>
+                  </div>
+                  <motion.div
+                    animate={{ rotate: contentMediaExpanded ? 0 : -90 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronDown className="w-4 h-4" />
+                  </motion.div>
+                </button>
+
+                {/* Content & Media Items */}
+                <AnimatePresence initial={false}>
+                  {contentMediaExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                      className="overflow-hidden"
+                    >
+                      <div className="space-y-1">
+                        {contentMediaItems.map((item) => (
+                          <NavItem
+                            key={item.href}
+                            item={item}
+                            showLabel={true}
+                            onClick={onMobileClose}
+                          />
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Other nav items */}
+              {navItems.slice(1).map((item) => (
                 <NavItem
                   key={item.href}
                   item={item}
@@ -218,6 +419,60 @@ export function AdminSidebar({
                   onClick={onMobileClose}
                 />
               ))}
+
+              {/* Divider */}
+              <div className="my-3 mx-2 border-t border-neutral-200/60 dark:border-neutral-800" />
+
+              {/* Developer Tools Section */}
+              <div className="space-y-1">
+                {/* Section Header */}
+                <button
+                  onClick={() => setDevToolsExpanded(!devToolsExpanded)}
+                  className={cn(
+                    'w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl',
+                    'text-neutral-500 dark:text-neutral-400',
+                    'hover:bg-neutral-100 dark:hover:bg-neutral-800',
+                    'transition-colors duration-200'
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <Code2 className="w-[18px] h-[18px] flex-shrink-0" strokeWidth={2} />
+                    <span className="text-[11px] font-semibold uppercase tracking-wider">
+                      Developer Tools
+                    </span>
+                  </div>
+                  <motion.div
+                    animate={{ rotate: devToolsExpanded ? 0 : -90 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronDown className="w-4 h-4" />
+                  </motion.div>
+                </button>
+
+                {/* Dev Tools Items */}
+                <AnimatePresence initial={false}>
+                  {devToolsExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                      className="overflow-hidden"
+                    >
+                      <div className="space-y-1">
+                        {devToolsItems.map((item) => (
+                          <NavItem
+                            key={item.href}
+                            item={item}
+                            showLabel={true}
+                            onClick={onMobileClose}
+                          />
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </nav>
 
             {/* Demo badge */}

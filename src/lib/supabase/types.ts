@@ -222,6 +222,78 @@ export interface Database {
         };
         Relationships: [];
       };
+
+      // Feedback table for element capture feedback system
+      feedback: {
+        Row: {
+          id: string;
+          created_at: string;
+          updated_at: string;
+          page_id: string;
+          page_url: string;
+          section_path: string | null;
+          component_name: string | null;
+          category: 'bug' | 'enhancement' | 'question' | 'content';
+          priority: 'low' | 'medium' | 'high' | 'critical';
+          status: 'new' | 'in-progress' | 'resolved' | 'blocked';
+          title: string | null;
+          notes: string | null;
+          position: Json | null;
+          text_context: Json | null;
+          screenshot_url: string | null;
+          user_id: string | null;
+          resolved_at: string | null;
+          resolution: string | null;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          page_id: string;
+          page_url: string;
+          section_path?: string | null;
+          component_name?: string | null;
+          category: 'bug' | 'enhancement' | 'question' | 'content';
+          priority?: 'low' | 'medium' | 'high' | 'critical';
+          status?: 'new' | 'in-progress' | 'resolved' | 'blocked';
+          title?: string | null;
+          notes?: string | null;
+          position?: Json | null;
+          text_context?: Json | null;
+          screenshot_url?: string | null;
+          user_id?: string | null;
+          resolved_at?: string | null;
+          resolution?: string | null;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          page_id?: string;
+          page_url?: string;
+          section_path?: string | null;
+          component_name?: string | null;
+          category?: 'bug' | 'enhancement' | 'question' | 'content';
+          priority?: 'low' | 'medium' | 'high' | 'critical';
+          status?: 'new' | 'in-progress' | 'resolved' | 'blocked';
+          title?: string | null;
+          notes?: string | null;
+          position?: Json | null;
+          text_context?: Json | null;
+          screenshot_url?: string | null;
+          user_id?: string | null;
+          resolved_at?: string | null;
+          resolution?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'feedback_user_id_fkey';
+            columns: ['user_id'];
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -232,6 +304,9 @@ export interface Database {
     Enums: {
       user_role: 'user' | 'admin' | 'editor';
       content_status: 'draft' | 'published' | 'archived';
+      feedback_category: 'bug' | 'enhancement' | 'question' | 'content';
+      feedback_priority: 'low' | 'medium' | 'high' | 'critical';
+      feedback_status: 'new' | 'in-progress' | 'resolved' | 'blocked';
     };
   };
 }
@@ -252,3 +327,4 @@ export type Content = Tables<'content'>;
 export type Media = Tables<'media'>;
 export type Setting = Tables<'settings'>;
 export type AnalyticsEvent = Tables<'analytics_events'>;
+export type Feedback = Tables<'feedback'>;

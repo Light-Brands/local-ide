@@ -1,412 +1,448 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
 import {
-  Plus,
-  Search,
-  Filter,
-  MoreHorizontal,
-  Edit,
-  Trash2,
-  Eye,
   FileText,
-  CheckCircle,
-  Clock,
-  XCircle,
-  ChevronDown,
+  Image,
+  Sparkles,
+  FolderOpen,
+  Tags,
+  Plus,
+  ChevronRight,
+  Eye,
+  HardDrive,
+  MoreHorizontal,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  demoPosts,
+  demoAIGenerations,
+  demoBatchJobs,
+  getContentStats,
+  formatFileSize,
+} from '@/data/content/demoData';
+import {
+  ContentStatusBadge,
+  ContentStatCard,
+  containerVariants,
+  itemVariants,
+} from '@/components/content/shared';
 
-// Demo content data
-const contentItems = [
+// Quick action cards
+const quickActions = [
   {
-    id: '1',
-    title: 'Getting Started with Light Brands',
-    type: 'page',
-    status: 'published',
-    author: 'John Doe',
-    updatedAt: '2024-01-15',
-    views: 1234,
+    title: 'New Post',
+    description: 'Create a new blog post',
+    href: '/admin/content/posts',
+    icon: FileText,
+    color: 'from-blue-500 to-indigo-500',
+    shadowColor: 'shadow-blue-500/20',
   },
   {
-    id: '2',
-    title: 'How to Build Modern Websites',
-    type: 'blog',
-    status: 'published',
-    author: 'Jane Smith',
-    updatedAt: '2024-01-14',
-    views: 856,
+    title: 'Upload Media',
+    description: 'Add images, videos, or files',
+    href: '/admin/content/media',
+    icon: Image,
+    color: 'from-emerald-500 to-teal-500',
+    shadowColor: 'shadow-emerald-500/20',
   },
   {
-    id: '3',
-    title: 'Design System Overview',
-    type: 'page',
-    status: 'draft',
-    author: 'Mike Johnson',
-    updatedAt: '2024-01-13',
-    views: 0,
-  },
-  {
-    id: '4',
-    title: 'New Feature Announcement',
-    type: 'blog',
-    status: 'scheduled',
-    author: 'Sarah Wilson',
-    updatedAt: '2024-01-12',
-    views: 0,
-  },
-  {
-    id: '5',
-    title: 'API Documentation',
-    type: 'page',
-    status: 'published',
-    author: 'Alex Brown',
-    updatedAt: '2024-01-11',
-    views: 2341,
+    title: 'AI Generator',
+    description: 'Generate content with AI',
+    href: '/admin/content/generator',
+    icon: Sparkles,
+    color: 'from-violet-500 to-purple-500',
+    shadowColor: 'shadow-violet-500/20',
   },
 ];
 
-const statusConfig = {
-  published: {
-    label: 'Published',
-    icon: CheckCircle,
-    color: 'text-emerald-700 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/30',
-  },
-  draft: {
-    label: 'Draft',
-    icon: Clock,
-    color: 'text-amber-700 bg-amber-50 dark:text-amber-400 dark:bg-amber-900/30',
-  },
-  scheduled: {
-    label: 'Scheduled',
-    icon: Clock,
-    color: 'text-blue-700 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/30',
-  },
-  archived: {
-    label: 'Archived',
-    icon: XCircle,
-    color: 'text-neutral-600 bg-neutral-100 dark:text-neutral-400 dark:bg-neutral-800',
-  },
-};
-
-export default function ContentPage() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [activeMenu, setActiveMenu] = useState<string | null>(null);
-
-  const filteredContent = contentItems.filter((item) =>
-    item.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const toggleSelectItem = (id: string) => {
-    setSelectedItems((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    );
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedItems.length === filteredContent.length) {
-      setSelectedItems([]);
-    } else {
-      setSelectedItems(filteredContent.map((item) => item.id));
-    }
-  };
+export default function ContentOverview() {
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  const stats = getContentStats();
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="space-y-6"
+    >
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
-            Content
+      <motion.div variants={itemVariants}>
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white tracking-tight">
+            Content & Media
           </h1>
-          <p className="text-neutral-500 mt-1 text-sm">
-            Manage your pages and blog posts
+          <p className="text-neutral-500 dark:text-neutral-400 text-sm">
+            Manage your posts, media library, and AI-powered content generation
           </p>
         </div>
-        <button className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary-500 to-secondary-500 text-white text-sm font-medium rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-primary-500/25">
-          <Plus className="w-4 h-4" />
-          New Content
-        </button>
-      </div>
+      </motion.div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
-          <input
-            type="search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search content..."
-            className={cn(
-              'w-full pl-9 pr-4 py-2.5 rounded-xl',
-              'bg-white dark:bg-neutral-900',
-              'border border-neutral-200 dark:border-neutral-800',
-              'text-sm text-neutral-900 dark:text-white',
-              'placeholder:text-neutral-500',
-              'focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500'
-            )}
-          />
+      {/* Stats Grid */}
+      <motion.div variants={itemVariants} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <ContentStatCard
+          label="Total Posts"
+          value={stats.totalPosts}
+          change={`${stats.publishedPosts} published`}
+          changeType="neutral"
+          icon={<FileText className="w-5 h-5 text-white" />}
+          gradient="from-blue-500 to-indigo-500"
+        />
+        <ContentStatCard
+          label="Page Views"
+          value={stats.totalViews.toLocaleString()}
+          change="+12.5%"
+          changeType="up"
+          icon={<Eye className="w-5 h-5 text-white" />}
+          gradient="from-emerald-500 to-teal-500"
+        />
+        <ContentStatCard
+          label="Media Files"
+          value={stats.totalMedia}
+          change={formatFileSize(stats.totalStorage)}
+          changeType="neutral"
+          icon={<HardDrive className="w-5 h-5 text-white" />}
+          gradient="from-amber-500 to-orange-500"
+        />
+        <ContentStatCard
+          label="AI Generations"
+          value={stats.aiGenerationsThisMonth}
+          change="This month"
+          changeType="neutral"
+          icon={<Sparkles className="w-5 h-5 text-white" />}
+          gradient="from-violet-500 to-purple-500"
+        />
+      </motion.div>
+
+      {/* Quick Actions */}
+      <motion.div variants={itemVariants}>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold text-neutral-900 dark:text-white uppercase tracking-wider">
+            Quick Actions
+          </h2>
         </div>
-        <button className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">
-          <Filter className="w-4 h-4" />
-          Filters
-          <ChevronDown className="w-4 h-4" />
-        </button>
-      </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {quickActions.map((action, index) => {
+            const Icon = action.icon;
+            return (
+              <motion.div
+                key={action.title}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.08, duration: 0.4 }}
+                whileHover={{ y: -4 }}
+              >
+                <Link
+                  href={action.href}
+                  className={cn(
+                    'block p-5 rounded-2xl',
+                    'bg-white dark:bg-neutral-900',
+                    'border border-neutral-200/60 dark:border-neutral-800/60',
+                    'hover:shadow-lg transition-all duration-300',
+                    action.shadowColor
+                  )}
+                >
+                  <div
+                    className={cn(
+                      'w-12 h-12 rounded-xl flex items-center justify-center mb-4',
+                      'bg-gradient-to-br text-white shadow-lg',
+                      action.color,
+                      action.shadowColor
+                    )}
+                  >
+                    <Icon className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-base font-semibold text-neutral-900 dark:text-white mb-1">
+                    {action.title}
+                  </h3>
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                    {action.description}
+                  </p>
+                  <div className="mt-4 flex items-center text-sm font-medium text-primary-600 dark:text-primary-400">
+                    Get started
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </div>
+                </Link>
+              </motion.div>
+            );
+          })}
+        </div>
+      </motion.div>
 
-      {/* Bulk actions */}
-      {selectedItems.length > 0 && (
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-6">
+        {/* Recent Posts */}
         <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-wrap items-center gap-3 p-4 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-xl"
+          variants={itemVariants}
+          className={cn(
+            'lg:col-span-2',
+            'bg-white dark:bg-neutral-900',
+            'rounded-2xl',
+            'border border-neutral-200/60 dark:border-neutral-800/60',
+            'overflow-hidden'
+          )}
         >
-          <span className="text-sm font-medium text-primary-700 dark:text-primary-300">
-            {selectedItems.length} selected
-          </span>
-          <div className="flex items-center gap-2">
-            <button className="px-3 py-1.5 text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/40 rounded-lg transition-colors">
-              Publish
-            </button>
-            <button className="px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-lg transition-colors">
-              Delete
-            </button>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Content List - Mobile Card View */}
-      <div className="block lg:hidden space-y-3">
-        {filteredContent.map((item) => {
-          const status = statusConfig[item.status as keyof typeof statusConfig];
-          const StatusIcon = status.icon;
-
-          return (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-4"
+          <div className="p-5 border-b border-neutral-200/60 dark:border-neutral-800/60 flex items-center justify-between">
+            <h2 className="text-base font-semibold text-neutral-900 dark:text-white">
+              Recent Posts
+            </h2>
+            <Link
+              href="/admin/content/posts"
+              className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline flex items-center"
             >
-              <div className="flex items-start gap-3">
-                <input
-                  type="checkbox"
-                  checked={selectedItems.includes(item.id)}
-                  onChange={() => toggleSelectItem(item.id)}
-                  className="mt-1 w-4 h-4 rounded border-neutral-300 text-primary-500 focus:ring-primary-500"
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-medium text-neutral-900 dark:text-white">
-                      {item.title}
-                    </h3>
-                    <span
-                      className={cn(
-                        'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0',
-                        status.color
-                      )}
-                    >
-                      <StatusIcon className="w-3 h-3" />
-                      {status.label}
+              View all
+              <ChevronRight className="w-4 h-4 ml-0.5" />
+            </Link>
+          </div>
+
+          <div className="divide-y divide-neutral-100 dark:divide-neutral-800/60">
+            <AnimatePresence>
+              {demoPosts.slice(0, 4).map((post, index) => (
+                <motion.div
+                  key={post.id}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05, duration: 0.3 }}
+                  onMouseEnter={() => setHoveredCard(post.id)}
+                  onMouseLeave={() => setHoveredCard(null)}
+                  className="p-4 sm:px-5 flex items-center gap-3 sm:gap-4 hover:bg-neutral-50/80 dark:hover:bg-neutral-800/40 transition-colors"
+                >
+                  {/* Thumbnail or icon */}
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-primary-500/10">
+                    <FileText className="w-5 h-5 text-white" />
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="text-sm font-semibold text-neutral-900 dark:text-white truncate">
+                        {post.title}
+                      </h3>
+                      <ContentStatusBadge status={post.status} />
+                    </div>
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                      {post.author} &middot; {new Date(post.updatedAt).toLocaleDateString()}
+                    </p>
+                  </div>
+
+                  {/* Stats */}
+                  <div className="hidden sm:flex items-center gap-4 text-sm text-neutral-500 dark:text-neutral-400">
+                    <span className="flex items-center gap-1">
+                      <Eye className="w-4 h-4" />
+                      {post.viewCount.toLocaleString()}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 mt-2 text-xs text-neutral-500">
-                    <span className="capitalize">{item.type}</span>
-                    <span>•</span>
-                    <span>{item.author}</span>
-                    <span>•</span>
-                    <span>{item.views.toLocaleString()} views</span>
-                  </div>
-                  <div className="flex items-center gap-2 mt-3">
-                    <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors">
-                      <Eye className="w-3.5 h-3.5" />
-                      View
-                    </button>
-                    <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors">
-                      <Edit className="w-3.5 h-3.5" />
-                      Edit
-                    </button>
-                    <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors">
-                      <Trash2 className="w-3.5 h-3.5" />
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
 
-      {/* Content Table - Desktop View */}
-      <div className="hidden lg:block bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-neutral-50 dark:bg-neutral-800/50 border-b border-neutral-200 dark:border-neutral-800">
-              <tr>
-                <th className="w-12 px-4 py-3">
-                  <input
-                    type="checkbox"
-                    checked={
-                      selectedItems.length === filteredContent.length &&
-                      filteredContent.length > 0
-                    }
-                    onChange={toggleSelectAll}
-                    className="w-4 h-4 rounded border-neutral-300 text-primary-500 focus:ring-primary-500"
-                  />
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-                  Title
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-                  Type
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-                  Author
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-                  Updated
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-                  Views
-                </th>
-                <th className="w-12"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-              {filteredContent.map((item) => {
-                const status = statusConfig[item.status as keyof typeof statusConfig];
-                const StatusIcon = status.icon;
-
-                return (
-                  <tr
-                    key={item.id}
-                    className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
+                  {/* Actions */}
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
                   >
-                    <td className="px-4 py-3">
-                      <input
-                        type="checkbox"
-                        checked={selectedItems.includes(item.id)}
-                        onChange={() => toggleSelectItem(item.id)}
-                        className="w-4 h-4 rounded border-neutral-300 text-primary-500 focus:ring-primary-500"
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-                          <FileText className="w-4 h-4 text-neutral-500" />
-                        </div>
-                        <span className="font-medium text-neutral-900 dark:text-white">
-                          {item.title}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-sm text-neutral-600 dark:text-neutral-400 capitalize">
-                        {item.type}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={cn(
-                          'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium',
-                          status.color
-                        )}
-                      >
-                        <StatusIcon className="w-3.5 h-3.5" />
-                        {status.label}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-sm text-neutral-600 dark:text-neutral-400">
-                        {item.author}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-sm text-neutral-500">
-                        {item.updatedAt}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-sm text-neutral-600 dark:text-neutral-400">
-                        {item.views.toLocaleString()}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="relative">
-                        <button
-                          onClick={() => setActiveMenu(activeMenu === item.id ? null : item.id)}
-                          className="p-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
-                        >
-                          <MoreHorizontal className="w-4 h-4 text-neutral-400" />
-                        </button>
-                        {activeMenu === item.id && (
-                          <>
-                            <div
-                              className="fixed inset-0 z-10"
-                              onClick={() => setActiveMenu(null)}
-                            />
-                            <div className="absolute right-0 mt-1 w-40 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-lg z-20 overflow-hidden">
-                              <button
-                                onClick={() => setActiveMenu(null)}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800"
-                              >
-                                <Eye className="w-4 h-4" />
-                                View
-                              </button>
-                              <button
-                                onClick={() => setActiveMenu(null)}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800"
-                              >
-                                <Edit className="w-4 h-4" />
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => setActiveMenu(null)}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                                Delete
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-neutral-200 dark:border-neutral-800">
-          <span className="text-sm text-neutral-500">
-            Showing {filteredContent.length} of {contentItems.length} items
-          </span>
-          <div className="flex items-center gap-2">
-            <button
-              className="px-3 py-1.5 text-sm font-medium text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 disabled:opacity-50 transition-colors"
-              disabled
-            >
-              Previous
-            </button>
-            <button
-              className="px-3 py-1.5 text-sm font-medium text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 disabled:opacity-50 transition-colors"
-              disabled
-            >
-              Next
-            </button>
+                    <MoreHorizontal className="w-4 h-4 text-neutral-400" />
+                  </motion.button>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
-        </div>
+
+          <div className="p-4 sm:p-5 border-t border-neutral-200/60 dark:border-neutral-800/60">
+            <Link
+              href="/admin/content/posts"
+              className="inline-flex items-center gap-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors group"
+            >
+              <Plus className="w-4 h-4" />
+              Create new post
+            </Link>
+          </div>
+        </motion.div>
+
+        {/* Right Sidebar */}
+        <motion.div variants={itemVariants} className="space-y-5 lg:space-y-6">
+          {/* Batch Queue Status */}
+          <div
+            className={cn(
+              'bg-white dark:bg-neutral-900',
+              'rounded-2xl',
+              'border border-neutral-200/60 dark:border-neutral-800/60',
+              'overflow-hidden'
+            )}
+          >
+            <div className="p-5 border-b border-neutral-200/60 dark:border-neutral-800/60 flex items-center justify-between">
+              <h2 className="text-base font-semibold text-neutral-900 dark:text-white">
+                Queue Status
+              </h2>
+              <Link
+                href="/admin/content/batch"
+                className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
+              >
+                View all
+              </Link>
+            </div>
+            <div className="p-4 space-y-3">
+              {demoBatchJobs
+                .filter((job) => job.status === 'processing' || job.status === 'queued')
+                .slice(0, 2)
+                .map((job, index) => (
+                  <motion.div
+                    key={job.id}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.2 + index * 0.05, duration: 0.3 }}
+                    className={cn(
+                      'p-3 rounded-xl',
+                      'bg-neutral-50 dark:bg-neutral-800/50'
+                    )}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-neutral-900 dark:text-white">
+                        {job.title}
+                      </span>
+                      <ContentStatusBadge
+                        status={job.status === 'queued' ? 'scheduled' : 'processing'}
+                      />
+                    </div>
+                    {job.status === 'processing' && (
+                      <div className="mt-2">
+                        <div className="h-1.5 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${job.progress}%` }}
+                            transition={{ duration: 0.5 }}
+                            className="h-full bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full"
+                          />
+                        </div>
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                          {job.progress}% complete
+                        </p>
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+              {demoBatchJobs.filter((job) => job.status === 'processing' || job.status === 'queued')
+                .length === 0 && (
+                <p className="text-sm text-neutral-500 dark:text-neutral-400 text-center py-4">
+                  No active jobs
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Content Overview */}
+          <div
+            className={cn(
+              'bg-white dark:bg-neutral-900',
+              'rounded-2xl',
+              'border border-neutral-200/60 dark:border-neutral-800/60',
+              'overflow-hidden'
+            )}
+          >
+            <div className="p-5 border-b border-neutral-200/60 dark:border-neutral-800/60">
+              <h2 className="text-base font-semibold text-neutral-900 dark:text-white">
+                Content Overview
+              </h2>
+            </div>
+            <div className="p-5 space-y-4">
+              {[
+                {
+                  label: 'Published',
+                  value: stats.publishedPosts,
+                  total: stats.totalPosts,
+                  color: 'bg-emerald-500',
+                },
+                {
+                  label: 'Drafts',
+                  value: stats.draftPosts,
+                  total: stats.totalPosts,
+                  color: 'bg-amber-500',
+                },
+                {
+                  label: 'Scheduled',
+                  value: stats.scheduledPosts,
+                  total: stats.totalPosts,
+                  color: 'bg-blue-500',
+                },
+              ].map((item, index) => (
+                <motion.div
+                  key={item.label}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 + index * 0.1 }}
+                >
+                  <div className="flex items-center justify-between text-sm mb-2">
+                    <span className="text-neutral-600 dark:text-neutral-400">{item.label}</span>
+                    <span className="font-semibold text-neutral-900 dark:text-white">
+                      {item.value}
+                    </span>
+                  </div>
+                  <div className="h-2 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{
+                        width: `${item.total > 0 ? (item.value / item.total) * 100 : 0}%`,
+                      }}
+                      transition={{
+                        duration: 0.8,
+                        ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
+                        delay: 0.4 + index * 0.1,
+                      }}
+                      className={cn('h-full rounded-full', item.color)}
+                    />
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* Recent AI Generations */}
+          <div
+            className={cn(
+              'bg-white dark:bg-neutral-900',
+              'rounded-2xl',
+              'border border-neutral-200/60 dark:border-neutral-800/60',
+              'overflow-hidden'
+            )}
+          >
+            <div className="p-5 border-b border-neutral-200/60 dark:border-neutral-800/60 flex items-center justify-between">
+              <h2 className="text-base font-semibold text-neutral-900 dark:text-white">
+                Recent AI Generations
+              </h2>
+              <Link
+                href="/admin/content/generator"
+                className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
+              >
+                Generate
+              </Link>
+            </div>
+            <div className="p-4 space-y-2">
+              {demoAIGenerations.slice(0, 3).map((gen, index) => (
+                <motion.div
+                  key={gen.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 + index * 0.05 }}
+                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
+                >
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center text-white">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-neutral-900 dark:text-white truncate">
+                      {gen.prompt.substring(0, 40)}...
+                    </p>
+                    <p className="text-xs text-neutral-400 dark:text-neutral-500 capitalize">
+                      {gen.type} &middot; {gen.status}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }
