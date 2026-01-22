@@ -1,0 +1,3 @@
+[submodule ".ai-coding-config"]
+	path = .ai-coding-config
+	url = https://github.com/Light-Brands/ai-coding-config.git
