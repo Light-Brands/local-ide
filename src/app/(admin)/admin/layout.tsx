@@ -54,7 +54,7 @@ export default function AdminLayout({
           <div className="relative">
             {/* Logo pulse */}
             <div className="animate-pulse">
-              <Logo size="lg" showText={false} />
+              <Logo size="lg" />
             </div>
             {/* Spinner ring */}
             <div className="absolute inset-0 -m-1 flex items-center justify-center">
