@@ -6,7 +6,7 @@ import { Metadata } from 'next';
  */
 
 export const siteConfig = {
-  name: 'Brand',
+  name: 'Light Brands',
   description: 'Premium Next.js boilerplate for building beautiful, high-performance websites.',
   url: process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com',
   ogImage: '/og-image.jpg',

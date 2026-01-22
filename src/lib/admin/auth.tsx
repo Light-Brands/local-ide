@@ -5,14 +5,14 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 // Demo user for testing without Supabase
 const DEMO_USER = {
   id: 'demo-user-id',
-  email: 'demo@oracle.dev',
+  email: 'demo@lightbrands.dev',
   name: 'Demo Admin',
   role: 'admin' as const,
   avatar: null,
 };
 
 const DEMO_CREDENTIALS = {
-  email: 'demo@oracle.dev',
+  email: 'demo@lightbrands.dev',
   password: 'demo1234',
 };
 

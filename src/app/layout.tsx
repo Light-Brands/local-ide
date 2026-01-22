@@ -55,7 +55,7 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: '/oracle-logo.webp',
+    icon: '/lb-logo.svg',
   },
 };
 
