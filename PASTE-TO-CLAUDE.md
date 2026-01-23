@@ -5,7 +5,7 @@ Copy everything below the line and paste it to Claude:
 ---
 
 ```
-Help me build a website using the Oracle Next.js Boilerplate.
+Help me build a website using the Light Brands AI Next.js Boilerplate.
 
 ## What You Need to Know
 

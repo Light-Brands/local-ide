@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Oracle Boilerplate - New Project Setup Script
+# Light Brands AI - New Project Setup Script
 # Usage: ./scripts/new-project.sh my-website-name
 
 set -e
@@ -22,7 +22,7 @@ fi
 PROJECT_NAME=$1
 PROJECT_DIR="../$PROJECT_NAME"
 
-echo -e "${BLUE}🚀 Creating new Oracle project: ${PROJECT_NAME}${NC}"
+echo -e "${BLUE}🚀 Creating new Light Brands AI project: ${PROJECT_NAME}${NC}"
 echo ""
 
 # Check if directory already exists
@@ -79,7 +79,7 @@ cat > .claude/CLAUDE.md << EOF
 # $PROJECT_NAME - Claude Configuration
 
 ## Project Overview
-This is a premium website built with the Oracle Next.js Boilerplate.
+This is a premium website built with the Light Brands AI Next.js Boilerplate.
 
 ## Key Files
 - \`/AI-RULES.md\` - Development guidelines (MUST follow)
@@ -112,7 +112,7 @@ fi
 # Initial commit
 echo -e "${YELLOW}📸 Creating initial commit...${NC}"
 git add .
-git commit -m "Initial commit from Oracle Boilerplate
+git commit -m "Initial commit from Light Brands AI Boilerplate
 
 Features:
 - Next.js 14+ with App Router
@@ -124,7 +124,7 @@ Features:
 - AI-powered components
 - GitHub Actions CI/CD
 
-Co-Authored-By: Oracle Boilerplate <noreply@oracle.dev>"
+Co-Authored-By: Light Brands AI <noreply@lightbrands.dev>"
 
 echo ""
 echo -e "${GREEN}✅ Project created successfully!${NC}"

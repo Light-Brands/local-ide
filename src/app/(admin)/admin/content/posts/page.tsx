@@ -22,7 +22,7 @@ import { cn } from '@/lib/utils';
 const contentItems = [
   {
     id: '1',
-    title: 'Getting Started with Oracle',
+    title: 'Getting Started with Light Brands AI',
     type: 'page',
     status: 'published',
     author: 'John Doe',

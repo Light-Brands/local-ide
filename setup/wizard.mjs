@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Oracle Boilerplate - Interactive Setup Wizard
+ * Light Brands AI - Interactive Setup Wizard
  *
  * Run with: node setup/wizard.mjs
  * Or: pnpm setup
@@ -77,7 +77,7 @@ function header() {
   clear();
   console.log('');
   console.log(color('blue', '  ┌─────────────────────────────────────────┐'));
-  console.log(color('blue', '  │') + color('bright', '   🚀 ORACLE SETUP WIZARD               ') + color('blue', '│'));
+  console.log(color('blue', '  │') + color('bright', '   🚀 LIGHT BRANDS AI SETUP WIZARD     ') + color('blue', '│'));
   console.log(color('blue', '  │') + color('dim', '   Build your website with AI           ') + color('blue', '│'));
   console.log(color('blue', '  └─────────────────────────────────────────┘'));
   console.log('');
@@ -235,7 +235,7 @@ function generatePrompt({ name, oneLiner, type, style, goal, features }) {
 
 ## Tech Context
 
-Using Oracle Next.js Boilerplate:
+Using Light Brands AI Next.js Boilerplate:
 - Next.js 14+, TypeScript, Tailwind v4, Framer Motion
 - Design tokens: primary blue, secondary violet, 4px grid
 - Components: Button, Card, Input, Modal, Toast, Tabs, Navigation, Footer

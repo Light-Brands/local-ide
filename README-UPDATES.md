@@ -1,10 +1,10 @@
-# Oracle Boilerplate - AI-First Enhancements
+# Light Brands AI - AI-First Enhancements
 
 > Summary of advanced AI-first features added to the premium Next.js boilerplate
 
 ## Overview
 
-This document summarizes the AI-first enhancements added to extend the Oracle boilerplate for maximum development velocity and AI-accelerated workflows.
+This document summarizes the AI-first enhancements added to extend the Light Brands AI boilerplate for maximum development velocity and AI-accelerated workflows.
 
 ## New Features Summary
 
@@ -183,13 +183,13 @@ VERCEL_PROJECT_ID=your-project-id
 cp ai-workflows/CLAUDE.md ~/.claude/CLAUDE.md
 
 # Or link the entire directory
-ln -s $(pwd)/ai-workflows ~/.claude/oracle-config
+ln -s $(pwd)/ai-workflows ~/.claude/lightbrands-config
 ```
 
 ## New File Structure
 
 ```
-oracle-boilerplate/
+light-brands-ai/
 ├── ai-workflows/              # NEW: AI development workflows
 │   ├── CLAUDE.md
 │   ├── README.md
@@ -285,7 +285,7 @@ oracle-boilerplate/
 
 ```xml
 <context>
-Project: Oracle Next.js Boilerplate
+Project: Light Brands AI Next.js Boilerplate
 Design System: /src/design-system/tokens.ts
 Patterns: /src/components/ui/Button.tsx
 </context>

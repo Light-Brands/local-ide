@@ -1,7 +1,7 @@
 {
   "$schema": "https://claude.ai/schemas/hooks.json",
   "version": "1.0.0",
-  "description": "Claude Code hooks for Oracle Boilerplate",
+  "description": "Claude Code hooks for Light Brands AI",
 
   "hooks": {
     "pre-edit": [

@@ -1,4 +1,4 @@
-# Claude Code Configuration for Oracle Boilerplate
+# Claude Code Configuration for Light Brands AI
 
 > AI-first development configuration for rapid, high-quality web development
 

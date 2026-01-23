@@ -581,7 +581,7 @@ Example prompt structure:
 
 ```xml
 <context>
-Project: Oracle Next.js Boilerplate
+Project: Light Brands AI Next.js Boilerplate
 Design System: /src/design-system/tokens.ts
 Component Pattern: /src/components/ui/Button.tsx
 </context>
