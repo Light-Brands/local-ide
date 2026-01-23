@@ -1,6 +1,6 @@
 # AI Workflow Automation
 
-> Claude Code integration for AI-first development with the Oracle Boilerplate
+> Claude Code integration for AI-first development with the Light Brands AI Boilerplate
 
 ## Quick Start
 

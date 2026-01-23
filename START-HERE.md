@@ -22,7 +22,7 @@ Copy the entire prompt below and paste it to Claude to start building your websi
 ### 📋 COPY FROM HERE ↓
 
 ```
-I'm starting a new website project using the Oracle Next.js Boilerplate. Please read the project context and help me build my site.
+I'm starting a new website project using the Light Brands AI Next.js Boilerplate. Please read the project context and help me build my site.
 
 ## Boilerplate Overview
 

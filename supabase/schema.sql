@@ -1,4 +1,4 @@
--- Oracle Boilerplate Database Schema
+-- Light Brands AI Database Schema
 -- Run this in Supabase SQL Editor to set up your database
 
 -- =============================================================================
@@ -258,7 +258,7 @@ CREATE TRIGGER on_auth_user_created
 
 -- Default settings
 INSERT INTO public.settings (key, value, description) VALUES
-  ('site_name', '"Oracle"', 'Site name'),
+  ('site_name', '"Light Brands AI"', 'Site name'),
   ('site_description', '"Premium Next.js Boilerplate"', 'Site description'),
   ('maintenance_mode', 'false', 'Enable maintenance mode'),
   ('analytics_enabled', 'true', 'Enable analytics tracking')

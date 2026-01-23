@@ -1,4 +1,4 @@
-# Oracle Boilerplate - Full Context for AI
+# Light Brands AI - Full Context for AI
 
 > This file contains everything Claude needs to know to build websites with this boilerplate.
 > Include this at the start of new conversations or reference it with: "Read /.claude/project-context.md"

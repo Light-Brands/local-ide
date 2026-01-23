@@ -7,7 +7,7 @@
 ## 🚀 COPY EVERYTHING BELOW THIS LINE TO START YOUR PROJECT
 
 ```
-You are building a premium website using the Oracle Next.js Boilerplate. Before we begin development, I need you to understand the project structure and then help me plan and build my website.
+You are building a premium website using the Light Brands AI Next.js Boilerplate. Before we begin development, I need you to understand the project structure and then help me plan and build my website.
 
 ## Boilerplate Context
 

@@ -1,4 +1,4 @@
-# Oracle - Premium Next.js Boilerplate
+# Light Brands AI - Premium Next.js Boilerplate
 
 A production-ready Next.js 14+ boilerplate with AI-first workflows. Build premium websites faster with Claude.
 
@@ -19,7 +19,7 @@ pnpm dev        # Start building
 Copy this to Claude and start building:
 
 ```
-Help me build a website using the Oracle Next.js Boilerplate.
+Help me build a website using the Light Brands AI Next.js Boilerplate.
 
 I'm using: Next.js 14+, TypeScript, Tailwind v4, Framer Motion
 Design: primary blue, secondary violet, 4px grid
@@ -439,6 +439,162 @@ pnpm type-check     # TypeScript check
 - `README-UPDATES.md` - All AI-first additions
 - `ui-polish/ui-polish.md` - UI refinement guide
 - `supabase/schema.sql` - Database schema
+
+---
+
+## Tools & Features Deep Dive
+
+### Developer Tools Suite
+
+The admin panel includes powerful developer tools at `/admin/dev`:
+
+| Tool | Route | Description |
+|------|-------|-------------|
+| **Dev Tracker** | `/admin/dev/tracker` | Epic-based task tracking with phases (Foundation, MVP, Growth), task categorization, dependency tracking, and status visualization |
+| **AutoDev** | `/admin/dev/autodev` | AI-powered operations hub for code generation and automation |
+| **Feedback Capture** | `/admin/dev/feedback` | Contextual feedback system with visual markers, screenshots, and resolution tracking |
+
+### AI Content Generation
+
+Located at `/admin/content/generator`, the AI content system provides:
+
+- **Generation Types**: Blog posts, social media content, meta descriptions, alt text, content rewrites
+- **Tone Options**: Professional, Casual, Technical, Friendly, Authoritative
+- **Prompt Templates**: Product announcements, how-to guides, industry insights, case studies
+- **Batch Processing**: Queue management with progress tracking for bulk AI operations
+
+### Content Management System
+
+Full CMS capabilities at `/admin/content`:
+
+| Feature | Description |
+|---------|-------------|
+| **Posts** | Create, edit, publish with status workflows (draft → published → archived) |
+| **Scheduled Publishing** | Queue content for future publication |
+| **Categories & Tags** | Hierarchical organization with post counts |
+| **Media Integration** | Inline media uploads with optimization |
+| **Author Attribution** | Multi-author support with role-based permissions |
+
+### Analytics Dashboard
+
+Comprehensive metrics at `/admin/analytics`:
+
+- **Overview Stats**: Total visitors, page views, session duration, bounce rate with trend indicators
+- **Visitor Trends**: Time-series visualization with date range filters (7, 30, 90 days, year)
+- **Device Breakdown**: Desktop (58%), Mobile (35%), Tablet (7%) distribution
+- **Top Pages**: Most visited pages with view counts and performance trends
+- **Traffic Sources**: Direct, organic search, referral, and social breakdown
+- **Geographic Data**: Top countries by visitor count with percentages
+
+### Feedback System
+
+Complete feedback management at `/admin/feedback`:
+
+**Capture Features:**
+- Visual markers on pages showing feedback locations
+- Screenshot capture with base64 encoding
+- Text context capture (50 lines before/after)
+- Element metadata (tag, ID, classes, data-attributes)
+- Position tracking (pixel + viewport coordinates)
+
+**Management Features:**
+- Categories: Bug, Enhancement, Question, Content
+- Priority Levels: Low, Medium, High, Critical
+- Status Tracking: New → In Progress → Resolved/Blocked
+- Bulk actions for efficient management
+
+### Authentication & User Management
+
+**Demo Mode** (no backend required):
+- Email: `demo@lightbrands.dev` / Password: `demo1234`
+- Full feature access for testing
+
+**Production Mode** (Supabase):
+- Email/password authentication
+- OAuth support via callback handler
+- Auto-profile creation on signup
+- Session persistence with localStorage
+
+**Roles & Permissions:**
+
+| Role | Permissions |
+|------|-------------|
+| **Admin** | Full access: all features, settings, user management |
+| **Editor** | Create/edit content, upload media, view analytics |
+| **User** | View published content only |
+
+### API Routes
+
+RESTful endpoints for all major features:
+
+| Endpoint | Methods | Description |
+|----------|---------|-------------|
+| `/api/content` | GET, POST, PATCH, DELETE | Full CRUD for content with status filtering |
+| `/api/media` | GET, POST, DELETE | File uploads with image optimization (Sharp) |
+| `/api/feedback` | GET, POST | Feedback capture with screenshots |
+| `/api/feedback/[id]` | GET, PUT, DELETE | Individual feedback management |
+| `/api/ai/personalize` | POST | AI content personalization by industry/role |
+| `/api/auth/callback` | GET | OAuth callback handler |
+
+### Media Library
+
+Full asset management at `/admin/media`:
+
+- **Supported Formats**: JPG, PNG, GIF, WebP, SVG, PDF
+- **File Size Limit**: 10MB per upload
+- **Auto-Optimization**: Images resized to max 2048px at 85% quality via Sharp
+- **Metadata Tracking**: Dimensions, alt text, file type, size, upload date
+- **Organization**: Grid/list views, search, filter by type
+- **Usage Tracking**: Count of content items using each asset
+
+### Database Schema
+
+PostgreSQL via Supabase with 5 core tables:
+
+```
+profiles      - User profiles extending auth.users (role, avatar, metadata)
+content       - CMS content (posts, pages with status workflow)
+media         - Uploaded assets with dimensions and alt text
+settings      - Key-value configuration store
+analytics_events - Event tracking with session and user context
+```
+
+**Security Features:**
+- Row-Level Security (RLS) on all tables
+- Role-based access control
+- Published content visible to all, draft/private protected
+- Users can only manage their own uploads
+
+### Design System
+
+100+ predefined design tokens:
+
+- **Colors**: Primary (blue), Secondary (violet), Neutral (11 shades each)
+- **Typography**: 8 font sizes with proper scale (10px-72px)
+- **Spacing**: 4px base grid system
+- **Shadows**: 5-level elevation system (subtle → prominent)
+- **Radius**: Consistent border radius scale
+- **Animations**: GSAP + Framer Motion with timing presets
+
+### CI/CD Workflows
+
+GitHub Actions automation:
+
+| Workflow | Trigger | Features |
+|----------|---------|----------|
+| `ci.yml` | Push/PR | Lint, type check, build, test, bundle analysis |
+| `pr-review.yml` | PR | Design token validation, a11y audit, auto-labeling |
+| `deploy.yml` | Push to main | Vercel deployment, Lighthouse audit |
+
+### AI Workflow Automation
+
+Located in `/ai-workflows/`:
+
+- **Claude Configuration**: `CLAUDE.md` for AI development rules
+- **Skills**: Custom commands (`/plan-feature`, `/dev`)
+- **Hooks**: Automated checks (design tokens, lint, format)
+- **Subagents**: Testing specialist, UI refinement specialist
+- **Prompt Library**: Mega-prompts for common tasks
 
 ---
 
