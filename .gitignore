@@ -36,6 +36,14 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local IDE data (feedback, screenshots, etc.)
+.local-ide/
+
+# Terminal Server (local only)
+*.db
+*.db-wal
+*.db-shm
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

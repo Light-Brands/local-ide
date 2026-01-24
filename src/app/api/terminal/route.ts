@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { spawn, exec } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
+import { isVercel } from '@/lib/ide/env';
 
 const execAsync = promisify(exec);
 
@@ -71,6 +72,14 @@ async function startTerminalServer(): Promise<{ success: boolean; message: strin
 
 // GET - Check terminal server status and auto-start if needed
 export async function GET(request: Request) {
+  // Return graceful response in production (Vercel)
+  if (isVercel) {
+    return NextResponse.json({
+      status: 'not_available',
+      reason: 'Terminal requires local server',
+    });
+  }
+
   const url = new URL(request.url);
   const autoStart = url.searchParams.get('autoStart') !== 'false';
 
@@ -113,6 +122,14 @@ export async function GET(request: Request) {
 
 // POST - Explicitly start the terminal server
 export async function POST() {
+  // Return graceful response in production (Vercel)
+  if (isVercel) {
+    return NextResponse.json({
+      status: 'not_available',
+      reason: 'Terminal requires local server',
+    });
+  }
+
   const result = await startTerminalServer();
 
   if (result.success) {

@@ -4,10 +4,12 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { useIDEStore, type TerminalTab as StoreTerminalTab } from '../../../stores/ideStore';
 import { useMobileDetect } from '../../../hooks';
+import { useTerminalAvailability } from '../../../hooks/useTerminalAvailability';
 import { TerminalService, type TerminalEvent } from '@/lib/ide/services/terminal';
 import { KeyboardToolbar } from '../../mobile/KeyboardToolbar';
 import { TerminalTabs, type TerminalTab } from './TerminalTabs';
 import { SessionManager } from './SessionManager';
+import { TerminalUnavailable } from './TerminalUnavailable';
 import {
   Terminal,
   Trash2,
@@ -102,6 +104,9 @@ export function TerminalPane() {
   if (initialStorageRef.current === null) {
     initialStorageRef.current = getInitialTabsFromStorage();
   }
+
+  // Check terminal availability (handles production/Vercel gracefully)
+  const { isAvailable, isChecking: isCheckingAvailability, reason, retryCheck } = useTerminalAvailability();
 
   // Store state
   const terminalTabs = useIDEStore((state) => state.terminalTabs);
@@ -202,7 +207,7 @@ export function TerminalPane() {
           brightWhite: '#fafafa',
         },
         allowProposedApi: true,
-        scrollback: 5000,
+        scrollback: 100000,
       });
 
       const fitAddon = new FitAddon();
@@ -667,6 +672,31 @@ export function TerminalPane() {
 
   // Get current session ID for the SessionManager
   const currentSessionId = terminalTabs.find(t => t.tabId === activeTabId)?.sessionId;
+
+  // Show unavailable UI in production or when terminal server is not running
+  if (!isAvailable && !isCheckingAvailability) {
+    return <TerminalUnavailable reason={reason} onRetry={retryCheck} />;
+  }
+
+  // Loading state while checking availability
+  if (isCheckingAvailability) {
+    return (
+      <div className="h-full flex flex-col bg-neutral-950">
+        <div className="flex items-center justify-between px-3 py-1.5 bg-neutral-900 border-b border-neutral-800">
+          <div className="flex items-center gap-2">
+            <Terminal className="w-4 h-4 text-neutral-400" />
+            <span className="text-xs text-neutral-400 font-medium">Terminal</span>
+          </div>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <RotateCcw className="w-6 h-6 text-neutral-400 animate-spin mb-2 mx-auto" />
+            <span className="text-sm text-neutral-400">Checking terminal availability...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Loading state while validating sessions
   if (isValidatingSession) {

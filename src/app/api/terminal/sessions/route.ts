@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { isVercel } from '@/lib/ide/env';
 
 const TERMINAL_SERVER_URL = process.env.TERMINAL_SERVER_URL || 'http://localhost:4001';
 
@@ -15,6 +16,14 @@ export interface TerminalSessionInfo {
 
 // GET - List all terminal sessions
 export async function GET() {
+  // Return empty sessions in production (Vercel)
+  if (isVercel) {
+    return NextResponse.json({
+      sessions: [],
+      available: false,
+      reason: 'Terminal requires local server',
+    });
+  }
   try {
     const response = await fetch(`${TERMINAL_SERVER_URL}/sessions`, {
       headers: { 'Accept': 'application/json' },
