@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
 
         // Extract tunnel ID from output
         const match = stdout.match(/Created tunnel ([a-f0-9-]+)/);
-        const tunnelId = match ? match[1] : null;
+        const tunnelId = match ? match[1] : undefined;
 
         // Save config
         await saveConfig({

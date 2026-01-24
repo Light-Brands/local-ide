@@ -49,7 +49,7 @@ export default function AdminLayout({
   // Show loading state
   if (isLoading && !isLoginPage) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-950">
+      <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-900">
         <div className="flex flex-col items-center gap-4">
           <div className="relative">
             {/* Logo pulse */}
@@ -80,7 +80,7 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900">
       {/* Sidebar */}
       <AdminSidebar
         isOpen={sidebarOpen}

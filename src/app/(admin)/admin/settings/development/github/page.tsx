@@ -298,14 +298,14 @@ export default function GitHubSettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex items-center justify-center">
+      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900">
       <div className="max-w-3xl mx-auto px-6 py-8">
         {/* Header */}
         <motion.div

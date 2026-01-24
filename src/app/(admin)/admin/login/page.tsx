@@ -36,7 +36,7 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-neutral-50 dark:bg-neutral-950">
+    <div className="min-h-screen flex bg-neutral-50 dark:bg-neutral-900">
       {/* Left side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         {/* Gradient background */}

@@ -261,7 +261,7 @@ export default function DevelopmentSettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex items-center justify-center">
+      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
           <p className="text-sm text-neutral-500">Loading integrations...</p>
@@ -271,7 +271,7 @@ export default function DevelopmentSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900">
       <div className="max-w-6xl mx-auto px-6 py-8">
         {/* Header */}
         <motion.div

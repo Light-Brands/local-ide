@@ -28,7 +28,7 @@ const mermaidConfig = {
     curve: 'basis',
   },
   securityLevel: 'loose',
-};
+} as const;
 
 // Track if mermaid has been initialized
 let mermaidInitialized = false;
