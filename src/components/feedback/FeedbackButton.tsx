@@ -5,15 +5,25 @@
 // =============================================================================
 
 import React, { useState, useRef, useEffect } from 'react';
+import { Bug, Sparkles, HelpCircle, FileText, type LucideIcon } from 'lucide-react';
 import { useFeedback } from '@/contexts/FeedbackContext';
 import {
   statusConfig,
   categoryConfig,
   priorityConfig,
   type FeedbackItem,
+  type FeedbackCategory,
 } from '@/lib/feedback/types';
 import { FEEDBACK_ENABLED, isBrowser } from '@/lib/feedback';
 import { FeedbackDetail } from './FeedbackDetail';
+
+// Icon mapping for categories
+const categoryIcons: Record<FeedbackCategory, LucideIcon> = {
+  bug: Bug,
+  enhancement: Sparkles,
+  question: HelpCircle,
+  content: FileText,
+};
 
 interface FeedbackButtonProps {
   onNavigate?: (pageId: string) => void;
@@ -148,7 +158,7 @@ function FeedbackButtonInner({ onNavigate }: FeedbackButtonProps) {
       {isOpen && !feedbackMode && (
         <div className="absolute bottom-16 right-0 w-80 bg-neutral-900/95 backdrop-blur-xl border border-neutral-700 rounded-2xl shadow-2xl overflow-hidden">
           {/* Panel Header */}
-          <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/10 px-4 py-3 border-b border-neutral-700">
+          <div className="bg-gradient-to-r from-primary-500/20 to-primary-600/10 px-4 py-3 border-b border-neutral-700">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-xl">💬</span>
@@ -174,10 +184,10 @@ function FeedbackButtonInner({ onNavigate }: FeedbackButtonProps) {
               {/* Enter Feedback Mode */}
               <button
                 onClick={handleEnterFeedbackMode}
-                className="flex items-center gap-2 p-3 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-xl transition-all group"
+                className="flex items-center gap-2 p-3 bg-slate-600/10 hover:bg-slate-600/20 border border-slate-600/30 rounded-xl transition-all group"
               >
-                <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <svg className="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <div className="w-8 h-8 rounded-lg bg-slate-600/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <svg className="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <circle cx="12" cy="12" r="10" strokeDasharray="4 2" />
                     <line x1="12" y1="2" x2="12" y2="6" />
                     <line x1="12" y1="18" x2="12" y2="22" />
@@ -227,7 +237,7 @@ function FeedbackButtonInner({ onNavigate }: FeedbackButtonProps) {
               onClick={() => setActiveTab('list')}
               className={`flex-1 px-4 py-2 text-xs font-bold transition-colors ${
                 activeTab === 'list'
-                  ? 'text-amber-500 border-b-2 border-amber-500'
+                  ? 'text-slate-600 border-b-2 border-slate-600'
                   : 'text-neutral-400 hover:text-white'
               }`}
             >
@@ -237,7 +247,7 @@ function FeedbackButtonInner({ onNavigate }: FeedbackButtonProps) {
               onClick={() => setActiveTab('settings')}
               className={`flex-1 px-4 py-2 text-xs font-bold transition-colors ${
                 activeTab === 'settings'
-                  ? 'text-amber-500 border-b-2 border-amber-500'
+                  ? 'text-slate-600 border-b-2 border-slate-600'
                   : 'text-neutral-400 hover:text-white'
               }`}
             >
@@ -263,7 +273,7 @@ function FeedbackButtonInner({ onNavigate }: FeedbackButtonProps) {
                           className="w-full text-left p-3 rounded-xl hover:bg-neutral-800 transition-colors group"
                         >
                           <div className="flex items-start gap-2">
-                            <span className="text-lg shrink-0">{category.icon}</span>
+                            {(() => { const Icon = categoryIcons[item.category]; return <Icon className="w-5 h-5 shrink-0" />; })()}
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
                                 <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${status.color}`}>
@@ -273,7 +283,7 @@ function FeedbackButtonInner({ onNavigate }: FeedbackButtonProps) {
                                   {priorityConfig[item.priority].label}
                                 </span>
                               </div>
-                              <p className="text-sm font-bold text-neutral-200 group-hover:text-amber-500 transition-colors truncate">
+                              <p className="text-sm font-bold text-neutral-200 group-hover:text-slate-600 transition-colors truncate">
                                 {item.title}
                               </p>
                               {item.notes && (
@@ -282,7 +292,7 @@ function FeedbackButtonInner({ onNavigate }: FeedbackButtonProps) {
                                 </p>
                               )}
                             </div>
-                            <svg className="w-4 h-4 text-neutral-600 group-hover:text-amber-500 transition-colors shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="w-4 h-4 text-neutral-600 group-hover:text-slate-600 transition-colors shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                             </svg>
                           </div>
@@ -314,7 +324,7 @@ function FeedbackButtonInner({ onNavigate }: FeedbackButtonProps) {
                           className="w-full text-left p-3 rounded-xl hover:bg-neutral-800 transition-colors group"
                         >
                           <div className="flex items-start gap-2">
-                            <span className="text-lg shrink-0">{category.icon}</span>
+                            {(() => { const Icon = categoryIcons[item.category]; return <Icon className="w-5 h-5 shrink-0" />; })()}
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
                                 <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${status.color}`}>
@@ -324,7 +334,7 @@ function FeedbackButtonInner({ onNavigate }: FeedbackButtonProps) {
                                   {item.page_id}
                                 </span>
                               </div>
-                              <p className="text-sm font-bold text-neutral-200 group-hover:text-amber-500 transition-colors truncate">
+                              <p className="text-sm font-bold text-neutral-200 group-hover:text-slate-600 transition-colors truncate">
                                 {item.title}
                               </p>
                               {item.notes && (
@@ -333,7 +343,7 @@ function FeedbackButtonInner({ onNavigate }: FeedbackButtonProps) {
                                 </p>
                               )}
                             </div>
-                            <svg className="w-4 h-4 text-neutral-600 group-hover:text-amber-500 transition-colors shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="w-4 h-4 text-neutral-600 group-hover:text-slate-600 transition-colors shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                             </svg>
                           </div>
@@ -374,8 +384,8 @@ function FeedbackButtonInner({ onNavigate }: FeedbackButtonProps) {
           feedbackMode
             ? 'bg-cyan-500 text-neutral-900 scale-110 ring-4 ring-cyan-500/30'
             : isOpen
-            ? 'bg-amber-500 text-neutral-900 scale-105 ring-4 ring-amber-500/30'
-            : 'bg-amber-500 text-neutral-900 hover:scale-105 hover:shadow-2xl'
+            ? 'bg-slate-600 text-neutral-900 scale-105 ring-4 ring-slate-600/30'
+            : 'bg-slate-600 text-neutral-900 hover:scale-105 hover:shadow-2xl'
         }`}
         title={feedbackMode ? 'Exit feedback mode (ESC)' : 'Open feedback panel'}
       >
@@ -466,7 +476,7 @@ function FeedbackButtonInner({ onNavigate }: FeedbackButtonProps) {
 
             {/* Click hint */}
             <div className="mt-3 pt-3 border-t border-neutral-800 text-center">
-              <span className="text-[10px] text-amber-500">Click to navigate & view details →</span>
+              <span className="text-[10px] text-slate-600">Click to navigate & view details →</span>
             </div>
           </div>
         </div>

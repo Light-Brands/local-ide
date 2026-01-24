@@ -154,15 +154,22 @@ export function AdminSidebar({
         {/* Logo */}
         <div
           className={cn(
-            'h-16 flex items-center border-b border-neutral-200/80 dark:border-neutral-800',
-            isOpen ? 'px-4' : 'justify-center'
+            'border-b border-neutral-200/80 dark:border-neutral-800',
+            isOpen ? 'px-4 py-4' : 'py-4'
           )}
         >
-          <Logo
-            href="/admin"
-            size="md"
-            className={cn('transition-all duration-200', !isOpen && 'justify-center')}
-          />
+          <div className={cn('flex flex-col', isOpen ? 'items-start' : 'items-center')}>
+            <Logo
+              href="/admin"
+              size="md"
+              className={cn('transition-all duration-200', !isOpen && 'justify-center')}
+            />
+            {isOpen && (
+              <span className="text-[10px] font-medium tracking-[0.15em] uppercase text-neutral-400 dark:text-neutral-500 mt-1.5 transition-colors duration-200">
+                STUDIO
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Navigation */}
@@ -339,12 +346,17 @@ export function AdminSidebar({
             )}
           >
             {/* Mobile header */}
-            <div className="h-16 flex items-center justify-between px-4 border-b border-neutral-200/80 dark:border-neutral-800">
-              <Logo
-                href="/admin"
-                size="md"
-                onClick={onMobileClose}
-              />
+            <div className="flex items-center justify-between px-4 py-4 border-b border-neutral-200/80 dark:border-neutral-800">
+              <div className="flex flex-col">
+                <Logo
+                  href="/admin"
+                  size="md"
+                  onClick={onMobileClose}
+                />
+                <span className="text-[10px] font-medium tracking-[0.15em] uppercase text-neutral-400 dark:text-neutral-500 mt-1.5 transition-colors duration-200">
+                  STUDIO
+                </span>
+              </div>
               <button
                 onClick={onMobileClose}
                 className="p-2 -mr-2 rounded-lg text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"

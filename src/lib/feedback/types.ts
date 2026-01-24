@@ -88,28 +88,32 @@ export interface FeedbackFormData {
   includeScreenshot: boolean;
 }
 
-// Category display config
-export const categoryConfig: Record<FeedbackCategory, { label: string; icon: string; color: string }> = {
-  bug: { label: 'Bug', icon: '🐛', color: 'text-red-400 bg-red-500/20' },
-  enhancement: { label: 'Enhancement', icon: '✨', color: 'text-cyan-400 bg-cyan-500/20' },
-  question: { label: 'Question', icon: '❓', color: 'text-amber-400 bg-amber-500/20' },
-  content: { label: 'Content', icon: '📝', color: 'text-teal-400 bg-teal-500/20' },
+import { badge, colors } from '@/lib/design/tokens';
+
+// Category display config - uses centralized tokens
+// `icon` is kept for backwards compatibility (previously was emoji)
+// `iconName` is the Lucide icon name for rendering
+export const categoryConfig: Record<FeedbackCategory, { label: string; icon: string; iconName: string; color: string }> = {
+  bug: { label: 'Bug', icon: 'Bug', iconName: 'Bug', color: badge.error },
+  enhancement: { label: 'Enhancement', icon: 'Sparkles', iconName: 'Sparkles', color: badge.primary },
+  question: { label: 'Question', icon: 'HelpCircle', iconName: 'HelpCircle', color: badge.warning },
+  content: { label: 'Content', icon: 'FileText', iconName: 'FileText', color: badge.neutral },
 };
 
-// Priority display config
+// Priority display config - using centralized tokens
 export const priorityConfig: Record<FeedbackPriority, { label: string; color: string }> = {
-  low: { label: 'Low', color: 'text-neutral-400 bg-neutral-500/20' },
-  medium: { label: 'Medium', color: 'text-teal-400 bg-teal-500/20' },
-  high: { label: 'High', color: 'text-amber-400 bg-amber-500/20' },
-  critical: { label: 'Critical', color: 'text-red-400 bg-red-500/20' },
+  low: { label: 'Low', color: badge.neutral },
+  medium: { label: 'Medium', color: badge.primary },
+  high: { label: 'High', color: badge.warning },
+  critical: { label: 'Critical', color: badge.error },
 };
 
-// Status display config
+// Status display config - using centralized tokens
 export const statusConfig: Record<FeedbackStatus, { label: string; color: string; markerColor: string }> = {
-  new: { label: 'New', color: 'text-amber-400 bg-amber-500/20', markerColor: 'bg-amber-500' },
-  'in-progress': { label: 'In Progress', color: 'text-cyan-400 bg-cyan-500/20', markerColor: 'bg-cyan-500' },
-  resolved: { label: 'Resolved', color: 'text-emerald-400 bg-emerald-500/20', markerColor: 'bg-emerald-500' },
-  blocked: { label: 'Blocked', color: 'text-red-400 bg-red-500/20', markerColor: 'bg-red-500' },
+  new: { label: 'New', color: badge.warning, markerColor: colors.warning.solid },
+  'in-progress': { label: 'In Progress', color: badge.primary, markerColor: colors.primary.solid },
+  resolved: { label: 'Resolved', color: badge.success, markerColor: colors.success.solid },
+  blocked: { label: 'Blocked', color: badge.error, markerColor: colors.error.solid },
 };
 
 // Create form data type (what API receives)

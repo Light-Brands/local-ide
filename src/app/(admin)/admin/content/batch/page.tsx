@@ -21,53 +21,62 @@ import {
 import { cn } from '@/lib/utils';
 import { demoBatchJobs } from '@/data/content/demoData';
 import { containerVariants, itemVariants, ContentStatusBadge } from '@/components/content/shared';
+import { statusColors, colors, gradients } from '@/lib/design/tokens';
 
-// Job type configurations
+// Job type configurations - using design tokens
 const jobTypes = {
   'ai-generate': {
     label: 'AI Generation',
     icon: Sparkles,
-    color: 'from-violet-500 to-purple-500',
+    gradient: gradients.brand,
     description: 'Generate content using AI',
   },
   publish: {
     label: 'Bulk Publish',
     icon: CheckCircle,
-    color: 'from-emerald-500 to-teal-500',
+    gradient: gradients.success,
     description: 'Publish multiple items',
   },
   optimize: {
     label: 'Image Optimization',
     icon: Upload,
-    color: 'from-blue-500 to-indigo-500',
+    gradient: gradients.primary,
     description: 'Optimize images for web',
   },
   schedule: {
     label: 'Scheduled Publish',
     icon: Clock,
-    color: 'from-amber-500 to-orange-500',
+    gradient: gradients.secondary,
     description: 'Schedule content publishing',
   },
 };
 
-// Status configurations
+// Status configurations - using design tokens
 const statusConfig = {
-  queued: { label: 'Queued', icon: Clock, color: 'text-blue-500 bg-blue-100 dark:bg-blue-900/30' },
+  queued: { 
+    label: 'Queued', 
+    icon: Clock, 
+    color: cn(colors.secondary.text, colors.primary.bg) 
+  },
   processing: {
     label: 'Processing',
     icon: Play,
-    color: 'text-violet-500 bg-violet-100 dark:bg-violet-900/30',
+    color: cn(colors.primary.text, colors.primary.bg),
   },
   complete: {
     label: 'Complete',
     icon: CheckCircle,
-    color: 'text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30',
+    color: cn(colors.success.text, colors.success.bg),
   },
-  failed: { label: 'Failed', icon: XCircle, color: 'text-red-500 bg-red-100 dark:bg-red-900/30' },
+  failed: { 
+    label: 'Failed', 
+    icon: XCircle, 
+    color: cn(colors.error.text, colors.error.bg) 
+  },
   paused: {
     label: 'Paused',
     icon: Pause,
-    color: 'text-amber-500 bg-amber-100 dark:bg-amber-900/30',
+    color: cn(colors.primary.text, colors.primary.bg),
   },
 };
 
@@ -90,63 +99,66 @@ export default function BatchQueuePage() {
       variants={containerVariants}
       initial="hidden"
       animate="show"
-      className="space-y-6"
+      className="admin-section"
     >
       {/* Header */}
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-white tracking-tight">
             Batch Queue
           </h1>
-          <p className="text-neutral-500 dark:text-neutral-400 text-sm mt-1">
+          <p className="text-neutral-500 dark:text-neutral-400 mt-1">
             Manage bulk operations and background jobs
           </p>
         </div>
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary-500 to-secondary-500 text-white font-medium rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-primary-500/25"
+          className={cn(
+            'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium',
+            'bg-primary text-primary-foreground',
+            'hover:bg-primary-hover transition-colors'
+          )}
+          aria-label="Create new batch job"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-4 h-4" aria-hidden="true" />
           New Batch Job
         </motion.button>
       </motion.div>
 
-      {/* Stats */}
-      <motion.div variants={itemVariants} className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        {[
-          { label: 'Total Jobs', value: stats.total, color: 'neutral' },
-          { label: 'Processing', value: stats.processing, color: 'violet' },
-          { label: 'Queued', value: stats.queued, color: 'blue' },
-          { label: 'Complete', value: stats.complete, color: 'emerald' },
-          { label: 'Failed', value: stats.failed, color: 'red' },
-        ].map((stat) => (
-          <motion.div
-            key={stat.label}
-            whileHover={{ y: -2 }}
-            className={cn(
-              'p-4 rounded-2xl text-center',
-              'bg-white dark:bg-neutral-900',
-              'border border-neutral-200/60 dark:border-neutral-800/60',
-              'hover:shadow-lg transition-all duration-300'
-            )}
-          >
-            <p className={cn('text-2xl font-bold', `text-${stat.color}-500`)}>{stat.value}</p>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">{stat.label}</p>
-          </motion.div>
-        ))}
+      {/* Stats - Compact inline design */}
+      <motion.div 
+        variants={itemVariants} 
+        className="flex flex-wrap items-center gap-4 p-4 rounded-xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200/60 dark:border-neutral-800/60"
+        role="region" 
+        aria-label="Job statistics"
+      >
+        <div className="flex items-center gap-6 flex-wrap">
+          {[
+            { label: 'Total', value: stats.total, color: 'text-neutral-900 dark:text-white' },
+            { label: 'Processing', value: stats.processing, color: colors.primary.text },
+            { label: 'Queued', value: stats.queued, color: colors.secondary.text },
+            { label: 'Complete', value: stats.complete, color: colors.success.text },
+            { label: 'Failed', value: stats.failed, color: colors.error.text },
+          ].map((stat, index) => (
+            <div key={stat.label} className="flex items-center gap-2">
+              <span className={cn('text-lg font-bold tabular-nums', stat.color)}>{stat.value}</span>
+              <span className="text-xs text-neutral-500 dark:text-neutral-400">{stat.label}</span>
+              {index < 4 && (
+                <span className="text-neutral-300 dark:text-neutral-700 mx-1">•</span>
+              )}
+            </div>
+          ))}
+        </div>
       </motion.div>
 
       {/* Filter Tabs */}
-      <motion.div variants={itemVariants} className="flex gap-2 overflow-x-auto pb-2">
+      <motion.div variants={itemVariants} className="admin-tabs overflow-x-auto mb-6" role="tablist" aria-label="Filter jobs by status">
         <button
           onClick={() => setFilter(null)}
-          className={cn(
-            'px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all',
-            !filter
-              ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900'
-              : 'bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700'
-          )}
+          className={cn('admin-tab whitespace-nowrap', !filter && 'admin-tab-active')}
+          role="tab"
+          aria-selected={!filter}
         >
           All Jobs
         </button>
@@ -154,12 +166,9 @@ export default function BatchQueuePage() {
           <button
             key={key}
             onClick={() => setFilter(key)}
-            className={cn(
-              'px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all',
-              filter === key
-                ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900'
-                : 'bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700'
-            )}
+            className={cn('admin-tab whitespace-nowrap', filter === key && 'admin-tab-active')}
+            role="tab"
+            aria-selected={filter === key}
           >
             {config.label}
           </button>
@@ -167,7 +176,7 @@ export default function BatchQueuePage() {
       </motion.div>
 
       {/* Job List */}
-      <motion.div variants={itemVariants} className="space-y-4">
+      <motion.div variants={itemVariants} className="space-y-4" role="list" aria-label="Batch jobs">
         <AnimatePresence mode="popLayout">
           {filteredJobs.map((job, index) => {
             const typeConfig = jobTypes[job.type as keyof typeof jobTypes];
@@ -176,28 +185,25 @@ export default function BatchQueuePage() {
             const StatusIcon = statusInfo.icon;
 
             return (
-              <motion.div
+              <motion.article
                 key={job.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ delay: index * 0.05 }}
                 layout
-                className={cn(
-                  'p-5 rounded-2xl',
-                  'bg-white dark:bg-neutral-900',
-                  'border border-neutral-200/60 dark:border-neutral-800/60',
-                  'hover:shadow-lg transition-all duration-300'
-                )}
+                className="admin-card admin-card-padded hover:shadow-lg hover:border-neutral-300 dark:hover:border-neutral-700 transition-all duration-300"
+                aria-labelledby={`job-title-${job.id}`}
               >
                 <div className="flex items-start gap-4">
                   {/* Icon */}
                   <div
                     className={cn(
-                      'w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0',
-                      'bg-gradient-to-br text-white shadow-lg',
-                      typeConfig.color
+                      'admin-icon-container admin-icon-container-lg flex-shrink-0',
+                      'text-white',
+                      typeConfig.gradient
                     )}
+                    aria-hidden="true"
                   >
                     <TypeIcon className="w-6 h-6" />
                   </div>
@@ -205,19 +211,14 @@ export default function BatchQueuePage() {
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-1">
-                      <h3 className="font-semibold text-neutral-900 dark:text-white">{job.title}</h3>
-                      <span
-                        className={cn(
-                          'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium',
-                          statusInfo.color
-                        )}
-                      >
-                        <StatusIcon className="w-3.5 h-3.5" />
+                      <h3 id={`job-title-${job.id}`} className="font-semibold text-neutral-900 dark:text-white">{job.title}</h3>
+                      <span className={cn('admin-badge', statusInfo.color)}>
+                        <StatusIcon className="w-3.5 h-3.5" aria-hidden="true" />
                         {statusInfo.label}
                       </span>
                     </div>
                     <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                      {typeConfig.description} &middot; {job.items.length} items
+                      {typeConfig.description} <span aria-hidden="true">&middot;</span> <span className="tabular-nums">{job.items.length}</span> items
                     </p>
 
                     {/* Progress Bar */}
@@ -225,20 +226,20 @@ export default function BatchQueuePage() {
                       <div className="mt-3">
                         <div className="flex items-center justify-between text-xs mb-1">
                           <span className="text-neutral-500 dark:text-neutral-400">Progress</span>
-                          <span className="font-medium text-neutral-900 dark:text-white">
+                          <span className="font-medium text-neutral-900 dark:text-white tabular-nums">
                             {job.progress}/{job.total}
                           </span>
                         </div>
-                        <div className="h-2 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
+                        <div className="admin-progress" role="progressbar" aria-valuenow={job.progress} aria-valuemin={0} aria-valuemax={job.total} aria-label={`${job.title}: ${job.progress} of ${job.total} complete`}>
                           <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${(job.progress / job.total) * 100}%` }}
                             transition={{ duration: 0.5 }}
                             className={cn(
-                              'h-full rounded-full',
+                              'admin-progress-bar',
                               job.status === 'paused'
-                                ? 'bg-amber-500'
-                                : 'bg-gradient-to-r from-primary-500 to-secondary-500'
+                                ? colors.primary.solid
+                                : 'bg-gradient-to-r from-primary-500 to-primary-600'
                             )}
                           />
                         </div>
@@ -247,71 +248,72 @@ export default function BatchQueuePage() {
 
                     {/* Timestamps */}
                     <div className="flex items-center gap-4 mt-3 text-xs text-neutral-500 dark:text-neutral-400">
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" />
+                      <time className="flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5" aria-hidden="true" />
                         Created: {new Date(job.createdAt).toLocaleDateString()}
-                      </span>
+                      </time>
                       {job.completedAt && (
-                        <span className="flex items-center gap-1">
-                          <CheckCircle className="w-3.5 h-3.5" />
+                        <time className="flex items-center gap-1">
+                          <CheckCircle className="w-3.5 h-3.5" aria-hidden="true" />
                           Completed: {new Date(job.completedAt).toLocaleDateString()}
-                        </span>
+                        </time>
                       )}
                     </div>
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-2">
+                  <div className="admin-actions">
                     {job.status === 'processing' && (
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="p-2 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
-                        title="Pause"
+                        className={cn('admin-icon-btn', colors.primary.text, 'hover:bg-primary/10 dark:hover:bg-primary/20')}
+                        aria-label={`Pause ${job.title}`}
                       >
-                        <Pause className="w-4 h-4" />
+                        <Pause className="w-4 h-4" aria-hidden="true" />
                       </motion.button>
                     )}
                     {job.status === 'paused' && (
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="p-2 text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
-                        title="Resume"
+                        className={cn('admin-icon-btn', colors.success.text, colors.success.bg)}
+                        aria-label={`Resume ${job.title}`}
                       >
-                        <Play className="w-4 h-4" />
+                        <Play className="w-4 h-4" aria-hidden="true" />
                       </motion.button>
                     )}
                     {job.status === 'failed' && (
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                        title="Retry"
+                        className={cn('admin-icon-btn', colors.secondary.text, 'hover:bg-secondary/10 dark:hover:bg-secondary/20')}
+                        aria-label={`Retry ${job.title}`}
                       >
-                        <RotateCcw className="w-4 h-4" />
+                        <RotateCcw className="w-4 h-4" aria-hidden="true" />
                       </motion.button>
                     )}
                     {job.status === 'queued' && (
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                        title="Cancel"
+                        className={cn('admin-icon-btn', colors.error.text, colors.error.bg)}
+                        aria-label={`Cancel ${job.title}`}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4" aria-hidden="true" />
                       </motion.button>
                     )}
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="p-2 text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
+                      className="admin-icon-btn"
+                      aria-label={`More options for ${job.title}`}
                     >
-                      <MoreHorizontal className="w-4 h-4" />
+                      <MoreHorizontal className="w-4 h-4" aria-hidden="true" />
                     </motion.button>
                   </div>
                 </div>
-              </motion.div>
+              </motion.article>
             );
           })}
         </AnimatePresence>
@@ -320,20 +322,20 @@ export default function BatchQueuePage() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center py-12"
+            className="admin-empty-state"
           >
-            <FolderOpen className="w-12 h-12 text-neutral-300 dark:text-neutral-700 mx-auto mb-4" />
-            <p className="text-neutral-500 dark:text-neutral-400">No jobs found</p>
+            <FolderOpen className="w-12 h-12 text-neutral-300 dark:text-neutral-700 mx-auto mb-4" aria-hidden="true" />
+            <p className="admin-empty-state-text">No jobs found</p>
           </motion.div>
         )}
       </motion.div>
 
       {/* Quick Actions */}
-      <motion.div variants={itemVariants}>
-        <h2 className="text-sm font-semibold text-neutral-900 dark:text-white uppercase tracking-wider mb-4">
+      <motion.div variants={itemVariants} role="region" aria-labelledby="new-job-heading">
+        <h2 id="new-job-heading" className="admin-section-title">
           Start New Job
         </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <nav className="grid grid-cols-2 md:grid-cols-4 gap-4" aria-label="Job type quick actions">
           {Object.entries(jobTypes).map(([key, config], index) => {
             const Icon = config.icon;
             return (
@@ -343,20 +345,15 @@ export default function BatchQueuePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 + index * 0.05 }}
                 whileHover={{ y: -4 }}
-                className={cn(
-                  'p-4 rounded-2xl text-left',
-                  'bg-white dark:bg-neutral-900',
-                  'border border-neutral-200/60 dark:border-neutral-800/60',
-                  'hover:shadow-lg transition-all duration-300',
-                  'group'
-                )}
+                className="admin-card admin-card-padded text-left hover:shadow-lg transition-all duration-300 group"
               >
                 <div
                   className={cn(
-                    'w-10 h-10 rounded-xl flex items-center justify-center mb-3',
-                    'bg-gradient-to-br text-white shadow-lg',
-                    config.color
+                    'admin-icon-container admin-icon-container-sm mb-3',
+                    'text-white',
+                    config.gradient
                   )}
+                  aria-hidden="true"
                 >
                   <Icon className="w-5 h-5" />
                 </div>
@@ -364,14 +361,14 @@ export default function BatchQueuePage() {
                   {config.label}
                 </h3>
                 <p className="text-xs text-neutral-500 dark:text-neutral-400">{config.description}</p>
-                <div className="mt-3 flex items-center text-xs font-medium text-primary-600 dark:text-primary-400 group-hover:gap-2 transition-all">
+                <span className={cn('mt-3 flex items-center text-xs font-medium group-hover:gap-2 transition-all', colors.primary.text)}>
                   Start
-                  <ChevronRight className="w-3.5 h-3.5 opacity-0 -ml-2 group-hover:opacity-100 group-hover:ml-0 transition-all" />
-                </div>
+                  <ChevronRight className="w-3.5 h-3.5 opacity-0 -ml-2 group-hover:opacity-100 group-hover:ml-0 transition-all" aria-hidden="true" />
+                </span>
               </motion.button>
             );
           })}
-        </div>
+        </nav>
       </motion.div>
     </motion.div>
   );

@@ -19,6 +19,30 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.06,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 16 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.4,
+      ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
+    },
+  },
+};
+
 // Demo media data
 const mediaItems = [
   {
@@ -103,10 +127,10 @@ const typeIcons = {
 };
 
 const typeColors = {
-  image: 'text-blue-500 bg-blue-50 dark:bg-blue-900/20',
-  video: 'text-purple-500 bg-purple-50 dark:bg-purple-900/20',
-  audio: 'text-green-500 bg-green-50 dark:bg-green-900/20',
-  document: 'text-orange-500 bg-orange-50 dark:bg-orange-900/20',
+  image: 'text-primary-700 dark:text-secondary-400 bg-primary-100 dark:bg-secondary-500/10',
+  video: 'text-primary-700 dark:text-secondary-400 bg-primary-100 dark:bg-secondary-500/10',
+  audio: 'text-success bg-success/10',
+  document: 'text-primary-700 dark:text-secondary-400 bg-primary-100 dark:bg-secondary-500/10',
 };
 
 export default function MediaPage() {
@@ -124,49 +148,58 @@ export default function MediaPage() {
     : null;
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="space-y-6"
+    >
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white tracking-tight">
             Media Library
           </h1>
-          <p className="text-neutral-500 mt-1">
+          <p className="text-neutral-500 dark:text-neutral-400 text-sm mt-1">
             Upload and manage your media files
           </p>
         </div>
-        <button className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-500 to-secondary-500 text-white font-medium rounded-lg hover:opacity-90 transition-opacity">
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-neutral-900 font-medium rounded-xl transition-colors shadow-lg shadow-primary-600/25"
+        >
           <Upload className="w-4 h-4" />
           Upload Files
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
 
       {/* Filters and View Toggle */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
           <input
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search files..."
             className={cn(
-              'w-full pl-10 pr-4 py-2.5 rounded-lg',
+              'w-full pl-10 pr-4 py-2.5 rounded-xl',
               'bg-white dark:bg-neutral-900',
-              'border border-neutral-200 dark:border-neutral-800',
-              'text-neutral-900 dark:text-white',
+              'border border-neutral-200/60 dark:border-neutral-800/60',
+              'text-sm text-neutral-900 dark:text-white',
               'placeholder:text-neutral-400',
               'focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500'
             )}
           />
         </div>
-        <div className="flex items-center gap-2 bg-neutral-100 dark:bg-neutral-800 p-1 rounded-lg">
+        <div className="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 p-1 rounded-xl">
           <button
             onClick={() => setViewMode('grid')}
             className={cn(
-              'p-2 rounded',
+              'p-2 rounded-lg transition-all',
               viewMode === 'grid'
-                ? 'bg-white dark:bg-neutral-700 shadow-sm'
+                ? 'bg-white dark:bg-neutral-700 shadow-sm text-neutral-900 dark:text-white'
                 : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
             )}
           >
@@ -175,19 +208,20 @@ export default function MediaPage() {
           <button
             onClick={() => setViewMode('list')}
             className={cn(
-              'p-2 rounded',
+              'p-2 rounded-lg transition-all',
               viewMode === 'list'
-                ? 'bg-white dark:bg-neutral-700 shadow-sm'
+                ? 'bg-white dark:bg-neutral-700 shadow-sm text-neutral-900 dark:text-white'
                 : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
             )}
           >
             <List className="w-4 h-4" />
           </button>
         </div>
-      </div>
+      </motion.div>
 
       {/* Upload Drop Zone */}
-      <div
+      <motion.div
+        variants={itemVariants}
         onDragOver={(e) => {
           e.preventDefault();
           setIsDragging(true);
@@ -199,10 +233,10 @@ export default function MediaPage() {
           // Handle file drop
         }}
         className={cn(
-          'border-2 border-dashed rounded-xl p-8 text-center transition-colors',
+          'border-2 border-dashed rounded-2xl p-8 text-center transition-all',
           isDragging
             ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-            : 'border-neutral-200 dark:border-neutral-800'
+            : 'border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700'
         )}
       >
         <Upload className="w-10 h-10 text-neutral-400 mx-auto mb-3" />
@@ -215,10 +249,10 @@ export default function MediaPage() {
         <p className="text-sm text-neutral-400 mt-1">
           Supports: JPG, PNG, GIF, SVG, PDF, MP4, MP3
         </p>
-      </div>
+      </motion.div>
 
       {/* Media Grid/List */}
-      <div className="flex gap-6">
+      <motion.div variants={itemVariants} className="flex gap-6">
         {/* Main Content */}
         <div className="flex-1">
           {viewMode === 'grid' ? (
@@ -235,16 +269,16 @@ export default function MediaPage() {
                     transition={{ delay: index * 0.05 }}
                     onClick={() => setSelectedItem(item.id)}
                     className={cn(
-                      'group relative bg-white dark:bg-neutral-900 rounded-xl border overflow-hidden cursor-pointer transition-all',
+                      'group relative bg-white dark:bg-neutral-900 rounded-2xl border overflow-hidden cursor-pointer transition-all',
                       selectedItem === item.id
                         ? 'border-primary-500 ring-2 ring-primary-500/20'
-                        : 'border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700'
+                        : 'border-neutral-200/60 dark:border-neutral-800/60 hover:border-neutral-300 dark:hover:border-neutral-700 hover:shadow-lg'
                     )}
                   >
                     {/* Thumbnail */}
                     <div className="aspect-square bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
                       {item.type === 'image' ? (
-                        <div className="w-full h-full bg-gradient-to-br from-neutral-200 to-neutral-300 dark:from-neutral-700 dark:to-neutral-800" />
+                        <div className="w-full h-full bg-neutral-200 dark:bg-neutral-700" />
                       ) : (
                         <Icon className={cn('w-12 h-12', colorClass.split(' ')[0])} />
                       )}
@@ -271,26 +305,26 @@ export default function MediaPage() {
               })}
             </div>
           ) : (
-            <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+            <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
               <table className="w-full">
-                <thead className="bg-neutral-50 dark:bg-neutral-800/50 border-b border-neutral-200 dark:border-neutral-800">
+                <thead className="bg-neutral-50 dark:bg-neutral-800/50 border-b border-neutral-200/60 dark:border-neutral-800/60">
                   <tr>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-neutral-500">
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
                       Name
                     </th>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-neutral-500">
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
                       Type
                     </th>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-neutral-500">
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
                       Size
                     </th>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-neutral-500">
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
                       Uploaded
                     </th>
                     <th className="w-12"></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
+                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800/60">
                   {filteredMedia.map((item) => {
                     const Icon = typeIcons[item.type as keyof typeof typeIcons];
                     const colorClass = typeColors[item.type as keyof typeof typeColors];
@@ -355,12 +389,12 @@ export default function MediaPage() {
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="hidden lg:block w-80 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden"
+            className="hidden lg:block w-80 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden"
           >
             {/* Preview */}
             <div className="aspect-video bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
               {selectedMedia.type === 'image' ? (
-                <div className="w-full h-full bg-gradient-to-br from-neutral-200 to-neutral-300 dark:from-neutral-700 dark:to-neutral-800" />
+                <div className="w-full h-full bg-neutral-200 dark:bg-neutral-700" />
               ) : (
                 (() => {
                   const Icon = typeIcons[selectedMedia.type as keyof typeof typeIcons];
@@ -413,16 +447,16 @@ export default function MediaPage() {
               </div>
 
               {/* Actions */}
-              <div className="pt-4 border-t border-neutral-200 dark:border-neutral-800 space-y-2">
-                <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 font-medium rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors">
+              <div className="pt-4 border-t border-neutral-200/60 dark:border-neutral-800/60 space-y-2">
+                <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 font-medium rounded-xl hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors">
                   <Copy className="w-4 h-4" />
                   Copy URL
                 </button>
-                <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 font-medium rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors">
+                <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 font-medium rounded-xl hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors">
                   <Download className="w-4 h-4" />
                   Download
                 </button>
-                <button className="w-full flex items-center justify-center gap-2 px-4 py-2 text-red-600 dark:text-red-400 font-medium rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                <button className="w-full flex items-center justify-center gap-2 px-4 py-2 text-red-600 dark:text-red-400 font-medium rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                   <Trash2 className="w-4 h-4" />
                   Delete
                 </button>
@@ -430,7 +464,7 @@ export default function MediaPage() {
             </div>
           </motion.div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

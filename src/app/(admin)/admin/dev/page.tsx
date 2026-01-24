@@ -4,16 +4,18 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import {
-  Terminal,
   ListTodo,
   Bug,
   Bot,
-  ChevronRight,
-  Zap,
+  ArrowRight,
   GitBranch,
-  Code2,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
   Layers,
-  Activity,
+  Code2,
+  Terminal,
+  Zap,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -23,190 +25,223 @@ import {
   getEpicTaskCounts,
   getTotalProgress,
 } from '@/data/dev/trackerData';
-import { ProgressRing, StatusBadge, StatCard } from '@/components/dev/shared';
+import { statusColors, colors } from '@/lib/design/tokens';
 
-// Animation variants
-const containerVariants = {
+// Smooth animation config
+const spring = { type: 'spring' as const, stiffness: 300, damping: 30 };
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  show: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const } 
+  },
+};
+
+const stagger = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
-    transition: {
-      staggerChildren: 0.06,
-      delayChildren: 0.1,
-    },
+    transition: { staggerChildren: 0.08, delayChildren: 0.1 },
   },
 };
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 16 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.4,
-      ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
-    },
-  },
-};
-
-// Quick action cards for dev tools
+// Dev tools config - using design token gradients
 const devTools = [
   {
-    title: 'Dev Tracker',
-    description: 'Track epics, tasks, and progress',
+    title: 'Tracker',
+    description: 'Epics, tasks & progress',
     href: '/admin/dev/tracker',
     icon: ListTodo,
-    color: 'from-blue-500 to-indigo-500',
-    shadowColor: 'shadow-blue-500/20',
+    gradient: colors.secondary.gradient,
   },
   {
-    title: 'Dev Feedback',
-    description: 'Capture contextual feedback',
+    title: 'Feedback',
+    description: 'Capture & manage issues',
     href: '/admin/dev/feedback',
     icon: Bug,
-    color: 'from-amber-500 to-orange-500',
-    shadowColor: 'shadow-amber-500/20',
+    gradient: colors.primary.gradient,
   },
   {
     title: 'AutoDev',
     description: 'AI-powered operations',
     href: '/admin/dev/autodev',
     icon: Bot,
-    color: 'from-violet-500 to-purple-500',
-    shadowColor: 'shadow-violet-500/20',
+    gradient: colors.secondary.gradient,
   },
 ];
 
-// Spec documentation links
+// Spec links
 const specLinks = [
-  {
-    title: 'Architecture',
-    description: 'System design & data models',
-    icon: Layers,
-    color: 'text-violet-500 bg-violet-100 dark:bg-violet-900/30',
-  },
-  {
-    title: 'API Routes',
-    description: 'Endpoint documentation',
-    icon: Code2,
-    color: 'text-blue-500 bg-blue-100 dark:bg-blue-900/30',
-  },
-  {
-    title: 'Components',
-    description: 'UI component library',
-    icon: Zap,
-    color: 'text-amber-500 bg-amber-100 dark:bg-amber-900/30',
-  },
-  {
-    title: 'Development',
-    description: 'Coding rules & agents',
-    icon: Terminal,
-    color: 'text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30',
-  },
+  { title: 'Architecture', icon: Layers },
+  { title: 'API Routes', icon: Code2 },
+  { title: 'Components', icon: Zap },
+  { title: 'Development', icon: Terminal },
 ];
+
+// Status icons
+const statusIcons = {
+  'complete': CheckCircle2,
+  'in-progress': Clock,
+  'blocked': AlertCircle,
+  'not-started': Clock,
+};
 
 export default function DevDashboard() {
-  const [hoveredEpic, setHoveredEpic] = useState<string | null>(null);
+  const [hoveredTool, setHoveredTool] = useState<string | null>(null);
   const progress = getTotalProgress();
 
-  // Calculate stats
   const completedEpics = epicData.filter(e => getEpicStatus(e) === 'complete').length;
   const inProgressEpics = epicData.filter(e => getEpicStatus(e) === 'in-progress').length;
+  const totalTasks = progress.total;
 
   return (
     <motion.div
-      variants={containerVariants}
+      variants={stagger}
       initial="hidden"
       animate="show"
-      className="space-y-6"
+      className="space-y-8"
     >
-      {/* Header */}
-      <motion.div variants={itemVariants}>
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white tracking-tight">
-            Developer Dashboard
-          </h1>
-          <p className="text-neutral-500 dark:text-neutral-400 text-sm">
-            Development command center for local-ide
-          </p>
+      {/* Header with Progress Ring */}
+      <motion.div variants={fadeUp} className="relative">
+        <div className="flex flex-col lg:flex-row lg:items-center gap-6">
+          {/* Title Section */}
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-1 h-6 bg-primary rounded-full" />
+              <h1 className="text-2xl font-bold text-neutral-900 dark:text-white tracking-tight font-mono">
+                DEVELOPER
+              </h1>
+            </div>
+            <p className="text-neutral-500 dark:text-neutral-400 ml-4 text-sm font-mono">
+              [COMMAND_CENTER] Development operations
+            </p>
+          </div>
+
+          {/* Progress Indicator */}
+          <div className="flex items-center gap-6">
+            <div className="relative w-20 h-20">
+              <svg className="w-full h-full -rotate-90" viewBox="0 0 80 80">
+                <circle
+                  cx="40"
+                  cy="40"
+                  r="36"
+                  fill="none"
+                  className="stroke-neutral-200 dark:stroke-neutral-800"
+                  strokeWidth="6"
+                />
+                <motion.circle
+                  cx="40"
+                  cy="40"
+                  r="36"
+                  fill="none"
+                  className="stroke-primary"
+                  strokeWidth="6"
+                  strokeLinecap="round"
+                  initial={{ pathLength: 0 }}
+                  animate={{ pathLength: progress.percentage / 100 }}
+                  transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+                  style={{
+                    strokeDasharray: '226.195',
+                    strokeDashoffset: '0',
+                  }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-lg font-bold text-neutral-900 dark:text-white font-mono tabular-nums">
+                  {Math.round(progress.percentage)}%
+                </span>
+              </div>
+            </div>
+            <div className="hidden sm:block">
+              <div className="text-sm font-medium text-neutral-900 dark:text-white font-mono tabular-nums">
+                {progress.completed}/{progress.total}
+              </div>
+              <div className="text-xs text-neutral-500 dark:text-neutral-400 font-mono">TASKS</div>
+            </div>
+          </div>
         </div>
       </motion.div>
 
-      {/* Stats Grid */}
-      <motion.div variants={itemVariants} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Overall Progress"
-          value={`${progress.percentage.toFixed(0)}%`}
-          icon={<Activity className="w-5 h-5 text-primary-500" />}
-          color="primary"
-        />
-        <StatCard
-          label="Epics Complete"
-          value={completedEpics}
-          icon={<GitBranch className="w-5 h-5 text-emerald-500" />}
-          color="emerald"
-        />
-        <StatCard
-          label="In Progress"
-          value={inProgressEpics}
-          icon={<Zap className="w-5 h-5 text-amber-500" />}
-          color="amber"
-        />
-        <StatCard
-          label="Total Tasks"
-          value={progress.total}
-          icon={<ListTodo className="w-5 h-5 text-neutral-500" />}
-        />
+      {/* Quick Stats Row */}
+      <motion.div variants={fadeUp} className="grid grid-cols-3 gap-3">
+        {[
+          { label: 'COMPLETE', value: completedEpics, color: colors.success.text },
+          { label: 'IN_PROGRESS', value: inProgressEpics, color: colors.warning.text },
+          { label: 'TOTAL', value: totalTasks, color: 'text-neutral-900 dark:text-white' },
+        ].map((stat) => (
+          <div
+            key={stat.label}
+            className={cn(
+              'p-4 rounded-xl border',
+              'bg-white dark:bg-neutral-900',
+              'border-neutral-200/60 dark:border-neutral-800/60'
+            )}
+          >
+            <div className={cn('text-2xl font-bold font-mono tabular-nums', stat.color)}>{stat.value}</div>
+            <div className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-0.5 font-mono uppercase tracking-wider">{stat.label}</div>
+          </div>
+        ))}
       </motion.div>
 
-      {/* Dev Tools Quick Access */}
-      <motion.div variants={itemVariants}>
+      {/* Dev Tools */}
+      <motion.div variants={fadeUp}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-neutral-900 dark:text-white uppercase tracking-wider">
-            Developer Tools
-          </h2>
+          <div className="flex items-center gap-2">
+            <div className="w-1 h-4 bg-primary rounded-full" />
+            <h2 className="text-xs font-semibold text-neutral-900 dark:text-white uppercase tracking-wider font-mono">
+              SYSTEMS
+            </h2>
+          </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {devTools.map((tool, index) => {
+          {devTools.map((tool) => {
             const Icon = tool.icon;
+            const isHovered = hoveredTool === tool.title;
+
             return (
               <motion.div
                 key={tool.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.08, duration: 0.4 }}
-                whileHover={{ y: -4 }}
+                onHoverStart={() => setHoveredTool(tool.title)}
+                onHoverEnd={() => setHoveredTool(null)}
+                whileHover={{ y: -2 }}
+                transition={spring}
               >
                 <Link
                   href={tool.href}
                   className={cn(
-                    'block p-5 rounded-2xl',
+                    'block p-5 rounded-xl border transition-all duration-300',
                     'bg-white dark:bg-neutral-900',
-                    'border border-neutral-200/60 dark:border-neutral-800/60',
-                    'hover:shadow-lg transition-all duration-300',
-                    tool.shadowColor
+                    'border-neutral-200/60 dark:border-neutral-800/60',
+                    'hover:border-primary/50 dark:hover:border-primary/50',
+                    'hover:shadow-lg hover:shadow-primary/5'
                   )}
                 >
-                  <div
-                    className={cn(
-                      'w-12 h-12 rounded-xl flex items-center justify-center mb-4',
-                      'bg-gradient-to-br text-white shadow-lg',
-                      tool.color,
-                      tool.shadowColor
-                    )}
-                  >
-                    <Icon className="w-6 h-6" />
+                  <div className="flex items-start justify-between">
+                    <div
+                      className={cn(
+                        'w-11 h-11 rounded-lg flex items-center justify-center relative',
+                        'bg-gradient-to-br',
+                        tool.gradient,
+                        'after:absolute after:inset-0 after:rounded-lg after:bg-white/10 after:opacity-0 hover:after:opacity-100 after:transition-opacity'
+                      )}
+                    >
+                      <Icon className="w-5 h-5 text-white relative z-10" />
+                    </div>
+                    <motion.div
+                      animate={{ x: isHovered ? 0 : -4, opacity: isHovered ? 1 : 0 }}
+                      transition={spring}
+                    >
+                      <ArrowRight className="w-5 h-5 text-primary" />
+                    </motion.div>
                   </div>
-                  <h3 className="text-base font-semibold text-neutral-900 dark:text-white mb-1">
+                  <h3 className="font-semibold text-neutral-900 dark:text-white mt-4 font-mono text-sm">
                     {tool.title}
                   </h3>
-                  <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 font-mono">
                     {tool.description}
                   </p>
-                  <div className="mt-4 flex items-center text-sm font-medium text-primary-600 dark:text-primary-400">
-                    Open
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                  </div>
                 </Link>
               </motion.div>
             );
@@ -214,133 +249,122 @@ export default function DevDashboard() {
         </div>
       </motion.div>
 
-      {/* Epic Progress Grid */}
-      <motion.div variants={itemVariants}>
+      {/* Epic Progress */}
+      <motion.div variants={fadeUp}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-neutral-900 dark:text-white uppercase tracking-wider">
-            Epic Progress
-          </h2>
+          <div className="flex items-center gap-2">
+            <div className="w-1 h-4 bg-primary rounded-full" />
+            <h2 className="text-xs font-semibold text-neutral-900 dark:text-white uppercase tracking-wider font-mono">
+              EPIC_STATUS
+            </h2>
+          </div>
           <Link
             href="/admin/dev/tracker"
-            className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline flex items-center"
+            className={cn('text-xs font-mono hover:underline flex items-center gap-1', colors.primary.text)}
           >
-            View All
-            <ChevronRight className="w-4 h-4 ml-0.5" />
+            VIEW_ALL
+            <ArrowRight className="w-3 h-3" />
           </Link>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {epicData.map((epic, index) => {
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+          {epicData.map((epic) => {
             const status = getEpicStatus(epic);
-            const progress = getEpicProgress(epic);
+            const epicProgress = getEpicProgress(epic);
             const counts = getEpicTaskCounts(epic);
-            const isHovered = hoveredEpic === epic.epicId;
+            const StatusIcon = statusIcons[status];
 
             return (
-              <motion.div
+              <Link
                 key={epic.epicId}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05, duration: 0.4 }}
-                onMouseEnter={() => setHoveredEpic(epic.epicId)}
-                onMouseLeave={() => setHoveredEpic(null)}
+                href={`/admin/dev/tracker?epic=${epic.epicId}`}
+                className={cn(
+                  'group block p-4 rounded-xl border transition-all duration-200',
+                  'bg-white dark:bg-neutral-900',
+                  'border-neutral-200/60 dark:border-neutral-800/60',
+                  'hover:border-primary/50 dark:hover:border-primary/50',
+                  status === 'blocked' && statusColors.blocked.border
+                )}
               >
-                <Link
-                  href={`/admin/dev/tracker?epic=${epic.epicId}`}
-                  className={cn(
-                    'block p-4 rounded-2xl border transition-all duration-300',
-                    'bg-white dark:bg-neutral-900',
-                    status === 'blocked'
-                      ? 'border-red-200 dark:border-red-900/50'
-                      : 'border-neutral-200/60 dark:border-neutral-800/60',
-                    isHovered && status !== 'blocked' && 'shadow-lg scale-[1.02]'
-                  )}
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest">
-                        {epic.epicId}
-                      </span>
-                      <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">
-                        {epic.epicName}
-                      </h3>
-                      <span
-                        className={cn(
-                          'text-[10px] uppercase tracking-wider font-medium',
-                          epic.phase === 'Foundation'
-                            ? 'text-amber-500'
-                            : epic.phase === 'MVP'
-                            ? 'text-blue-500'
-                            : 'text-emerald-500'
-                        )}
-                      >
-                        {epic.phase}
-                      </span>
-                    </div>
-                    <StatusBadge status={status} />
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider font-mono">
+                    {epic.epicId}
+                  </span>
+                  <StatusIcon
+                    className={cn(
+                      'w-4 h-4',
+                      status === 'complete' && statusColors.completed.text,
+                      status === 'in-progress' && statusColors['in-progress'].text,
+                      status === 'blocked' && statusColors.blocked.text,
+                      status === 'not-started' && 'text-neutral-300 dark:text-neutral-600'
+                    )}
+                  />
+                </div>
+                <h3 className="text-sm font-medium text-neutral-900 dark:text-white line-clamp-1 font-mono">
+                  {epic.epicName}
+                </h3>
+                <div className="mt-3">
+                  <div className="flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400 mb-1.5 font-mono tabular-nums">
+                    <span>{counts.completed}/{counts.total}</span>
+                    <span>{Math.round(epicProgress)}%</span>
                   </div>
-
-                  <div className="flex items-center gap-3">
-                    <ProgressRing percentage={progress} size={56} strokeWidth={5} status={status} />
-                    <div className="flex-1 text-xs">
-                      <div className="text-neutral-900 dark:text-white font-medium">
-                        {counts.completed}/{counts.total} tasks
-                      </div>
-                      <div className="text-neutral-500 dark:text-neutral-400">
-                        {counts.inProgress} in progress
-                      </div>
-                    </div>
+                  <div className="h-1 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden relative">
+                    <motion.div
+                      className={cn(
+                        'h-full rounded-full relative',
+                        status === 'complete' && statusColors.completed.solid,
+                        status === 'in-progress' && statusColors['in-progress'].solid,
+                        status === 'blocked' && statusColors.blocked.solid,
+                        status === 'not-started' && 'bg-neutral-300 dark:bg-neutral-600',
+                        'after:absolute after:right-0 after:top-0 after:w-0.5 after:h-full after:bg-white/30'
+                      )}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${epicProgress}%` }}
+                      transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                    />
                   </div>
-                </Link>
-              </motion.div>
+                </div>
+              </Link>
             );
           })}
         </div>
       </motion.div>
 
-      {/* Spec Documentation & Quick Access */}
+      {/* Bottom Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Spec Documentation */}
+        {/* Documentation */}
         <motion.div
-          variants={itemVariants}
+          variants={fadeUp}
           className={cn(
-            'p-5 rounded-2xl',
+            'p-5 rounded-xl border',
             'bg-white dark:bg-neutral-900',
-            'border border-neutral-200/60 dark:border-neutral-800/60'
+            'border-neutral-200/60 dark:border-neutral-800/60'
           )}
         >
-          <h2 className="text-sm font-semibold text-neutral-900 dark:text-white uppercase tracking-wider mb-4">
-            Documentation
-          </h2>
-          <div className="grid grid-cols-2 gap-3">
-            {specLinks.map((link, index) => {
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-1 h-4 bg-primary rounded-full" />
+            <h2 className="text-xs font-semibold text-neutral-900 dark:text-white uppercase tracking-wider font-mono">
+              DOCS
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {specLinks.map((link) => {
               const Icon = link.icon;
               return (
-                <motion.button
+                <button
                   key={link.title}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.2 + index * 0.05 }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
                   className={cn(
-                    'flex items-center gap-3 p-3 rounded-xl text-left',
+                    'flex items-center gap-3 p-3 rounded-lg text-left border transition-all',
                     'bg-neutral-50 dark:bg-neutral-800/50',
+                    'border-neutral-200/50 dark:border-neutral-700/50',
                     'hover:bg-neutral-100 dark:hover:bg-neutral-800',
-                    'transition-colors'
+                    'hover:border-primary/30 dark:hover:border-primary/30'
                   )}
                 >
-                  <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', link.color)}>
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium text-neutral-900 dark:text-white">
-                      {link.title}
-                    </div>
-                    <div className="text-xs text-neutral-500 dark:text-neutral-400">
-                      {link.description}
-                    </div>
-                  </div>
-                </motion.button>
+                  <Icon className="w-4 h-4 text-neutral-400 dark:text-neutral-500" />
+                  <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300 font-mono">
+                    {link.title}
+                  </span>
+                </button>
               );
             })}
           </div>
@@ -348,41 +372,41 @@ export default function DevDashboard() {
 
         {/* Recent Activity */}
         <motion.div
-          variants={itemVariants}
+          variants={fadeUp}
           className={cn(
-            'p-5 rounded-2xl',
+            'p-5 rounded-xl border',
             'bg-white dark:bg-neutral-900',
-            'border border-neutral-200/60 dark:border-neutral-800/60'
+            'border-neutral-200/60 dark:border-neutral-800/60'
           )}
         >
-          <h2 className="text-sm font-semibold text-neutral-900 dark:text-white uppercase tracking-wider mb-4">
-            Recent Activity
-          </h2>
-          <div className="space-y-3">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-1 h-4 bg-primary rounded-full" />
+            <h2 className="text-xs font-semibold text-neutral-900 dark:text-white uppercase tracking-wider font-mono">
+              LOG
+            </h2>
+          </div>
+          <div className="space-y-2">
             {[
-              { action: 'Updated', item: 'AdminSidebar', time: 'Just now', type: 'component' },
-              { action: 'Created', item: 'Dev Dashboard', time: '5 min ago', type: 'component' },
-              { action: 'Completed', item: 'Auth Service', time: '1 hour ago', type: 'service' },
-              { action: 'In Progress', item: 'Analytics API', time: '2 hours ago', type: 'endpoint' },
-            ].map((activity, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 + index * 0.05 }}
-                className="flex items-center gap-3 p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
+              { action: 'UPDATED', item: 'AdminSidebar', time: '00:00' },
+              { action: 'CREATED', item: 'Dev Dashboard', time: '00:05' },
+              { action: 'COMPLETE', item: 'Auth Service', time: '01:00' },
+              { action: 'STARTED', item: 'Analytics API', time: '02:00' },
+            ].map((activity, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-3 py-2 border-b border-neutral-200/60 dark:border-neutral-800/60 last:border-0"
               >
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white text-xs font-medium">
-                  {activity.type === 'component' ? '🧩' : activity.type === 'service' ? '⚙️' : '🔌'}
-                </div>
+                <div className="w-1 h-1 rounded-full bg-primary flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-neutral-900 dark:text-white">
-                    <span className="font-medium">{activity.action}</span>{' '}
-                    <span className="text-neutral-500 dark:text-neutral-400">{activity.item}</span>
-                  </p>
-                  <p className="text-xs text-neutral-400 dark:text-neutral-500">{activity.time}</p>
+                  <span className="text-xs text-neutral-600 dark:text-neutral-300 font-mono">
+                    <span className="text-neutral-400 dark:text-neutral-500">{activity.action}</span>{' '}
+                    <span className="font-medium text-neutral-900 dark:text-white">
+                      {activity.item}
+                    </span>
+                  </span>
                 </div>
-              </motion.div>
+                <span className="text-[10px] text-neutral-400 dark:text-neutral-500 flex-shrink-0 font-mono tabular-nums">{activity.time}</span>
+              </div>
             ))}
           </div>
         </motion.div>

@@ -4,13 +4,9 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   MessageSquare,
-  ThumbsUp,
-  ThumbsDown,
   Filter,
   MoreHorizontal,
   Trash2,
-  Check,
-  Archive,
   ExternalLink,
   MapPin,
   Image,
@@ -20,11 +16,41 @@ import {
   Clock,
   CheckCircle,
   XCircle,
+  Bug,
+  Sparkles,
+  HelpCircle,
+  X,
+  type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { colors, statusColors } from '@/lib/design/tokens';
 import type { FeedbackItem, FeedbackStatus, FeedbackCategory } from '@/lib/feedback/types';
 import { categoryConfig, priorityConfig, statusConfig } from '@/lib/feedback/types';
 import { getFeedbackItems, updateFeedback, deleteFeedback } from '@/lib/feedback/feedbackService';
+
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.06,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 16 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.4,
+      ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
+    },
+  },
+};
 
 export default function FeedbackPage() {
   const [items, setItems] = useState<FeedbackItem[]>([]);
@@ -96,184 +122,212 @@ export default function FeedbackPage() {
     setConfirmDelete(null);
   };
 
-  const statusIcons = {
+  const statusIcons: Record<FeedbackStatus, LucideIcon> = {
     new: AlertTriangle,
     'in-progress': Clock,
     resolved: CheckCircle,
     blocked: XCircle,
   };
 
+  const categoryIcons: Record<FeedbackCategory, LucideIcon> = {
+    bug: Bug,
+    enhancement: Sparkles,
+    question: HelpCircle,
+    content: FileText,
+  };
+
   return (
-    <div className="space-y-6">
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="admin-section"
+    >
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Feedback</h1>
-          <p className="text-neutral-500 mt-1">
+      <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white tracking-tight">
+            Feedback
+          </h1>
+          <p className="text-neutral-500 dark:text-neutral-400 mt-1">
             Review and manage element-captured feedback
           </p>
         </div>
-        <button
+        <motion.button
           onClick={loadFeedback}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 rounded-xl hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors disabled:opacity-50"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className={cn(
+            'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium',
+            'bg-white dark:bg-neutral-900',
+            'border border-neutral-200 dark:border-neutral-800',
+            'text-neutral-700 dark:text-neutral-300',
+            'hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors',
+            'disabled:opacity-50 disabled:cursor-not-allowed'
+          )}
+          aria-busy={loading}
+          aria-label="Refresh feedback list"
         >
-          <RefreshCw className={cn('w-4 h-4', loading && 'animate-spin')} />
+          <RefreshCw className={cn('w-4 h-4', loading && 'animate-spin')} aria-hidden="true" />
           Refresh
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4"
-        >
+      <motion.div variants={itemVariants} className="grid grid-cols-2 lg:grid-cols-5 gap-6" role="region" aria-label="Feedback statistics">
+        <div className={cn(
+          'p-5 rounded-xl border',
+          'bg-white dark:bg-neutral-900',
+          'border-neutral-200/60 dark:border-neutral-800/60'
+        )}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500/10 to-secondary-500/10 flex items-center justify-center">
-              <MessageSquare className="w-5 h-5 text-primary-500" />
+            <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', colors.primary.bg)} aria-hidden="true">
+              <MessageSquare className={cn('w-5 h-5', colors.primary.text)} />
             </div>
             <div>
-              <p className="text-xs font-medium text-neutral-500">Total</p>
-              <p className="text-xl font-bold text-neutral-900 dark:text-white tabular-nums">
-                {stats.total}
-              </p>
+              <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Total</p>
+              <p className="text-xl font-bold text-neutral-900 dark:text-white tabular-nums">{stats.total}</p>
             </div>
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4"
-        >
+        <div className={cn(
+          'p-5 rounded-xl border',
+          'bg-white dark:bg-neutral-900',
+          'border-neutral-200/60 dark:border-neutral-800/60'
+        )}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
-              <AlertTriangle className="w-5 h-5 text-amber-500" />
+            <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', colors.warning.bg)} aria-hidden="true">
+              <AlertTriangle className={cn('w-5 h-5', colors.warning.text)} />
             </div>
             <div>
-              <p className="text-xs font-medium text-neutral-500">New</p>
-              <p className="text-xl font-bold text-neutral-900 dark:text-white tabular-nums">
-                {stats.new}
-              </p>
+              <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">New</p>
+              <p className="text-xl font-bold text-neutral-900 dark:text-white tabular-nums">{stats.new}</p>
             </div>
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4"
-        >
+        <div className={cn(
+          'p-5 rounded-xl border',
+          'bg-white dark:bg-neutral-900',
+          'border-neutral-200/60 dark:border-neutral-800/60'
+        )}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-cyan-50 dark:bg-cyan-900/20 flex items-center justify-center">
-              <Clock className="w-5 h-5 text-cyan-500" />
+            <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', colors.primary.bg)} aria-hidden="true">
+              <Clock className={cn('w-5 h-5', colors.primary.text)} />
             </div>
             <div>
-              <p className="text-xs font-medium text-neutral-500">In Progress</p>
-              <p className="text-xl font-bold text-neutral-900 dark:text-white tabular-nums">
-                {stats.inProgress}
-              </p>
+              <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">In Progress</p>
+              <p className="text-xl font-bold text-neutral-900 dark:text-white tabular-nums">{stats.inProgress}</p>
             </div>
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4"
-        >
+        <div className={cn(
+          'p-5 rounded-xl border',
+          'bg-white dark:bg-neutral-900',
+          'border-neutral-200/60 dark:border-neutral-800/60'
+        )}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
-              <CheckCircle className="w-5 h-5 text-emerald-500" />
+            <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', colors.success.bg)} aria-hidden="true">
+              <CheckCircle className={cn('w-5 h-5', colors.success.text)} />
             </div>
             <div>
-              <p className="text-xs font-medium text-neutral-500">Resolved</p>
-              <p className="text-xl font-bold text-neutral-900 dark:text-white tabular-nums">
-                {stats.resolved}
-              </p>
+              <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Resolved</p>
+              <p className="text-xl font-bold text-neutral-900 dark:text-white tabular-nums">{stats.resolved}</p>
             </div>
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4"
-        >
+        <div className={cn(
+          'p-5 rounded-xl border',
+          'bg-white dark:bg-neutral-900',
+          'border-neutral-200/60 dark:border-neutral-800/60'
+        )}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
-              <XCircle className="w-5 h-5 text-red-500" />
+            <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', colors.error.bg)} aria-hidden="true">
+              <XCircle className={cn('w-5 h-5', colors.error.text)} />
             </div>
             <div>
-              <p className="text-xs font-medium text-neutral-500">Blocked</p>
-              <p className="text-xl font-bold text-neutral-900 dark:text-white tabular-nums">
-                {stats.blocked}
-              </p>
+              <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Blocked</p>
+              <p className="text-xl font-bold text-neutral-900 dark:text-white tabular-nums">{stats.blocked}</p>
             </div>
           </div>
-        </motion.div>
-      </div>
+        </div>
+      </motion.div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-4">
+      <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-4 mb-6">
         <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-neutral-400" />
-          <span className="text-sm text-neutral-500">Status:</span>
-          {(['all', 'new', 'in-progress', 'resolved', 'blocked'] as const).map((status) => (
-            <button
-              key={status}
-              onClick={() => setFilter(status)}
-              className={cn(
-                'px-3 py-1.5 text-sm font-medium rounded-xl transition-all duration-200 capitalize',
-                filter === status
-                  ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900'
-                  : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'
-              )}
-            >
-              {status === 'all' ? 'All' : statusConfig[status].label}
-            </button>
-          ))}
+          <Filter className="w-4 h-4 text-neutral-400 dark:text-neutral-500" aria-hidden="true" />
+          <span className="text-sm text-neutral-500 dark:text-neutral-400">Status:</span>
+          <div className="flex gap-2" role="tablist" aria-label="Filter by status">
+            {(['all', 'new', 'in-progress', 'resolved', 'blocked'] as const).map((status) => (
+              <button
+                key={status}
+                onClick={() => setFilter(status)}
+                className={cn(
+                  'px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all',
+                  filter === status
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+                )}
+                role="tab"
+                aria-selected={filter === status}
+              >
+                {status === 'all' ? 'All' : statusConfig[status].label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-sm text-neutral-500">Category:</span>
-          {(['all', 'bug', 'enhancement', 'question', 'content'] as const).map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setCategoryFilter(cat)}
-              className={cn(
-                'px-3 py-1.5 text-sm font-medium rounded-xl transition-all duration-200',
-                categoryFilter === cat
-                  ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900'
-                  : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'
-              )}
-            >
-              {cat === 'all' ? 'All' : categoryConfig[cat].icon}
-            </button>
-          ))}
+          <span className="text-sm text-neutral-500 dark:text-neutral-400">Category:</span>
+          <div className="flex gap-2" role="tablist" aria-label="Filter by category">
+            {(['all', 'bug', 'enhancement', 'question', 'content'] as const).map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setCategoryFilter(cat)}
+                className={cn(
+                  'px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all',
+                  categoryFilter === cat
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+                )}
+                role="tab"
+                aria-selected={categoryFilter === cat}
+                aria-label={cat === 'all' ? 'All categories' : cat}
+              >
+                {cat === 'all' ? 'All' : (() => {
+                  const Icon = categoryIcons[cat];
+                  return <Icon className="w-4 h-4" aria-hidden="true" />;
+                })()}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Feedback List */}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <RefreshCw className="w-8 h-8 text-neutral-400 animate-spin" />
+        <div className="flex items-center justify-center py-12" aria-busy="true" aria-label="Loading feedback">
+          <RefreshCw className="w-8 h-8 text-neutral-400 animate-spin" aria-hidden="true" />
         </div>
       ) : filteredItems.length === 0 ? (
-        <div className="text-center py-12">
-          <MessageSquare className="w-12 h-12 text-neutral-300 dark:text-neutral-700 mx-auto mb-4" />
-          <p className="text-neutral-500">No feedback items found</p>
+        <div className={cn(
+          'flex flex-col items-center justify-center py-12 px-4',
+          'rounded-xl border',
+          'bg-white dark:bg-neutral-900',
+          'border-neutral-200/60 dark:border-neutral-800/60'
+        )}>
+          <MessageSquare className="w-12 h-12 text-neutral-300 dark:text-neutral-700 mb-4" aria-hidden="true" />
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">No feedback items found</p>
         </div>
       ) : (
         <div className="flex gap-6">
           {/* List */}
-          <div className="flex-1 space-y-3">
+          <div className="flex-1 space-y-3" role="list" aria-label="Feedback items">
             {filteredItems.map((item, index) => {
               const status = statusConfig[item.status];
               const category = categoryConfig[item.category];
@@ -281,53 +335,61 @@ export default function FeedbackPage() {
               const StatusIcon = statusIcons[item.status];
 
               return (
-                <motion.div
+                <motion.article
                   key={item.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.03 }}
                   onClick={() => setSelectedItem(item)}
                   className={cn(
-                    'bg-white dark:bg-neutral-900 rounded-2xl border p-4 cursor-pointer transition-all duration-200',
+                    'p-5 rounded-xl border cursor-pointer transition-all duration-200',
+                    'bg-white dark:bg-neutral-900',
                     selectedItem?.id === item.id
-                      ? 'border-primary-500 ring-2 ring-primary-500/20'
-                      : 'border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700'
+                      ? cn('border-primary ring-2 ring-primary/20', colors.primary.border)
+                      : 'border-neutral-200/60 dark:border-neutral-800/60 hover:border-neutral-300 dark:hover:border-neutral-700 hover:shadow-sm'
                   )}
+                  aria-selected={selectedItem?.id === item.id}
+                  tabIndex={0}
+                  role="button"
                 >
                   <div className="flex items-start gap-4">
-                    <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', status.color.replace('text-', 'bg-').replace(/\/\d+$/, '/20'))}>
+                    <div className={cn('admin-icon-container admin-icon-container-sm', status.color.replace('text-', 'bg-').replace(new RegExp('/\\d+$'), '/20'))} aria-hidden="true">
                       <StatusIcon className={cn('w-5 h-5', status.color.split(' ')[0])} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className={cn('px-2 py-0.5 text-xs font-medium rounded-full', category.color)}>
-                          {category.icon} {category.label}
+                        <span className={cn('admin-badge', category.color)}>
+                          {(() => {
+                            const CategoryIcon = categoryIcons[item.category];
+                            return <CategoryIcon className="w-3 h-3" aria-hidden="true" />;
+                          })()}
+                          {category.label}
                         </span>
-                        <span className={cn('px-2 py-0.5 text-xs font-medium rounded-full', priority.color)}>
+                        <span className={cn('admin-badge', priority.color)}>
                           {priority.label}
                         </span>
-                        <span className="text-xs text-neutral-400">
+                        <time className="text-xs text-neutral-400">
                           {new Date(item.created_at).toLocaleDateString()}
-                        </span>
+                        </time>
                       </div>
-                      <p className="text-neutral-900 dark:text-white font-medium line-clamp-1">
+                      <h3 className="text-neutral-900 dark:text-white font-medium line-clamp-1">
                         {item.title || 'Untitled'}
-                      </p>
+                      </h3>
                       <div className="flex items-center gap-3 mt-1 text-sm text-neutral-500">
                         <span className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
+                          <MapPin className="w-3 h-3" aria-hidden="true" />
                           {item.page_id}
                         </span>
                         {item.screenshot_url && (
                           <span className="flex items-center gap-1">
-                            <Image className="w-3 h-3" />
+                            <Image className="w-3 h-3" aria-hidden="true" />
                             Screenshot
                           </span>
                         )}
                       </div>
                     </div>
                   </div>
-                </motion.div>
+                </motion.article>
               );
             })}
           </div>
@@ -335,27 +397,40 @@ export default function FeedbackPage() {
           {/* Detail Panel */}
           <AnimatePresence mode="wait">
             {selectedItem && (
-              <motion.div
+              <motion.aside
                 key={selectedItem.id}
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
-                className="hidden lg:block w-[400px] bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden sticky top-6 max-h-[calc(100vh-8rem)] overflow-y-auto"
+                className={cn(
+                  'hidden lg:block w-[400px] overflow-hidden sticky top-6 max-h-[calc(100vh-8rem)] overflow-y-auto',
+                  'p-0 rounded-xl border',
+                  'bg-white dark:bg-neutral-900',
+                  'border-neutral-200/60 dark:border-neutral-800/60'
+                )}
+                role="complementary"
+                aria-label="Feedback details"
               >
                 {/* Header */}
-                <div className="p-6 border-b border-neutral-200 dark:border-neutral-800">
+                <header className="p-6 border-b border-neutral-200/60 dark:border-neutral-800/60">
                   <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl">{categoryConfig[selectedItem.category].icon}</span>
-                      <span className={cn('px-2 py-0.5 text-xs font-medium rounded-full', statusConfig[selectedItem.status].color)}>
+                    <div className="flex items-center gap-3">
+                      <div className={cn('admin-icon-container admin-icon-container-sm', categoryConfig[selectedItem.category].color)} aria-hidden="true">
+                        {(() => {
+                          const CategoryIcon = categoryIcons[selectedItem.category];
+                          return <CategoryIcon className="w-5 h-5" />;
+                        })()}
+                      </div>
+                      <span className={cn('admin-badge', statusConfig[selectedItem.status].color)}>
                         {statusConfig[selectedItem.status].label}
                       </span>
                     </div>
                     <button
                       onClick={() => setSelectedItem(null)}
-                      className="p-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded"
+                      className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                      aria-label="Close details panel"
                     >
-                      <MoreHorizontal className="w-4 h-4 text-neutral-400" />
+                      <X className="w-4 h-4 text-neutral-400 dark:text-neutral-500" aria-hidden="true" />
                     </button>
                   </div>
                   <h3 className="text-lg font-bold text-neutral-900 dark:text-white mb-2">
@@ -366,11 +441,11 @@ export default function FeedbackPage() {
                       {selectedItem.notes}
                     </p>
                   )}
-                </div>
+                </header>
 
                 {/* Screenshot */}
                 {selectedItem.screenshot_url && (
-                  <div className="p-4 border-b border-neutral-200 dark:border-neutral-800">
+                  <div className="p-4 border-b border-neutral-200/60 dark:border-neutral-800/60">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-medium text-neutral-500 uppercase">Screenshot</span>
                     </div>
@@ -384,7 +459,7 @@ export default function FeedbackPage() {
                 )}
 
                 {/* Location Details */}
-                <div className="p-4 border-b border-neutral-200 dark:border-neutral-800 space-y-3">
+                <div className="p-4 border-b border-neutral-200/60 dark:border-neutral-800/60 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-neutral-500">Page</span>
                     <span className="text-sm font-medium text-neutral-900 dark:text-white">
@@ -422,7 +497,7 @@ export default function FeedbackPage() {
                       href={selectedItem.page_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-sm text-primary-500 hover:underline"
+                      className={cn('flex items-center gap-2 text-sm hover:underline', colors.primary.text)}
                     >
                       <ExternalLink className="w-3 h-3" />
                       View page
@@ -432,7 +507,7 @@ export default function FeedbackPage() {
 
                 {/* Text Context */}
                 {selectedItem.text_context && (
-                  <div className="p-4 border-b border-neutral-200 dark:border-neutral-800">
+                  <div className="p-4 border-b border-neutral-200/60 dark:border-neutral-800/60">
                     <button
                       onClick={() => setShowTextContext(!showTextContext)}
                       className="flex items-center gap-2 text-xs font-medium text-neutral-500 uppercase hover:text-neutral-700 dark:hover:text-neutral-300"
@@ -444,8 +519,8 @@ export default function FeedbackPage() {
                       <div className="mt-3 space-y-3">
                         {selectedItem.text_context.clickedText && (
                           <div>
-                            <span className="text-[10px] text-cyan-500 uppercase">Clicked Element</span>
-                            <pre className="mt-1 p-2 bg-cyan-500/5 border border-cyan-500/20 rounded text-xs text-cyan-600 dark:text-cyan-400 overflow-x-auto max-h-24 overflow-y-auto font-mono">
+                            <span className="text-[10px] text-primary-500 uppercase">Clicked Element</span>
+                            <pre className="mt-1 p-2 bg-primary-500/5 border border-primary-500/20 rounded text-xs text-primary-600 dark:text-primary-400 overflow-x-auto max-h-24 overflow-y-auto font-mono">
                               {selectedItem.text_context.clickedText}
                             </pre>
                           </div>
@@ -472,7 +547,7 @@ export default function FeedbackPage() {
                 )}
 
                 {/* Status Actions */}
-                <div className="p-4 border-b border-neutral-200 dark:border-neutral-800">
+                <div className="p-4 border-b border-neutral-200/60 dark:border-neutral-800/60">
                   <span className="text-xs font-medium text-neutral-500 uppercase mb-3 block">Change Status</span>
                   <div className="grid grid-cols-2 gap-2">
                     {(['new', 'in-progress', 'resolved', 'blocked'] as FeedbackStatus[]).map((status) => (
@@ -482,7 +557,7 @@ export default function FeedbackPage() {
                         className={cn(
                           'px-3 py-2 text-sm font-medium rounded-lg transition-all',
                           selectedItem.status === status
-                            ? statusConfig[status].color + ' ring-1 ring-current'
+                            ? cn(statusConfig[status].color, 'ring-1 ring-current')
                             : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700'
                         )}
                       >
@@ -494,7 +569,7 @@ export default function FeedbackPage() {
 
                 {/* Resolution */}
                 {selectedItem.resolution && (
-                  <div className="p-4 border-b border-neutral-200 dark:border-neutral-800">
+                  <div className="p-4 border-b border-neutral-200/60 dark:border-neutral-800/60">
                     <span className="text-xs font-medium text-neutral-500 uppercase mb-2 block">Resolution</span>
                     <p className="text-sm text-neutral-700 dark:text-neutral-300">{selectedItem.resolution}</p>
                     {selectedItem.resolved_at && (
@@ -510,17 +585,18 @@ export default function FeedbackPage() {
                   <button
                     onClick={() => handleDelete(selectedItem.id)}
                     className={cn(
-                      'w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors',
+                      'flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl text-sm font-medium transition-colors',
                       confirmDelete === selectedItem.id
-                        ? 'bg-red-500 text-white'
-                        : 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
+                        ? cn(colors.error.solid, 'text-white')
+                        : cn(colors.error.text, colors.error.bg)
                     )}
+                    aria-label={confirmDelete === selectedItem.id ? 'Confirm delete' : 'Delete feedback item'}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4" aria-hidden="true" />
                     {confirmDelete === selectedItem.id ? 'Click again to confirm' : 'Delete'}
                   </button>
                 </div>
-              </motion.div>
+              </motion.aside>
             )}
           </AnimatePresence>
         </div>
@@ -547,6 +623,6 @@ export default function FeedbackPage() {
           </button>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

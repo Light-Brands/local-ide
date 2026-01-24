@@ -14,6 +14,31 @@ import {
   UserX,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { colors, statusColors } from '@/lib/design/tokens';
+
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.06,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 16 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.4,
+      ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
+    },
+  },
+};
 
 // Demo users data
 const usersData = [
@@ -65,9 +90,9 @@ const usersData = [
 ];
 
 const roleColors = {
-  admin: 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20',
-  editor: 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/20',
-  user: 'text-neutral-600 bg-neutral-50 dark:text-neutral-400 dark:bg-neutral-900/20',
+  admin: cn(colors.primary.text, colors.primary.bg),
+  editor: cn(colors.secondary.text, colors.secondary.bg),
+  user: 'text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800',
 };
 
 export default function UsersPage() {
@@ -80,136 +105,143 @@ export default function UsersPage() {
   );
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="admin-section"
+    >
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
+      <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white tracking-tight">
             Users
           </h1>
-          <p className="text-neutral-500 mt-1">
+          <p className="text-neutral-500 dark:text-neutral-400 mt-1">
             Manage user accounts and permissions
           </p>
         </div>
-        <button className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-500 to-secondary-500 text-white font-medium rounded-lg hover:opacity-90 transition-opacity">
-          <Plus className="w-4 h-4" />
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className={cn(
+            'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium',
+            'bg-primary text-primary-foreground',
+            'hover:bg-primary-hover transition-colors'
+          )}
+          aria-label="Add new user"
+        >
+          <Plus className="w-4 h-4" aria-hidden="true" />
           Add User
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
 
       {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
+      <motion.div variants={itemVariants} className="relative flex-1 max-w-md mb-6">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 dark:text-neutral-500" aria-hidden="true" />
         <input
           type="search"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search users..."
           className={cn(
-            'w-full pl-10 pr-4 py-2.5 rounded-lg',
+            'w-full pl-10 pr-4 py-2.5 rounded-xl text-sm',
             'bg-white dark:bg-neutral-900',
             'border border-neutral-200 dark:border-neutral-800',
-            'text-neutral-900 dark:text-white',
-            'placeholder:text-neutral-400',
-            'focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500'
+            'placeholder:text-neutral-400 dark:placeholder:text-neutral-500',
+            'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary'
           )}
+          aria-label="Search users"
         />
-      </div>
+      </motion.div>
 
       {/* Users Table */}
-      <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+      <motion.div variants={itemVariants} className={cn(
+        'p-5 rounded-xl border overflow-hidden',
+        'bg-white dark:bg-neutral-900',
+        'border-neutral-200/60 dark:border-neutral-800/60'
+      )}>
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-neutral-50 dark:bg-neutral-800/50 border-b border-neutral-200 dark:border-neutral-800">
-              <tr>
-                <th className="text-left px-4 py-3 text-sm font-medium text-neutral-500">
-                  User
-                </th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-neutral-500">
-                  Role
-                </th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-neutral-500">
-                  Status
-                </th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-neutral-500">
-                  Last Active
-                </th>
-                <th className="w-12"></th>
+          <table className="w-full border-collapse" role="grid">
+            <thead>
+              <tr className="border-b border-neutral-200/60 dark:border-neutral-800/60">
+                <th scope="col" className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">User</th>
+                <th scope="col" className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Role</th>
+                <th scope="col" className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Status</th>
+                <th scope="col" className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Last Active</th>
+                <th scope="col" className="w-12 py-3 px-4"><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
+            <tbody>
               {filteredUsers.map((user, index) => (
                 <motion.tr
                   key={user.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
+                  className="border-b border-neutral-200/60 dark:border-neutral-800/60 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
                 >
-                  <td className="px-4 py-3">
+                  <td className="py-3 px-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
-                        <span className="text-sm font-medium text-white">
-                          {user.name.charAt(0)}
-                        </span>
+                      <div className={cn('w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium text-white', colors.primary.solid)} aria-hidden="true">
+                        {user.name.charAt(0)}
                       </div>
                       <div>
                         <p className="font-medium text-neutral-900 dark:text-white">
                           {user.name}
                         </p>
-                        <p className="text-sm text-neutral-500">{user.email}</p>
+                        <p className="text-sm text-neutral-500 dark:text-neutral-400">{user.email}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={cn(
-                        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium capitalize',
-                        roleColors[user.role as keyof typeof roleColors]
-                      )}
-                    >
-                      <Shield className="w-3 h-3" />
+                  <td className="py-3 px-4">
+                    <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium capitalize', roleColors[user.role as keyof typeof roleColors])}>
+                      <Shield className="w-3 h-3" aria-hidden="true" />
                       {user.role}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="py-3 px-4">
                     <span
                       className={cn(
-                        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium',
+                        'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium capitalize',
                         user.status === 'active'
-                          ? 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/20'
-                          : 'text-neutral-600 bg-neutral-100 dark:text-neutral-400 dark:bg-neutral-800'
+                          ? cn(colors.success.text, colors.success.bg)
+                          : 'text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800'
                       )}
                     >
                       {user.status === 'active' ? (
-                        <UserCheck className="w-3 h-3" />
+                        <UserCheck className="w-3 h-3" aria-hidden="true" />
                       ) : (
-                        <UserX className="w-3 h-3" />
+                        <UserX className="w-3 h-3" aria-hidden="true" />
                       )}
                       {user.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
-                    <span className="text-sm text-neutral-500">
+                  <td className="py-3 px-4">
+                    <time className="text-sm text-neutral-500 dark:text-neutral-400">
                       {user.lastActive}
-                    </span>
+                    </time>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="py-3 px-4">
                     <div className="relative group">
-                      <button className="p-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded">
-                        <MoreHorizontal className="w-4 h-4 text-neutral-400" />
+                      <button className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors" aria-label={`Actions for ${user.name}`} aria-haspopup="menu">
+                        <MoreHorizontal className="w-4 h-4 text-neutral-400 dark:text-neutral-500" aria-hidden="true" />
                       </button>
-                      <div className="absolute right-0 mt-1 w-40 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
-                        <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800">
-                          <Mail className="w-4 h-4" />
+                      <div className={cn(
+                        'absolute right-0 mt-1 w-40 rounded-xl border shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 overflow-hidden p-1',
+                        'bg-white dark:bg-neutral-900',
+                        'border-neutral-200 dark:border-neutral-800'
+                      )} role="menu">
+                        <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-lg transition-colors" role="menuitem">
+                          <Mail className="w-4 h-4" aria-hidden="true" />
                           Email
                         </button>
-                        <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800">
-                          <Edit className="w-4 h-4" />
+                        <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-lg transition-colors" role="menuitem">
+                          <Edit className="w-4 h-4" aria-hidden="true" />
                           Edit
                         </button>
-                        <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
-                          <Trash2 className="w-4 h-4" />
+                        <button className={cn('w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors', colors.error.text, colors.error.bg.replace('bg-', 'hover:bg-'))} role="menuitem">
+                          <Trash2 className="w-4 h-4" aria-hidden="true" />
                           Delete
                         </button>
                       </div>
@@ -220,7 +252,7 @@ export default function UsersPage() {
             </tbody>
           </table>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

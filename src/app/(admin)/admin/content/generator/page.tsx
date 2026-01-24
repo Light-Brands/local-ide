@@ -20,6 +20,7 @@ import {
 import { cn } from '@/lib/utils';
 import { demoAIGenerations } from '@/data/content/demoData';
 import { containerVariants, itemVariants, ContentStatusBadge } from '@/components/content/shared';
+import { colors, gradients } from '@/lib/design/tokens';
 
 // Generation types
 const generationTypes = [
@@ -28,35 +29,35 @@ const generationTypes = [
     label: 'Blog Post',
     description: 'Generate a full blog post from a topic or outline',
     icon: FileText,
-    color: 'from-blue-500 to-indigo-500',
+    gradient: gradients.primary,
   },
   {
     id: 'social',
     label: 'Social Media',
     description: 'Create posts for Twitter, LinkedIn, or Instagram',
     icon: MessageSquare,
-    color: 'from-pink-500 to-rose-500',
+    gradient: gradients.secondary,
   },
   {
     id: 'meta',
     label: 'Meta Description',
     description: 'Generate SEO-optimized meta descriptions',
     icon: Hash,
-    color: 'from-emerald-500 to-teal-500',
+    gradient: gradients.success,
   },
   {
     id: 'alt-text',
     label: 'Image Alt Text',
     description: 'Create accessible alt text for images',
     icon: Image,
-    color: 'from-violet-500 to-purple-500',
+    gradient: gradients.brand,
   },
   {
     id: 'rewrite',
     label: 'Rewrite',
     description: 'Rewrite or improve existing content',
     icon: RefreshCw,
-    color: 'from-amber-500 to-orange-500',
+    gradient: gradients.secondary,
   },
 ];
 
@@ -109,48 +110,51 @@ export default function AIGeneratorPage() {
       variants={containerVariants}
       initial="hidden"
       animate="show"
-      className="space-y-6"
+      className="admin-section"
     >
       {/* Header */}
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-white tracking-tight">
             AI Content Generator
           </h1>
-          <p className="text-neutral-500 dark:text-neutral-400 text-sm mt-1">
+          <p className="text-neutral-500 dark:text-neutral-400 mt-1">
             Generate high-quality content with AI assistance
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setShowHistory(!showHistory)}
-            className={cn(
-              'inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-colors',
-              showHistory
-                ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900'
-                : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700'
-            )}
-          >
-            <History className="w-4 h-4" />
-            History
-          </motion.button>
-        </div>
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => setShowHistory(!showHistory)}
+          className={cn(
+            'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors',
+            showHistory
+              ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900'
+              : cn(
+                  'bg-white dark:bg-neutral-900',
+                  'border border-neutral-200 dark:border-neutral-800',
+                  'text-neutral-700 dark:text-neutral-300',
+                  'hover:bg-neutral-50 dark:hover:bg-neutral-800'
+                )
+          )}
+          aria-pressed={showHistory}
+          aria-label="Toggle generation history"
+        >
+          <History className="w-4 h-4" aria-hidden="true" />
+          History
+        </motion.button>
       </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         {/* Left Panel - Configuration */}
-        <motion.div variants={itemVariants} className="lg:col-span-2 space-y-6">
+        <motion.div variants={itemVariants} className="flex flex-col gap-6">
           {/* Generation Type Selection */}
-          <div
-            className={cn(
-              'p-5 rounded-2xl',
-              'bg-white dark:bg-neutral-900',
-              'border border-neutral-200/60 dark:border-neutral-800/60'
-            )}
-          >
-            <h2 className="text-sm font-semibold text-neutral-900 dark:text-white uppercase tracking-wider mb-4">
+          <div className={cn(
+            'p-5 rounded-xl border',
+            'bg-white dark:bg-neutral-900',
+            'border-neutral-200/60 dark:border-neutral-800/60'
+          )} role="region" aria-labelledby="content-type-heading">
+            <h2 id="content-type-heading" className="text-xs font-semibold text-neutral-900 dark:text-white uppercase tracking-wider mb-4">
               Content Type
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -165,10 +169,15 @@ export default function AIGeneratorPage() {
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setSelectedType(type.id)}
                     className={cn(
-                      'flex flex-col items-center gap-2 p-4 rounded-xl transition-all',
+                      'flex flex-col items-center gap-2 p-4 rounded-xl transition-all border',
                       isSelected
-                        ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900'
-                        : 'bg-neutral-50 dark:bg-neutral-800/50 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                        ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 border-neutral-900 dark:border-white'
+                        : cn(
+                            'bg-white dark:bg-neutral-900',
+                            'border-neutral-200/60 dark:border-neutral-800/60',
+                            'text-neutral-600 dark:text-neutral-400',
+                            'hover:bg-neutral-50 dark:hover:bg-neutral-800'
+                          )
                     )}
                   >
                     <div
@@ -176,7 +185,7 @@ export default function AIGeneratorPage() {
                         'w-10 h-10 rounded-xl flex items-center justify-center',
                         isSelected
                           ? 'bg-white/20 dark:bg-neutral-900/20'
-                          : `bg-gradient-to-br ${type.color} text-white`
+                          : cn(type.gradient, 'text-white')
                       )}
                     >
                       <Icon className="w-5 h-5" />
@@ -189,15 +198,13 @@ export default function AIGeneratorPage() {
           </div>
 
           {/* Prompt Input */}
-          <div
-            className={cn(
-              'p-5 rounded-2xl',
-              'bg-white dark:bg-neutral-900',
-              'border border-neutral-200/60 dark:border-neutral-800/60'
-            )}
-          >
+          <div className={cn(
+            'p-5 rounded-xl border',
+            'bg-white dark:bg-neutral-900',
+            'border-neutral-200/60 dark:border-neutral-800/60'
+          )} role="region" aria-labelledby="prompt-heading">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold text-neutral-900 dark:text-white uppercase tracking-wider">
+              <h2 id="prompt-heading" className="text-xs font-semibold text-neutral-900 dark:text-white uppercase tracking-wider">
                 Your Prompt
               </h2>
               <div className="flex items-center gap-2">
@@ -214,34 +221,36 @@ export default function AIGeneratorPage() {
             </div>
 
             <textarea
+              id="ai-prompt"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder={`Describe what you want to generate... (${selectedTypeConfig?.description})`}
               rows={5}
               className={cn(
-                'w-full px-4 py-3 rounded-xl resize-none',
-                'bg-neutral-50 dark:bg-neutral-800',
-                'border border-neutral-200 dark:border-neutral-700',
+                'w-full px-4 py-3 rounded-xl text-sm resize-none',
+                'bg-white dark:bg-neutral-900',
+                'border border-neutral-200 dark:border-neutral-800',
                 'text-neutral-900 dark:text-white',
                 'placeholder:text-neutral-400 dark:placeholder:text-neutral-500',
-                'focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500',
-                'transition-all duration-200'
+                'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary'
               )}
+              aria-describedby="prompt-description"
             />
 
             {/* Tone & Settings */}
             <div className="flex flex-wrap items-center gap-4 mt-4">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-neutral-500 dark:text-neutral-400">Tone:</span>
+                <label htmlFor="tone-select" className="text-sm text-neutral-500 dark:text-neutral-400">Tone:</label>
                 <select
+                  id="tone-select"
                   value={tone}
                   onChange={(e) => setTone(e.target.value)}
                   className={cn(
-                    'px-3 py-1.5 rounded-lg text-sm',
-                    'bg-neutral-100 dark:bg-neutral-800',
-                    'border-none',
+                    'px-3 py-1.5 rounded-xl text-sm',
+                    'bg-white dark:bg-neutral-900',
+                    'border border-neutral-200 dark:border-neutral-800',
                     'text-neutral-900 dark:text-white',
-                    'focus:outline-none focus:ring-2 focus:ring-primary-500/20'
+                    'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary'
                   )}
                 >
                   {toneOptions.map((t) => (
@@ -260,21 +269,21 @@ export default function AIGeneratorPage() {
                 onClick={handleGenerate}
                 disabled={isGenerating || !prompt.trim()}
                 className={cn(
-                  'inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-medium',
-                  'bg-gradient-to-r from-violet-500 to-purple-500',
-                  'text-white shadow-lg shadow-violet-500/25',
-                  'disabled:opacity-50 disabled:cursor-not-allowed',
-                  'transition-all duration-200'
+                  'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors',
+                  'bg-primary text-primary-foreground',
+                  'hover:bg-primary-hover',
+                  'disabled:opacity-50 disabled:cursor-not-allowed'
                 )}
+                aria-busy={isGenerating}
               >
                 {isGenerating ? (
                   <>
-                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" aria-hidden="true" />
                     Generating...
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-4 h-4" />
+                    <Sparkles className="w-4 h-4" aria-hidden="true" />
                     Generate
                   </>
                 )}
@@ -290,13 +299,16 @@ export default function AIGeneratorPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 className={cn(
-                  'p-5 rounded-2xl',
+                  'p-5 rounded-xl border',
                   'bg-white dark:bg-neutral-900',
-                  'border border-neutral-200/60 dark:border-neutral-800/60'
+                  'border-neutral-200/60 dark:border-neutral-800/60'
                 )}
+                role="region"
+                aria-labelledby="generated-content-heading"
+                aria-live="polite"
               >
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-sm font-semibold text-neutral-900 dark:text-white uppercase tracking-wider">
+                  <h2 id="generated-content-heading" className="text-xs font-semibold text-neutral-900 dark:text-white uppercase tracking-wider">
                     Generated Content
                   </h2>
                   <div className="flex items-center gap-2">
@@ -304,29 +316,36 @@ export default function AIGeneratorPage() {
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={handleGenerate}
-                      className="p-2 text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
+                      className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                      aria-label="Regenerate content"
                     >
-                      <RefreshCw className="w-4 h-4" />
+                      <RefreshCw className="w-4 h-4 text-neutral-400 dark:text-neutral-500" aria-hidden="true" />
                     </motion.button>
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={handleCopy}
                       className={cn(
-                        'inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                        'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
                         copied
-                          ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-                          : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+                          ? cn(colors.success.text, colors.success.bg)
+                          : cn(
+                              'bg-white dark:bg-neutral-900',
+                              'border border-neutral-200 dark:border-neutral-800',
+                              'text-neutral-700 dark:text-neutral-300',
+                              'hover:bg-neutral-50 dark:hover:bg-neutral-800'
+                            )
                       )}
+                      aria-label={copied ? 'Copied to clipboard' : 'Copy content'}
                     >
                       {copied ? (
                         <>
-                          <Check className="w-4 h-4" />
+                          <Check className="w-4 h-4" aria-hidden="true" />
                           Copied!
                         </>
                       ) : (
                         <>
-                          <Copy className="w-4 h-4" />
+                          <Copy className="w-4 h-4" aria-hidden="true" />
                           Copy
                         </>
                       )}
@@ -336,8 +355,9 @@ export default function AIGeneratorPage() {
 
                 <div
                   className={cn(
-                    'p-4 rounded-xl',
+                    'p-4 rounded-xl border',
                     'bg-neutral-50 dark:bg-neutral-800/50',
+                    'border-neutral-200/50 dark:border-neutral-700/50',
                     'prose prose-sm dark:prose-invert max-w-none'
                   )}
                 >
@@ -346,19 +366,29 @@ export default function AIGeneratorPage() {
                   </pre>
                 </div>
 
-                <div className="flex items-center gap-3 mt-4">
+                <div className="flex items-center gap-2 mt-4">
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 font-medium rounded-xl hover:opacity-90 transition-opacity"
+                    className={cn(
+                      'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors',
+                      'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900',
+                      'hover:opacity-90'
+                    )}
                   >
-                    <FileText className="w-4 h-4" />
+                    <FileText className="w-4 h-4" aria-hidden="true" />
                     Save as Draft
                   </motion.button>
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 font-medium rounded-xl hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+                    className={cn(
+                      'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors',
+                      'bg-white dark:bg-neutral-900',
+                      'border border-neutral-200 dark:border-neutral-800',
+                      'text-neutral-700 dark:text-neutral-300',
+                      'hover:bg-neutral-50 dark:hover:bg-neutral-800'
+                    )}
                   >
                     Edit & Refine
                   </motion.button>
@@ -369,24 +399,22 @@ export default function AIGeneratorPage() {
         </motion.div>
 
         {/* Right Panel - History & Tips */}
-        <motion.div variants={itemVariants} className="space-y-6">
+        <motion.div variants={itemVariants} className="flex flex-col gap-6">
           {/* Quick Stats */}
-          <div
-            className={cn(
-              'p-5 rounded-2xl',
-              'bg-white dark:bg-neutral-900',
-              'border border-neutral-200/60 dark:border-neutral-800/60'
-            )}
-          >
-            <h2 className="text-sm font-semibold text-neutral-900 dark:text-white uppercase tracking-wider mb-4">
+          <div className={cn(
+            'p-5 rounded-xl border',
+            'bg-white dark:bg-neutral-900',
+            'border-neutral-200/60 dark:border-neutral-800/60'
+          )} role="region" aria-labelledby="stats-heading">
+            <h2 id="stats-heading" className="text-xs font-semibold text-neutral-900 dark:text-white uppercase tracking-wider mb-4">
               This Month
             </h2>
             <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/50">
+              <div className={cn('text-center p-3 rounded-lg border', 'bg-neutral-50 dark:bg-neutral-800/50', 'border-neutral-200/50 dark:border-neutral-700/50')}>
                 <p className="text-2xl font-bold text-neutral-900 dark:text-white">{demoAIGenerations.length}</p>
                 <p className="text-xs text-neutral-500 dark:text-neutral-400">Generations</p>
               </div>
-              <div className="text-center p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/50">
+              <div className={cn('text-center p-3 rounded-lg border', 'bg-neutral-50 dark:bg-neutral-800/50', 'border-neutral-200/50 dark:border-neutral-700/50')}>
                 <p className="text-2xl font-bold text-neutral-900 dark:text-white">2.4K</p>
                 <p className="text-xs text-neutral-500 dark:text-neutral-400">Words</p>
               </div>
@@ -394,24 +422,27 @@ export default function AIGeneratorPage() {
           </div>
 
           {/* Recent Generations */}
-          <div
-            className={cn(
-              'p-5 rounded-2xl',
-              'bg-white dark:bg-neutral-900',
-              'border border-neutral-200/60 dark:border-neutral-800/60'
-            )}
-          >
-            <h2 className="text-sm font-semibold text-neutral-900 dark:text-white uppercase tracking-wider mb-4">
+          <div className={cn(
+            'p-5 rounded-xl border',
+            'bg-white dark:bg-neutral-900',
+            'border-neutral-200/60 dark:border-neutral-800/60'
+          )} role="region" aria-labelledby="recent-generations-heading">
+            <h2 id="recent-generations-heading" className="text-xs font-semibold text-neutral-900 dark:text-white uppercase tracking-wider mb-4">
               Recent Generations
             </h2>
-            <div className="space-y-3">
+            <div className="space-y-3" role="list">
               {demoAIGenerations.map((gen, index) => (
                 <motion.div
                   key={gen.id}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer transition-colors"
+                  className={cn(
+                    'p-3 rounded-lg border cursor-pointer transition-colors',
+                    'bg-neutral-50 dark:bg-neutral-800/50',
+                    'border-neutral-200/50 dark:border-neutral-700/50',
+                    'hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                  )}
                 >
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <p className="text-sm font-medium text-neutral-900 dark:text-white truncate">
@@ -423,11 +454,11 @@ export default function AIGeneratorPage() {
                   </div>
                   <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
                     <span className="capitalize">{gen.type}</span>
-                    <span>&middot;</span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
+                    <span aria-hidden="true">&middot;</span>
+                    <time className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" aria-hidden="true" />
                       {new Date(gen.createdAt).toLocaleDateString()}
-                    </span>
+                    </time>
                   </div>
                 </motion.div>
               ))}
@@ -437,26 +468,28 @@ export default function AIGeneratorPage() {
           {/* Tips */}
           <div
             className={cn(
-              'p-5 rounded-2xl',
-              'bg-gradient-to-br from-violet-500/10 to-purple-500/10',
-              'border border-violet-200/60 dark:border-violet-800/60'
+              'p-5 rounded-xl border',
+              colors.primary.bg,
+              colors.primary.border
             )}
+            role="complementary"
+            aria-labelledby="tips-heading"
           >
             <div className="flex items-center gap-2 mb-3">
-              <Zap className="w-4 h-4 text-violet-500" />
-              <h2 className="text-sm font-semibold text-neutral-900 dark:text-white">Pro Tips</h2>
+              <Zap className={cn('w-4 h-4', colors.primary.text)} aria-hidden="true" />
+              <h2 id="tips-heading" className={cn('text-sm font-semibold', colors.primary.text)}>Pro Tips</h2>
             </div>
-            <ul className="space-y-2 text-sm text-neutral-600 dark:text-neutral-400">
+            <ul className="space-y-2 text-sm" role="list" style={{ color: 'inherit' }}>
               <li className="flex items-start gap-2">
-                <ChevronRight className="w-4 h-4 text-violet-500 flex-shrink-0 mt-0.5" />
+                <ChevronRight className={cn('w-4 h-4 flex-shrink-0 mt-0.5', colors.primary.text)} aria-hidden="true" />
                 Be specific about your target audience
               </li>
               <li className="flex items-start gap-2">
-                <ChevronRight className="w-4 h-4 text-violet-500 flex-shrink-0 mt-0.5" />
+                <ChevronRight className={cn('w-4 h-4 flex-shrink-0 mt-0.5', colors.primary.text)} aria-hidden="true" />
                 Include key points you want covered
               </li>
               <li className="flex items-start gap-2">
-                <ChevronRight className="w-4 h-4 text-violet-500 flex-shrink-0 mt-0.5" />
+                <ChevronRight className={cn('w-4 h-4 flex-shrink-0 mt-0.5', colors.primary.text)} aria-hidden="true" />
                 Mention the desired tone and style
               </li>
             </ul>

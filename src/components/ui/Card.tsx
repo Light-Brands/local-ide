@@ -38,8 +38,7 @@ const variantStyles: Record<CardVariant, string> = {
     'shadow-lg shadow-neutral-900/[0.04]'
   ),
   gradient: cn(
-    'bg-gradient-to-br from-neutral-50 via-white to-neutral-50/80',
-    'dark:from-neutral-900 dark:via-neutral-900 dark:to-neutral-800/50',
+    'bg-white dark:bg-neutral-900',
     'border border-neutral-200/60 dark:border-neutral-800/60'
   ),
 };

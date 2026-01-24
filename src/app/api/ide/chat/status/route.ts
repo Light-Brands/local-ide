@@ -7,21 +7,10 @@ import { spawn } from 'child_process';
 import { accessSync } from 'fs';
 import { NextResponse } from 'next/server';
 import type { ClaudeCliStatus } from '@/types/chat';
-import { getIntegration } from '@/lib/storage/configStorage';
 
-// Get CLI path from integrations config, environment, or common locations
+// Get CLI path from environment or common locations
 async function getClaudePath(): Promise<string> {
-  // First, check integrations config (set in admin dashboard)
-  try {
-    const claudeConfig = await getIntegration('claude');
-    if (claudeConfig?.cliPath) {
-      return claudeConfig.cliPath;
-    }
-  } catch {
-    // Config not available
-  }
-
-  // Then check environment variable
+  // Check environment variable
   if (process.env.CLAUDE_CLI_PATH) {
     return process.env.CLAUDE_CLI_PATH;
   }

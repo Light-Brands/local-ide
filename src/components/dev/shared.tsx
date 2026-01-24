@@ -10,6 +10,7 @@ import { motion } from 'framer-motion';
 type EpicStatus = 'not-started' | 'in-progress' | 'blocked' | 'complete';
 type TaskStatus = 'pending' | 'in-progress' | 'complete' | 'blocked';
 
+// Uses semantic tokens: warning for in-progress, error for blocked, success for complete
 const statusConfig: Record<EpicStatus, { label: string; className: string }> = {
   'not-started': {
     label: 'Not Started',
@@ -17,15 +18,15 @@ const statusConfig: Record<EpicStatus, { label: string; className: string }> = {
   },
   'in-progress': {
     label: 'In Progress',
-    className: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800',
+    className: 'bg-warning/10 text-warning border border-warning/30',
   },
   blocked: {
     label: 'Blocked',
-    className: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800',
+    className: 'bg-error/10 text-error border border-error/30',
   },
   complete: {
     label: 'Complete',
-    className: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800',
+    className: 'bg-success/10 text-success border border-success/30',
   },
 };
 
@@ -47,11 +48,14 @@ export function StatusBadge({ status }: { status: EpicStatus }) {
 // Task Status Config
 // =============================================================================
 
-export const taskStatusConfig: Record<TaskStatus, { icon: string; className: string }> = {
-  pending: { icon: '○', className: 'text-neutral-400' },
-  'in-progress': { icon: '◐', className: 'text-amber-500 animate-pulse' },
-  complete: { icon: '●', className: 'text-emerald-500' },
-  blocked: { icon: '⊘', className: 'text-red-500' },
+import { Circle, Clock, CheckCircle2, XCircle } from 'lucide-react';
+
+// Uses semantic tokens for task status indicators
+export const taskStatusConfig: Record<TaskStatus, { icon: React.ElementType; className: string }> = {
+  pending: { icon: Circle, className: 'text-neutral-400' },
+  'in-progress': { icon: Clock, className: 'text-warning animate-pulse' },
+  complete: { icon: CheckCircle2, className: 'text-success' },
+  blocked: { icon: XCircle, className: 'text-error' },
 };
 
 // =============================================================================
@@ -75,11 +79,12 @@ export function ProgressRing({
   const circumference = radius * 2 * Math.PI;
   const offset = circumference - (percentage / 100) * circumference;
 
+  // Semantic color mapping for progress ring strokes
   const colorClass = {
     'not-started': 'stroke-neutral-300 dark:stroke-neutral-600',
-    'in-progress': 'stroke-amber-500',
-    blocked: 'stroke-red-500',
-    complete: 'stroke-emerald-500',
+    'in-progress': 'stroke-warning',
+    blocked: 'stroke-error',
+    complete: 'stroke-success',
   }[status];
 
   return (
@@ -198,10 +203,13 @@ export function AnimatedNumber({
 // Glow Card Component
 // =============================================================================
 
+// Semantic glow color type
+type GlowColor = 'primary' | 'secondary' | 'success' | 'warning' | 'error';
+
 interface GlowCardProps {
   children: React.ReactNode;
   className?: string;
-  glowColor?: string;
+  glowColor?: GlowColor;
 }
 
 export function GlowCard({
@@ -209,12 +217,13 @@ export function GlowCard({
   className,
   glowColor = 'primary',
 }: GlowCardProps) {
+  // Semantic glow colors using CSS variables
   const glowColors = {
-    primary: 'hover:shadow-primary-500/20',
-    emerald: 'hover:shadow-emerald-500/20',
-    amber: 'hover:shadow-amber-500/20',
-    red: 'hover:shadow-red-500/20',
-    violet: 'hover:shadow-violet-500/20',
+    primary: 'hover:shadow-primary/20',
+    secondary: 'hover:shadow-secondary/20',
+    success: 'hover:shadow-success/20',
+    warning: 'hover:shadow-warning/20',
+    error: 'hover:shadow-error/20',
   };
 
   return (
@@ -222,7 +231,7 @@ export function GlowCard({
       className={cn(
         'bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200/60 dark:border-neutral-800/60',
         'transition-all duration-300 hover:shadow-lg',
-        glowColors[glowColor as keyof typeof glowColors] || glowColors.primary,
+        glowColors[glowColor] || glowColors.primary,
         className
       )}
     >
@@ -276,6 +285,9 @@ export function SectionHeader({
 // Stat Card Component
 // =============================================================================
 
+// Semantic color type for StatCard
+type StatCardColor = 'default' | 'primary' | 'success' | 'warning' | 'error';
+
 interface StatCardProps {
   label: string;
   value: string | number;
@@ -284,7 +296,7 @@ interface StatCardProps {
     value: string;
     direction: 'up' | 'down';
   };
-  color?: 'default' | 'primary' | 'emerald' | 'amber' | 'red';
+  color?: StatCardColor;
 }
 
 export function StatCard({
@@ -294,20 +306,22 @@ export function StatCard({
   trend,
   color = 'default',
 }: StatCardProps) {
-  const colorStyles = {
+  // Semantic background colors
+  const colorStyles: Record<StatCardColor, string> = {
     default: 'bg-white dark:bg-neutral-900',
-    primary: 'bg-primary-50 dark:bg-primary-900/20',
-    emerald: 'bg-emerald-50 dark:bg-emerald-900/20',
-    amber: 'bg-amber-50 dark:bg-amber-900/20',
-    red: 'bg-red-50 dark:bg-red-900/20',
+    primary: 'bg-accent dark:bg-accent',
+    success: 'bg-success/10',
+    warning: 'bg-warning/10',
+    error: 'bg-error/10',
   };
 
-  const valueColors = {
+  // Semantic text colors
+  const valueColors: Record<StatCardColor, string> = {
     default: 'text-neutral-900 dark:text-white',
-    primary: 'text-primary-600 dark:text-primary-400',
-    emerald: 'text-emerald-600 dark:text-emerald-400',
-    amber: 'text-amber-600 dark:text-amber-400',
-    red: 'text-red-600 dark:text-red-400',
+    primary: 'text-primary',
+    success: 'text-success',
+    warning: 'text-warning',
+    error: 'text-error',
   };
 
   return (
@@ -328,8 +342,8 @@ export function StatCard({
             className={cn(
               'text-xs font-semibold px-2 py-1 rounded-full',
               trend.direction === 'up'
-                ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-                : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                ? 'bg-success/10 dark:bg-success/20 text-success dark:text-success'
+                : 'bg-error/10 dark:bg-error/20 text-error dark:text-error'
             )}
           >
             {trend.direction === 'up' ? '↑' : '↓'} {trend.value}
@@ -350,11 +364,20 @@ export function StatCard({
 // Type Icons
 // =============================================================================
 
-export const typeIcons: Record<string, string> = {
-  table: '🗄️',
-  endpoint: '🔌',
-  service: '⚙️',
-  component: '🧩',
-  test: '🧪',
-  config: '⚡',
+import {
+  Database,
+  Plug,
+  Settings,
+  Puzzle,
+  TestTube,
+  Zap,
+} from 'lucide-react';
+
+export const typeIcons: Record<string, React.ElementType> = {
+  table: Database,
+  endpoint: Plug,
+  service: Settings,
+  component: Puzzle,
+  test: TestTube,
+  config: Zap,
 };

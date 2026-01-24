@@ -5,7 +5,11 @@ import { ServiceProvider } from './contexts/ServiceContext';
 import { PWAProvider } from './components/PWAProvider';
 import { SyncMonitor } from './components/SyncMonitor';
 
-export function IDEProviders({ children }: { children: React.ReactNode }) {
+interface IDEProvidersProps {
+  children: React.ReactNode;
+}
+
+export function IDEProviders({ children }: IDEProvidersProps) {
   return (
     <ToolingProvider>
       <ServiceProvider>

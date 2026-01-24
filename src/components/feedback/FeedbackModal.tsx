@@ -6,6 +6,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { Bug, Sparkles, HelpCircle, FileText, type LucideIcon } from 'lucide-react';
 import { useFeedback } from '@/contexts/FeedbackContext';
 import {
   categoryConfig,
@@ -14,6 +15,14 @@ import {
   type FeedbackPriority,
 } from '@/lib/feedback/types';
 import { formatTextContextPreview, isBrowser } from '@/lib/feedback';
+
+// Icon mapping for categories
+const categoryIcons: Record<FeedbackCategory, LucideIcon> = {
+  bug: Bug,
+  enhancement: Sparkles,
+  question: HelpCircle,
+  content: FileText,
+};
 
 export function FeedbackModal() {
   const { isModalOpen, closeModal, pendingCapture, createFeedback } = useFeedback();
@@ -200,18 +209,19 @@ export function FeedbackModal() {
             <div className="flex flex-wrap gap-2">
               {(Object.keys(categoryConfig) as FeedbackCategory[]).map((cat) => {
                 const config = categoryConfig[cat];
+                const Icon = categoryIcons[cat];
                 return (
                   <button
                     key={cat}
                     type="button"
                     onClick={() => setCategory(cat)}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${
                       category === cat
                         ? `${config.color} ring-2 ring-offset-2 ring-offset-neutral-900 ring-current`
                         : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
                     }`}
                   >
-                    {config.icon} {config.label}
+                    <Icon className="w-4 h-4" /> {config.label}
                   </button>
                 );
               })}

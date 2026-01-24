@@ -24,6 +24,7 @@ import {
 import { cn } from '@/lib/utils';
 import { demoMedia, formatFileSize } from '@/data/content/demoData';
 import { containerVariants, itemVariants } from '@/components/content/shared';
+import { colors } from '@/lib/design/tokens';
 
 const typeIcons = {
   image: ImageIcon,
@@ -34,11 +35,11 @@ const typeIcons = {
 };
 
 const typeColors = {
-  image: 'text-blue-500 bg-blue-50 dark:bg-blue-900/20',
-  video: 'text-purple-500 bg-purple-50 dark:bg-purple-900/20',
-  audio: 'text-green-500 bg-green-50 dark:bg-green-900/20',
-  document: 'text-orange-500 bg-orange-50 dark:bg-orange-900/20',
-  archive: 'text-neutral-500 bg-neutral-50 dark:bg-neutral-900/20',
+  image: cn(colors.primary.text, colors.primary.bg),
+  video: cn(colors.secondary.text, colors.secondary.bg),
+  audio: cn(colors.success.text, colors.success.bg),
+  document: cn(colors.primary.text, colors.primary.bg),
+  archive: 'text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-500/10',
 };
 
 const folders = ['All Files', 'banners', 'videos', 'team', 'documents', 'audio', 'icons'];
@@ -65,114 +66,134 @@ export default function MediaLibraryPage() {
       variants={containerVariants}
       initial="hidden"
       animate="show"
-      className="space-y-6"
+      className="admin-section"
     >
       {/* Header */}
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-white tracking-tight">
             Media Library
           </h1>
-          <p className="text-neutral-500 dark:text-neutral-400 text-sm mt-1">
+          <p className="text-neutral-500 dark:text-neutral-400 mt-1">
             Upload and manage your media files
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 font-medium rounded-xl hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+            className={cn(
+              'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium',
+              'bg-white dark:bg-neutral-900',
+              'border border-neutral-200 dark:border-neutral-800',
+              'text-neutral-700 dark:text-neutral-300',
+              'hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors'
+            )}
+            aria-label="Generate media with AI"
           >
-            <Sparkles className="w-4 h-4" />
+            <Sparkles className="w-4 h-4" aria-hidden="true" />
             AI Generate
           </motion.button>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary-500 to-secondary-500 text-white font-medium rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-primary-500/25"
+            className={cn(
+              'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium',
+              'bg-primary text-primary-foreground',
+              'hover:bg-primary-hover transition-colors'
+            )}
+            aria-label="Upload new files"
           >
-            <Upload className="w-4 h-4" />
+            <Upload className="w-4 h-4" aria-hidden="true" />
             Upload Files
           </motion.button>
         </div>
       </motion.div>
 
       {/* Filters and View Toggle */}
-      <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+      <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 dark:text-neutral-500" aria-hidden="true" />
           <input
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search files..."
             className={cn(
-              'w-full pl-10 pr-4 py-2.5 rounded-xl',
+              'w-full pl-10 pr-4 py-2.5 rounded-xl text-sm',
               'bg-white dark:bg-neutral-900',
               'border border-neutral-200 dark:border-neutral-800',
-              'text-sm text-neutral-900 dark:text-white',
-              'placeholder:text-neutral-400',
-              'focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500'
+              'placeholder:text-neutral-400 dark:placeholder:text-neutral-500',
+              'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary'
             )}
+            aria-label="Search media files"
           />
         </div>
 
         {/* Type Filter */}
-        <div className="relative">
-          <button
-            className={cn(
-              'inline-flex items-center gap-2 px-4 py-2.5 rounded-xl',
-              'bg-white dark:bg-neutral-900',
-              'border border-neutral-200 dark:border-neutral-800',
-              'text-sm font-medium text-neutral-700 dark:text-neutral-300',
-              'hover:bg-neutral-50 dark:hover:bg-neutral-800'
-            )}
-          >
-            <Filter className="w-4 h-4" />
-            {typeFilter ? typeFilter.charAt(0).toUpperCase() + typeFilter.slice(1) : 'All Types'}
-            <ChevronDown className="w-4 h-4" />
-          </button>
-        </div>
+        <button
+          className={cn(
+            'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium',
+            'bg-white dark:bg-neutral-900',
+            'border border-neutral-200 dark:border-neutral-800',
+            'text-neutral-700 dark:text-neutral-300',
+            'hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors'
+          )}
+          aria-haspopup="listbox"
+          aria-expanded="false"
+        >
+          <Filter className="w-4 h-4" aria-hidden="true" />
+          {typeFilter ? typeFilter.charAt(0).toUpperCase() + typeFilter.slice(1) : 'All Types'}
+          <ChevronDown className="w-4 h-4" aria-hidden="true" />
+        </button>
 
         {/* View Mode Toggle */}
-        <div className="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 p-1 rounded-xl">
+        <div className="flex gap-2" role="tablist" aria-label="View mode">
           <button
             onClick={() => setViewMode('grid')}
             className={cn(
               'p-2 rounded-lg transition-all',
               viewMode === 'grid'
-                ? 'bg-white dark:bg-neutral-700 shadow-sm text-neutral-900 dark:text-white'
-                : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700'
             )}
+            role="tab"
+            aria-selected={viewMode === 'grid'}
+            aria-label="Grid view"
           >
-            <Grid className="w-4 h-4" />
+            <Grid className="w-4 h-4" aria-hidden="true" />
           </button>
           <button
             onClick={() => setViewMode('list')}
             className={cn(
               'p-2 rounded-lg transition-all',
               viewMode === 'list'
-                ? 'bg-white dark:bg-neutral-700 shadow-sm text-neutral-900 dark:text-white'
-                : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700'
             )}
+            role="tab"
+            aria-selected={viewMode === 'list'}
+            aria-label="List view"
           >
-            <List className="w-4 h-4" />
+            <List className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
       </motion.div>
 
       {/* Folders */}
-      <motion.div variants={itemVariants} className="flex gap-2 overflow-x-auto pb-2">
+      <motion.div variants={itemVariants} className="flex gap-2 overflow-x-auto pb-2 mb-6" role="tablist" aria-label="Media folders">
         {folders.map((folder) => (
           <button
             key={folder}
             onClick={() => setSelectedFolder(folder)}
             className={cn(
-              'px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all',
+              'px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all',
               selectedFolder === folder
-                ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900'
-                : 'bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700'
             )}
+            role="tab"
+            aria-selected={selectedFolder === folder}
           >
             {folder}
           </button>
@@ -192,16 +213,19 @@ export default function MediaLibraryPage() {
           setIsDragging(false);
         }}
         className={cn(
-          'border-2 border-dashed rounded-2xl p-8 text-center transition-all',
+          'p-8 rounded-xl border-2 border-dashed text-center transition-all mb-6',
+          'bg-white dark:bg-neutral-900',
           isDragging
-            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+            ? cn('border-primary', colors.primary.bg)
             : 'border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700'
         )}
+        role="region"
+        aria-label="File upload drop zone"
       >
-        <Upload className="w-10 h-10 text-neutral-400 mx-auto mb-3" />
+        <Upload className="w-10 h-10 text-neutral-400 mx-auto mb-3" aria-hidden="true" />
         <p className="text-neutral-600 dark:text-neutral-400">
           Drag and drop files here, or{' '}
-          <button className="text-primary-500 font-medium hover:underline">browse</button>
+          <button className={cn('font-medium hover:underline', colors.primary.text)}>browse</button>
         </p>
         <p className="text-sm text-neutral-400 mt-1">
           Supports: JPG, PNG, GIF, SVG, PDF, MP4, MP3, WebP
@@ -229,16 +253,16 @@ export default function MediaLibraryPage() {
                       onClick={() => setSelectedItem(item.id)}
                       whileHover={{ y: -2 }}
                       className={cn(
-                        'group relative bg-white dark:bg-neutral-900 rounded-2xl border overflow-hidden cursor-pointer transition-all',
+                        'group relative bg-white dark:bg-neutral-900 rounded-xl border overflow-hidden cursor-pointer transition-all',
                         selectedItem === item.id
-                          ? 'border-primary-500 ring-2 ring-primary-500/20'
-                          : 'border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 hover:shadow-lg'
+                          ? cn('border-primary ring-2 ring-primary/20', colors.primary.border)
+                          : 'border-neutral-200/60 dark:border-neutral-800/60 hover:border-neutral-300 dark:hover:border-neutral-700 hover:shadow-sm'
                       )}
                     >
                       {/* Thumbnail */}
                       <div className="aspect-square bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
                         {item.type === 'image' ? (
-                          <div className="w-full h-full bg-gradient-to-br from-neutral-200 to-neutral-300 dark:from-neutral-700 dark:to-neutral-800" />
+                          <div className="w-full h-full bg-neutral-200 dark:bg-neutral-700" />
                         ) : (
                           <Icon className={cn('w-12 h-12', colorClass.split(' ')[0])} />
                         )}
@@ -271,29 +295,23 @@ export default function MediaLibraryPage() {
               </AnimatePresence>
             </div>
           ) : (
-            <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-neutral-50 dark:bg-neutral-800/50 border-b border-neutral-200 dark:border-neutral-800">
-                  <tr>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-                      Name
-                    </th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-                      Type
-                    </th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-                      Size
-                    </th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-                      Folder
-                    </th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-                      Usage
-                    </th>
-                    <th className="w-12"></th>
+            <div className={cn(
+              'rounded-xl border overflow-hidden',
+              'bg-white dark:bg-neutral-900',
+              'border-neutral-200/60 dark:border-neutral-800/60'
+            )}>
+              <table className="w-full border-collapse" role="grid">
+                <thead>
+                  <tr className="border-b border-neutral-200/60 dark:border-neutral-800/60">
+                    <th scope="col" className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Name</th>
+                    <th scope="col" className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Type</th>
+                    <th scope="col" className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Size</th>
+                    <th scope="col" className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Folder</th>
+                    <th scope="col" className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Usage</th>
+                    <th scope="col" className="w-12 py-3 px-4"><span className="sr-only">Actions</span></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                <tbody>
                   {filteredMedia.map((item) => {
                     const Icon = typeIcons[item.type as keyof typeof typeIcons];
                     const colorClass = typeColors[item.type as keyof typeof typeColors];
@@ -303,37 +321,37 @@ export default function MediaLibraryPage() {
                         key={item.id}
                         onClick={() => setSelectedItem(item.id)}
                         className={cn(
-                          'cursor-pointer transition-colors',
+                          'cursor-pointer transition-colors border-b border-neutral-200/60 dark:border-neutral-800/60',
                           selectedItem === item.id
-                            ? 'bg-primary-50 dark:bg-primary-900/20'
+                            ? colors.primary.bg
                             : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
                         )}
                       >
-                        <td className="px-4 py-3">
+                        <td className="py-3 px-4">
                           <div className="flex items-center gap-3">
-                            <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', colorClass)}>
+                            <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', colorClass)} aria-hidden="true">
                               <Icon className="w-5 h-5" />
                             </div>
                             <span className="font-medium text-neutral-900 dark:text-white">{item.name}</span>
                           </div>
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="py-3 px-4">
                           <span className="text-sm text-neutral-600 dark:text-neutral-400 capitalize">{item.type}</span>
                         </td>
-                        <td className="px-4 py-3">
-                          <span className="text-sm text-neutral-600 dark:text-neutral-400">
+                        <td className="py-3 px-4">
+                          <span className="text-sm text-neutral-600 dark:text-neutral-400 tabular-nums">
                             {formatFileSize(item.size)}
                           </span>
                         </td>
-                        <td className="px-4 py-3">
-                          <span className="text-sm text-neutral-500">{item.folder}</span>
+                        <td className="py-3 px-4">
+                          <span className="text-sm text-neutral-500 dark:text-neutral-400">{item.folder}</span>
                         </td>
-                        <td className="px-4 py-3">
-                          <span className="text-sm text-neutral-600 dark:text-neutral-400">{item.usageCount}x</span>
+                        <td className="py-3 px-4">
+                          <span className="text-sm text-neutral-600 dark:text-neutral-400 tabular-nums">{item.usageCount}x</span>
                         </td>
-                        <td className="px-4 py-3">
-                          <button className="p-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg">
-                            <MoreHorizontal className="w-4 h-4 text-neutral-400" />
+                        <td className="py-3 px-4">
+                          <button className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors" aria-label={`Actions for ${item.name}`}>
+                            <MoreHorizontal className="w-4 h-4 text-neutral-400 dark:text-neutral-500" />
                           </button>
                         </td>
                       </tr>
@@ -352,12 +370,18 @@ export default function MediaLibraryPage() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
-              className="hidden lg:block w-80 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden"
+              className={cn(
+                'hidden lg:block w-80 overflow-hidden rounded-xl border',
+                'bg-white dark:bg-neutral-900',
+                'border-neutral-200/60 dark:border-neutral-800/60'
+              )}
+              role="complementary"
+              aria-label="Media details"
             >
               {/* Preview */}
               <div className="aspect-video bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
                 {selectedMedia.type === 'image' ? (
-                  <div className="w-full h-full bg-gradient-to-br from-neutral-200 to-neutral-300 dark:from-neutral-700 dark:to-neutral-800" />
+                  <div className="w-full h-full bg-neutral-200 dark:bg-neutral-700" />
                 ) : (
                   (() => {
                     const Icon = typeIcons[selectedMedia.type as keyof typeof typeIcons];
@@ -408,35 +432,54 @@ export default function MediaLibraryPage() {
                 </div>
 
                 {/* Alt Text */}
-                <div className="pt-4 border-t border-neutral-200 dark:border-neutral-800">
-                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                <div className="flex flex-col gap-2 pt-4 border-t border-neutral-200/60 dark:border-neutral-800/60">
+                  <label htmlFor="alt-text" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                     Alt Text
                   </label>
                   <textarea
+                    id="alt-text"
                     defaultValue={selectedMedia.altText}
                     rows={2}
                     className={cn(
-                      'w-full px-3 py-2 rounded-xl resize-none',
-                      'bg-neutral-50 dark:bg-neutral-800',
-                      'border border-neutral-200 dark:border-neutral-700',
-                      'text-sm text-neutral-900 dark:text-white',
-                      'focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500'
+                      'px-4 py-2.5 rounded-xl text-sm resize-none',
+                      'bg-white dark:bg-neutral-900',
+                      'border border-neutral-200 dark:border-neutral-800',
+                      'text-neutral-900 dark:text-white',
+                      'placeholder:text-neutral-400 dark:placeholder:text-neutral-500',
+                      'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary'
                     )}
+                    aria-describedby="alt-text-help"
                   />
                 </div>
 
                 {/* Actions */}
-                <div className="pt-4 border-t border-neutral-200 dark:border-neutral-800 space-y-2">
-                  <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 font-medium rounded-xl hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors">
-                    <Copy className="w-4 h-4" />
+                <div className="pt-4 border-t border-neutral-200/60 dark:border-neutral-800/60 space-y-2">
+                  <button className={cn(
+                    'flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl text-sm font-medium transition-colors',
+                    'bg-white dark:bg-neutral-900',
+                    'border border-neutral-200 dark:border-neutral-800',
+                    'text-neutral-700 dark:text-neutral-300',
+                    'hover:bg-neutral-50 dark:hover:bg-neutral-800'
+                  )}>
+                    <Copy className="w-4 h-4" aria-hidden="true" />
                     Copy URL
                   </button>
-                  <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 font-medium rounded-xl hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors">
-                    <Download className="w-4 h-4" />
+                  <button className={cn(
+                    'flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl text-sm font-medium transition-colors',
+                    'bg-white dark:bg-neutral-900',
+                    'border border-neutral-200 dark:border-neutral-800',
+                    'text-neutral-700 dark:text-neutral-300',
+                    'hover:bg-neutral-50 dark:hover:bg-neutral-800'
+                  )}>
+                    <Download className="w-4 h-4" aria-hidden="true" />
                     Download
                   </button>
-                  <button className="w-full flex items-center justify-center gap-2 px-4 py-2 text-red-600 dark:text-red-400 font-medium rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                    <Trash2 className="w-4 h-4" />
+                  <button className={cn(
+                    'flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl text-sm font-medium transition-colors',
+                    colors.error.text,
+                    colors.error.bg
+                  )}>
+                    <Trash2 className="w-4 h-4" aria-hidden="true" />
                     Delete
                   </button>
                 </div>

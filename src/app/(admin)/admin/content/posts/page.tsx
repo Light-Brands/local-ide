@@ -17,6 +17,31 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { colors, statusColors } from '@/lib/design/tokens';
+
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.06,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 16 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.4,
+      ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
+    },
+  },
+};
 
 // Demo content data
 const contentItems = [
@@ -71,22 +96,22 @@ const statusConfig = {
   published: {
     label: 'Published',
     icon: CheckCircle,
-    color: 'text-emerald-700 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/30',
+    color: cn(colors.success.text, colors.success.bg),
   },
   draft: {
     label: 'Draft',
     icon: Clock,
-    color: 'text-amber-700 bg-amber-50 dark:text-amber-400 dark:bg-amber-900/30',
+    color: cn(colors.primary.text, colors.primary.bg),
   },
   scheduled: {
     label: 'Scheduled',
     icon: Clock,
-    color: 'text-blue-700 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/30',
+    color: cn(colors.secondary.text, colors.secondary.bg),
   },
   archived: {
     label: 'Archived',
     icon: XCircle,
-    color: 'text-neutral-600 bg-neutral-100 dark:text-neutral-400 dark:bg-neutral-800',
+    color: 'text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800',
   },
 };
 
@@ -114,64 +139,90 @@ export default function ContentPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="admin-section"
+    >
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
-            Content
+      <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white tracking-tight">
+            Posts
           </h1>
-          <p className="text-neutral-500 mt-1 text-sm">
+          <p className="text-neutral-500 dark:text-neutral-400 mt-1">
             Manage your pages and blog posts
           </p>
         </div>
-        <button className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary-500 to-secondary-500 text-white text-sm font-medium rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-primary-500/25">
-          <Plus className="w-4 h-4" />
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className={cn(
+            'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium',
+            'bg-primary text-primary-foreground',
+            'hover:bg-primary-hover transition-colors'
+          )}
+          aria-label="Create new content"
+        >
+          <Plus className="w-4 h-4" aria-hidden="true" />
           New Content
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+      <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 dark:text-neutral-500" aria-hidden="true" />
           <input
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search content..."
             className={cn(
-              'w-full pl-9 pr-4 py-2.5 rounded-xl',
+              'w-full pl-10 pr-4 py-2.5 rounded-xl text-sm',
               'bg-white dark:bg-neutral-900',
               'border border-neutral-200 dark:border-neutral-800',
-              'text-sm text-neutral-900 dark:text-white',
-              'placeholder:text-neutral-500',
-              'focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500'
+              'placeholder:text-neutral-400 dark:placeholder:text-neutral-500',
+              'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary'
             )}
+            aria-label="Search content"
           />
         </div>
-        <button className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">
-          <Filter className="w-4 h-4" />
+        <button className={cn(
+          'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium',
+          'bg-white dark:bg-neutral-900',
+          'border border-neutral-200 dark:border-neutral-800',
+          'text-neutral-700 dark:text-neutral-300',
+          'hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors'
+        )} aria-haspopup="true" aria-expanded="false">
+          <Filter className="w-4 h-4" aria-hidden="true" />
           Filters
-          <ChevronDown className="w-4 h-4" />
+          <ChevronDown className="w-4 h-4" aria-hidden="true" />
         </button>
-      </div>
+      </motion.div>
 
       {/* Bulk actions */}
       {selectedItems.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-wrap items-center gap-3 p-4 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-xl"
+          className={cn(
+            'p-4 rounded-xl border flex flex-wrap items-center gap-3 mb-6',
+            colors.primary.bg,
+            colors.primary.border
+          )}
+          role="toolbar"
+          aria-label="Bulk actions"
         >
-          <span className="text-sm font-medium text-primary-700 dark:text-primary-300">
+          <span className={cn('text-sm font-medium', colors.primary.text)}>
             {selectedItems.length} selected
           </span>
           <div className="flex items-center gap-2">
-            <button className="px-3 py-1.5 text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/40 rounded-lg transition-colors">
+            <button className={cn('px-3 py-1.5 text-sm font-medium rounded-lg transition-colors', colors.primary.text, colors.primary.bg.replace('bg-', 'hover:bg-'))}>
               Publish
             </button>
-            <button className="px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-lg transition-colors">
+            <button className={cn('px-3 py-1.5 text-sm font-medium rounded-lg transition-colors', colors.error.text, colors.error.bg.replace('bg-', 'hover:bg-'))}>
               Delete
             </button>
           </div>
@@ -179,17 +230,21 @@ export default function ContentPage() {
       )}
 
       {/* Content List - Mobile Card View */}
-      <div className="block lg:hidden space-y-3">
+      <motion.div variants={itemVariants} className="block lg:hidden space-y-3" role="list">
         {filteredContent.map((item) => {
           const status = statusConfig[item.status as keyof typeof statusConfig];
           const StatusIcon = status.icon;
 
           return (
-            <motion.div
+            <motion.article
               key={item.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-4"
+              className={cn(
+                'p-5 rounded-xl border',
+                'bg-white dark:bg-neutral-900',
+                'border-neutral-200/60 dark:border-neutral-800/60'
+              )}
             >
               <div className="flex items-start gap-3">
                 <input
@@ -197,6 +252,7 @@ export default function ContentPage() {
                   checked={selectedItems.includes(item.id)}
                   onChange={() => toggleSelectItem(item.id)}
                   className="mt-1 w-4 h-4 rounded border-neutral-300 text-primary-500 focus:ring-primary-500"
+                  aria-label={`Select ${item.title}`}
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
@@ -205,49 +261,53 @@ export default function ContentPage() {
                     </h3>
                     <span
                       className={cn(
-                        'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0',
+                        'admin-badge flex-shrink-0',
                         status.color
                       )}
                     >
-                      <StatusIcon className="w-3 h-3" />
+                      <StatusIcon className="w-3 h-3" aria-hidden="true" />
                       {status.label}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 mt-2 text-xs text-neutral-500">
+                  <div className="flex items-center gap-3 mt-2 text-xs text-neutral-500 flex-wrap">
                     <span className="capitalize">{item.type}</span>
-                    <span>•</span>
+                    <span aria-hidden="true">•</span>
                     <span>{item.author}</span>
-                    <span>•</span>
-                    <span>{item.views.toLocaleString()} views</span>
+                    <span aria-hidden="true">•</span>
+                    <span className="tabular-nums">{item.views.toLocaleString()} views</span>
                   </div>
-                  <div className="flex items-center gap-2 mt-3">
-                    <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors">
-                      <Eye className="w-3.5 h-3.5" />
+                  <div className="admin-actions mt-3">
+                    <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors" aria-label={`View ${item.title}`}>
+                      <Eye className="w-3.5 h-3.5" aria-hidden="true" />
                       View
                     </button>
-                    <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors">
-                      <Edit className="w-3.5 h-3.5" />
+                    <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors" aria-label={`Edit ${item.title}`}>
+                      <Edit className="w-3.5 h-3.5" aria-hidden="true" />
                       Edit
                     </button>
-                    <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors">
-                      <Trash2 className="w-3.5 h-3.5" />
+                    <button className={cn('flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors', colors.error.text, colors.error.bg)} aria-label={`Delete ${item.title}`}>
+                      <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                       Delete
                     </button>
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </motion.article>
           );
         })}
-      </div>
+      </motion.div>
 
       {/* Content Table - Desktop View */}
-      <div className="hidden lg:block bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+      <motion.div variants={itemVariants} className={cn(
+        'hidden lg:block overflow-hidden rounded-xl border',
+        'bg-white dark:bg-neutral-900',
+        'border-neutral-200/60 dark:border-neutral-800/60'
+      )}>
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-neutral-50 dark:bg-neutral-800/50 border-b border-neutral-200 dark:border-neutral-800">
-              <tr>
-                <th className="w-12 px-4 py-3">
+          <table className="w-full border-collapse" role="grid">
+            <thead>
+              <tr className="border-b border-neutral-200/60 dark:border-neutral-800/60">
+                <th scope="col" className="w-12 px-4 py-3">
                   <input
                     type="checkbox"
                     checked={
@@ -255,123 +315,116 @@ export default function ContentPage() {
                       filteredContent.length > 0
                     }
                     onChange={toggleSelectAll}
-                    className="w-4 h-4 rounded border-neutral-300 text-primary-500 focus:ring-primary-500"
+                    className="w-4 h-4 rounded border-neutral-300 text-primary focus:ring-primary/20"
+                    aria-label="Select all items"
                   />
                 </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-                  Title
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-                  Type
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-                  Author
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-                  Updated
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-                  Views
-                </th>
-                <th className="w-12"></th>
+                <th scope="col" className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Title</th>
+                <th scope="col" className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Type</th>
+                <th scope="col" className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Status</th>
+                <th scope="col" className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Author</th>
+                <th scope="col" className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Updated</th>
+                <th scope="col" className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Views</th>
+                <th scope="col" className="w-12 py-3 px-4"><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
+            <tbody>
               {filteredContent.map((item) => {
                 const status = statusConfig[item.status as keyof typeof statusConfig];
                 const StatusIcon = status.icon;
 
                 return (
-                  <tr
-                    key={item.id}
-                    className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
-                  >
-                    <td className="px-4 py-3">
+                  <tr key={item.id} className="border-b border-neutral-200/60 dark:border-neutral-800/60 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
+                    <td className="py-3 px-4">
                       <input
                         type="checkbox"
                         checked={selectedItems.includes(item.id)}
                         onChange={() => toggleSelectItem(item.id)}
-                        className="w-4 h-4 rounded border-neutral-300 text-primary-500 focus:ring-primary-500"
+                        className="w-4 h-4 rounded border-neutral-300 text-primary focus:ring-primary/20"
+                        aria-label={`Select ${item.title}`}
                       />
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-                          <FileText className="w-4 h-4 text-neutral-500" />
+                        <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center" aria-hidden="true">
+                          <FileText className="w-4 h-4 text-neutral-500 dark:text-neutral-400" />
                         </div>
                         <span className="font-medium text-neutral-900 dark:text-white">
                           {item.title}
                         </span>
                       </div>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="py-3 px-4">
                       <span className="text-sm text-neutral-600 dark:text-neutral-400 capitalize">
                         {item.type}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={cn(
-                          'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium',
-                          status.color
-                        )}
-                      >
-                        <StatusIcon className="w-3.5 h-3.5" />
+                    <td className="py-3 px-4">
+                      <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium', status.color)}>
+                        <StatusIcon className="w-3.5 h-3.5" aria-hidden="true" />
                         {status.label}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="py-3 px-4">
                       <span className="text-sm text-neutral-600 dark:text-neutral-400">
                         {item.author}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
-                      <span className="text-sm text-neutral-500">
+                    <td className="py-3 px-4">
+                      <time className="text-sm text-neutral-500 dark:text-neutral-400">
                         {item.updatedAt}
-                      </span>
+                      </time>
                     </td>
-                    <td className="px-4 py-3">
-                      <span className="text-sm text-neutral-600 dark:text-neutral-400">
+                    <td className="py-3 px-4">
+                      <span className="text-sm text-neutral-600 dark:text-neutral-400 tabular-nums">
                         {item.views.toLocaleString()}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="relative">
+                    <td className="py-3 px-4">
+                      <div className="relative group">
                         <button
                           onClick={() => setActiveMenu(activeMenu === item.id ? null : item.id)}
-                          className="p-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
+                          className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                          aria-label={`Actions for ${item.title}`}
+                          aria-haspopup="menu"
+                          aria-expanded={activeMenu === item.id}
                         >
-                          <MoreHorizontal className="w-4 h-4 text-neutral-400" />
+                          <MoreHorizontal className="w-4 h-4 text-neutral-400 dark:text-neutral-500" />
                         </button>
                         {activeMenu === item.id && (
                           <>
                             <div
                               className="fixed inset-0 z-10"
                               onClick={() => setActiveMenu(null)}
+                              aria-hidden="true"
                             />
-                            <div className="absolute right-0 mt-1 w-40 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-lg z-20 overflow-hidden">
+                            <div className={cn(
+                              'absolute right-0 mt-1 w-40 rounded-xl border shadow-lg z-20 overflow-hidden p-1',
+                              'bg-white dark:bg-neutral-900',
+                              'border-neutral-200 dark:border-neutral-800'
+                            )} role="menu">
                               <button
                                 onClick={() => setActiveMenu(null)}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-lg transition-colors"
+                                role="menuitem"
                               >
-                                <Eye className="w-4 h-4" />
+                                <Eye className="w-4 h-4" aria-hidden="true" />
                                 View
                               </button>
                               <button
                                 onClick={() => setActiveMenu(null)}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-lg transition-colors"
+                                role="menuitem"
                               >
-                                <Edit className="w-4 h-4" />
+                                <Edit className="w-4 h-4" aria-hidden="true" />
                                 Edit
                               </button>
                               <button
                                 onClick={() => setActiveMenu(null)}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                className={cn('w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors', colors.error.text, colors.error.bg.replace('bg-', 'hover:bg-'))}
+                                role="menuitem"
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-4 h-4" aria-hidden="true" />
                                 Delete
                               </button>
                             </div>
@@ -387,26 +440,42 @@ export default function ContentPage() {
         </div>
 
         {/* Pagination */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-neutral-200 dark:border-neutral-800">
-          <span className="text-sm text-neutral-500">
-            Showing {filteredContent.length} of {contentItems.length} items
-          </span>
+        <nav className="flex items-center justify-between px-4 py-3 border-t border-neutral-200/60 dark:border-neutral-800/60" aria-label="Pagination">
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">
+            Showing <span className="tabular-nums">{filteredContent.length}</span> of <span className="tabular-nums">{contentItems.length}</span> items
+          </p>
           <div className="flex items-center gap-2">
             <button
-              className="px-3 py-1.5 text-sm font-medium text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 disabled:opacity-50 transition-colors"
+              className={cn(
+                'px-4 py-2 rounded-xl text-sm font-medium transition-colors',
+                'bg-white dark:bg-neutral-900',
+                'border border-neutral-200 dark:border-neutral-800',
+                'text-neutral-700 dark:text-neutral-300',
+                'hover:bg-neutral-50 dark:hover:bg-neutral-800',
+                'disabled:opacity-50 disabled:cursor-not-allowed'
+              )}
               disabled
+              aria-label="Go to previous page"
             >
               Previous
             </button>
             <button
-              className="px-3 py-1.5 text-sm font-medium text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 disabled:opacity-50 transition-colors"
+              className={cn(
+                'px-4 py-2 rounded-xl text-sm font-medium transition-colors',
+                'bg-white dark:bg-neutral-900',
+                'border border-neutral-200 dark:border-neutral-800',
+                'text-neutral-700 dark:text-neutral-300',
+                'hover:bg-neutral-50 dark:hover:bg-neutral-800',
+                'disabled:opacity-50 disabled:cursor-not-allowed'
+              )}
               disabled
+              aria-label="Go to next page"
             >
               Next
             </button>
           </div>
-        </div>
-      </div>
-    </div>
+        </nav>
+      </motion.div>
+    </motion.div>
   );
 }

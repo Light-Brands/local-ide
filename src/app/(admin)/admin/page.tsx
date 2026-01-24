@@ -18,8 +18,9 @@ import {
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { SkeletonDashboard } from '@/components/admin/Skeleton';
+import { colors, gradients } from '@/lib/design/tokens';
 
-// Demo stats data - using refined design system colors
+// Demo stats data - using design tokens
 const stats = [
   {
     label: 'Total Users',
@@ -27,8 +28,7 @@ const stats = [
     change: '+12.5%',
     trend: 'up',
     icon: Users,
-    gradient: 'from-primary-500 to-primary-600',
-    shadowColor: 'shadow-primary-500/20',
+    gradient: gradients.primary,
   },
   {
     label: 'Content Items',
@@ -36,8 +36,7 @@ const stats = [
     change: '+8.2%',
     trend: 'up',
     icon: FileText,
-    gradient: 'from-secondary-500 to-secondary-600',
-    shadowColor: 'shadow-secondary-500/20',
+    gradient: gradients.secondary,
   },
   {
     label: 'Page Views',
@@ -45,8 +44,7 @@ const stats = [
     change: '+24.1%',
     trend: 'up',
     icon: Eye,
-    gradient: 'from-primary-400 to-primary-500',
-    shadowColor: 'shadow-primary-400/20',
+    gradient: gradients.primary,
   },
   {
     label: 'Conversion',
@@ -54,8 +52,7 @@ const stats = [
     change: '-2.4%',
     trend: 'down',
     icon: TrendingUp,
-    gradient: 'from-secondary-400 to-secondary-500',
-    shadowColor: 'shadow-secondary-400/20',
+    gradient: gradients.secondary,
   },
 ];
 
@@ -140,18 +137,15 @@ export default function AdminDashboard() {
       variants={containerVariants}
       initial="hidden"
       animate="show"
-      className="space-y-6"
+      className="admin-section"
     >
-      {/* Header - Refined */}
-      <motion.div
-        variants={itemVariants}
-        className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
-      >
-        <div>
+      {/* Header */}
+      <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex-1">
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-white tracking-tight">
             Dashboard
           </h1>
-          <p className="text-neutral-500 dark:text-neutral-400 mt-1 text-sm">
+          <p className="text-neutral-500 dark:text-neutral-400 mt-1">
             Welcome back! Here&apos;s what&apos;s happening.
           </p>
         </div>
@@ -159,24 +153,21 @@ export default function AdminDashboard() {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           className={cn(
-            'inline-flex items-center justify-center gap-2 px-4 py-2.5',
-            'text-sm font-medium',
+            'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium',
+            'bg-white dark:bg-neutral-900',
+            'border border-neutral-200 dark:border-neutral-800',
             'text-neutral-700 dark:text-neutral-300',
-            'bg-white dark:bg-neutral-800',
-            'border border-neutral-200/80 dark:border-neutral-700/80',
-            'rounded-xl',
-            'hover:bg-neutral-50 dark:hover:bg-neutral-700/80',
-            'shadow-sm',
-            'transition-colors duration-200'
+            'hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors'
           )}
+          aria-label="Filter by time period"
         >
           <Calendar className="w-4 h-4" />
           Last 7 days
         </motion.button>
       </motion.div>
 
-      {/* Stats Grid - Refined with premium cards */}
-      <motion.div variants={itemVariants} className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
+      {/* Stats Grid */}
+      <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
@@ -187,89 +178,77 @@ export default function AdminDashboard() {
               transition={{ delay: index * 0.08, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
               whileHover={{ y: -2, transition: { duration: 0.2 } }}
               className={cn(
-                'group relative',
+                'p-5 rounded-xl border transition-all',
                 'bg-white dark:bg-neutral-900',
-                'rounded-2xl',
-                'border border-neutral-200/60 dark:border-neutral-800/60',
-                'p-5 lg:p-6',
-                'hover:shadow-lg hover:shadow-neutral-900/[0.04] dark:hover:shadow-neutral-950/30',
-                'transition-all duration-300'
+                'border-neutral-200/60 dark:border-neutral-800/60',
+                'hover:shadow-sm'
               )}
+              role="article"
+              aria-label={`${stat.label}: ${stat.value}, ${stat.change}`}
             >
               <div className="flex items-start justify-between mb-4">
-                {/* Icon with gradient */}
-                <div
-                  className={cn(
-                    'w-10 h-10 rounded-xl',
-                    'bg-gradient-to-br flex items-center justify-center',
-                    'shadow-lg',
-                    stat.gradient,
-                    stat.shadowColor
-                  )}
-                >
-                  <Icon className="w-5 h-5 text-white" />
+                <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center text-white', stat.gradient)}>
+                  <Icon className="w-5 h-5" aria-hidden="true" />
                 </div>
 
-                {/* Trend badge */}
-                <div
+                <span
                   className={cn(
-                    'flex items-center gap-0.5 text-xs font-semibold',
-                    'px-2 py-1 rounded-full',
+                    'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium',
                     stat.trend === 'up'
-                      ? 'text-emerald-700 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/30'
-                      : 'text-red-700 bg-red-50 dark:text-red-400 dark:bg-red-900/30'
+                      ? cn(colors.success.text, colors.success.bg)
+                      : cn(colors.error.text, colors.error.bg)
                   )}
                 >
                   {stat.trend === 'up' ? (
-                    <ArrowUpRight className="w-3 h-3" />
+                    <ArrowUpRight className="w-3 h-3" aria-hidden="true" />
                   ) : (
-                    <ArrowDownRight className="w-3 h-3" />
+                    <ArrowDownRight className="w-3 h-3" aria-hidden="true" />
                   )}
                   {stat.change}
-                </div>
+                </span>
               </div>
 
-              {/* Value */}
-              <p className="text-2xl lg:text-3xl font-bold text-neutral-900 dark:text-white tracking-tight">
-                {stat.value}
-              </p>
-              <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-                {stat.label}
-              </p>
+              <div>
+                <p className="text-2xl lg:text-3xl font-bold text-neutral-900 dark:text-white tracking-tight tabular-nums">
+                  {stat.value}
+                </p>
+                <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
+                  {stat.label}
+                </p>
+              </div>
             </motion.div>
           );
         })}
       </motion.div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         {/* Recent Activity */}
         <motion.div
           variants={itemVariants}
           className={cn(
-            'lg:col-span-2',
+            'p-5 rounded-xl border',
             'bg-white dark:bg-neutral-900',
-            'rounded-2xl',
-            'border border-neutral-200/60 dark:border-neutral-800/60',
-            'overflow-hidden'
+            'border-neutral-200/60 dark:border-neutral-800/60'
           )}
+          role="region"
+          aria-labelledby="recent-activity-title"
         >
-          {/* Card Header */}
-          <div className="p-5 border-b border-neutral-200/60 dark:border-neutral-800/60 flex items-center justify-between">
-            <h2 className="text-base font-semibold text-neutral-900 dark:text-white">
+          <div className="flex items-center justify-between mb-4">
+            <h2 id="recent-activity-title" className="text-xs font-semibold text-neutral-900 dark:text-white uppercase tracking-wider">
               Recent Activity
             </h2>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
+              className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+              aria-label="More options"
             >
-              <MoreHorizontal className="w-4 h-4 text-neutral-400" />
+              <MoreHorizontal className="w-4 h-4 text-neutral-400 dark:text-neutral-500" />
             </motion.button>
           </div>
 
-          {/* Activity List */}
-          <div className="divide-y divide-neutral-100 dark:divide-neutral-800/60">
+          <div className="space-y-0">
             <AnimatePresence>
               {recentActivity.map((activity, index) => (
                 <motion.div
@@ -277,60 +256,53 @@ export default function AdminDashboard() {
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05, duration: 0.3 }}
-                  className="p-4 sm:px-5 flex items-center gap-3 sm:gap-4 hover:bg-neutral-50/80 dark:hover:bg-neutral-800/40 transition-colors"
+                  className={cn(
+                    'flex items-center gap-3 py-3',
+                    index < recentActivity.length - 1 && 'border-b border-neutral-200/60 dark:border-neutral-800/60'
+                  )}
                 >
-                  {/* Avatar */}
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-primary-500/10">
-                    <span className="text-sm font-semibold text-white">
-                      {activity.user.charAt(0)}
-                    </span>
+                  <div className={cn('w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium text-white', colors.primary.solid)} aria-hidden="true">
+                    {activity.user.charAt(0)}
                   </div>
 
-                  {/* Content */}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-neutral-900 dark:text-white">
                       <span className="font-semibold">{activity.user}</span>{' '}
                       <span className="text-neutral-500 dark:text-neutral-400">{activity.action}</span>{' '}
                       <span className="font-medium">{activity.target}</span>
                     </p>
-                    <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-0.5">
+                    <time className="text-xs text-neutral-400 dark:text-neutral-500 mt-0.5 block">
                       {activity.time}
-                    </p>
+                    </time>
                   </div>
                 </motion.div>
               ))}
             </AnimatePresence>
           </div>
 
-          {/* View All Link */}
-          <div className="p-4 sm:p-5 border-t border-neutral-200/60 dark:border-neutral-800/60">
+          <div className="pt-4 mt-4 border-t border-neutral-200/60 dark:border-neutral-800/60">
             <Link
               href="/admin/analytics"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors group"
+              className={cn('inline-flex items-center gap-1.5 text-sm font-medium transition-colors group', colors.primary.text)}
             >
               View all activity
-              <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" aria-hidden="true" />
             </Link>
           </div>
         </motion.div>
 
         {/* Right Sidebar */}
-        <motion.div variants={itemVariants} className="space-y-5 lg:space-y-6">
+        <motion.div variants={itemVariants} className="flex flex-col gap-6">
           {/* Quick Actions */}
-          <div
-            className={cn(
-              'bg-white dark:bg-neutral-900',
-              'rounded-2xl',
-              'border border-neutral-200/60 dark:border-neutral-800/60',
-              'overflow-hidden'
-            )}
-          >
-            <div className="p-5 border-b border-neutral-200/60 dark:border-neutral-800/60">
-              <h2 className="text-base font-semibold text-neutral-900 dark:text-white">
-                Quick Actions
-              </h2>
-            </div>
-            <div className="p-3 sm:p-4 grid grid-cols-3 gap-2 sm:gap-3">
+          <div className={cn(
+            'p-5 rounded-xl border',
+            'bg-white dark:bg-neutral-900',
+            'border-neutral-200/60 dark:border-neutral-800/60'
+          )} role="region" aria-labelledby="quick-actions-title">
+            <h2 id="quick-actions-title" className="text-xs font-semibold text-neutral-900 dark:text-white uppercase tracking-wider mb-4">
+              Quick Actions
+            </h2>
+            <nav className="grid grid-cols-3 gap-3" aria-label="Quick actions">
               {quickActions.map((action, index) => {
                 const Icon = action.icon;
                 return (
@@ -345,22 +317,15 @@ export default function AdminDashboard() {
                     <Link
                       href={action.href}
                       className={cn(
-                        'flex flex-col items-center gap-2 p-3 sm:p-4 rounded-xl',
+                        'flex flex-col items-center gap-2 p-4 rounded-xl',
                         'bg-neutral-50 dark:bg-neutral-800/50',
                         'hover:bg-neutral-100 dark:hover:bg-neutral-800',
-                        'transition-colors text-center',
-                        'group'
+                        'transition-colors text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20',
+                        'group border border-neutral-200/50 dark:border-neutral-700/50'
                       )}
                     >
-                      <div className={cn(
-                        'w-10 h-10 rounded-xl',
-                        'bg-white dark:bg-neutral-700',
-                        'flex items-center justify-center',
-                        'shadow-sm',
-                        'group-hover:shadow-md',
-                        'transition-shadow'
-                      )}>
-                        <Icon className="w-5 h-5 text-neutral-600 dark:text-neutral-300" />
+                      <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', colors.primary.bg)}>
+                        <Icon className="w-5 h-5 text-white" aria-hidden="true" />
                       </div>
                       <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
                         {action.label}
@@ -369,28 +334,23 @@ export default function AdminDashboard() {
                   </motion.div>
                 );
               })}
-            </div>
+            </nav>
           </div>
 
           {/* Traffic Overview */}
-          <div
-            className={cn(
-              'bg-white dark:bg-neutral-900',
-              'rounded-2xl',
-              'border border-neutral-200/60 dark:border-neutral-800/60',
-              'overflow-hidden'
-            )}
-          >
-            <div className="p-5 border-b border-neutral-200/60 dark:border-neutral-800/60">
-              <h2 className="text-base font-semibold text-neutral-900 dark:text-white">
-                Traffic Sources
-              </h2>
-            </div>
-            <div className="p-5 space-y-4">
+          <div className={cn(
+            'p-5 rounded-xl border',
+            'bg-white dark:bg-neutral-900',
+            'border-neutral-200/60 dark:border-neutral-800/60'
+          )} role="region" aria-labelledby="traffic-title">
+            <h2 id="traffic-title" className="text-xs font-semibold text-neutral-900 dark:text-white uppercase tracking-wider mb-4">
+              Traffic Sources
+            </h2>
+            <div className="space-y-4">
               {[
-                { label: 'Direct', value: 42, color: 'bg-primary-500' },
-                { label: 'Organic', value: 31, color: 'bg-secondary-500' },
-                { label: 'Referral', value: 27, color: 'bg-primary-400' },
+                { label: 'Direct', value: 42, color: colors.primary.solid },
+                { label: 'Organic', value: 31, color: colors.secondary.solid },
+                { label: 'Referral', value: 27, color: colors.primary.solid },
               ].map((source, index) => (
                 <motion.div
                   key={source.label}
@@ -402,11 +362,11 @@ export default function AdminDashboard() {
                     <span className="text-neutral-600 dark:text-neutral-400">
                       {source.label}
                     </span>
-                    <span className="font-semibold text-neutral-900 dark:text-white">
+                    <span className="font-semibold text-neutral-900 dark:text-white tabular-nums">
                       {source.value}%
                     </span>
                   </div>
-                  <div className="h-2 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden" role="progressbar" aria-valuenow={source.value} aria-valuemin={0} aria-valuemax={100} aria-label={`${source.label} traffic: ${source.value}%`}>
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${source.value}%` }}

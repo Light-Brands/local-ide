@@ -110,22 +110,22 @@ export default function AdminLayout({
         <main className="p-4 md:p-6 lg:p-8 admin-scrollbar">
           {/* Demo mode banner */}
           {isDemo && (
-            <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200/80 dark:border-amber-800/50 flex items-start gap-3 shadow-sm">
+            <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 border border-primary-200/80 dark:border-primary-800/50 flex items-start gap-3 shadow-sm">
               <div className="relative mt-1 flex-shrink-0">
-                <div className="w-2 h-2 rounded-full bg-amber-500" />
-                <div className="absolute inset-0 w-2 h-2 rounded-full bg-amber-500 animate-ping opacity-75" />
+                <div className="w-2 h-2 rounded-full bg-primary-600" />
+                <div className="absolute inset-0 w-2 h-2 rounded-full bg-primary-600 animate-ping opacity-75" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">
+                <p className="text-sm font-semibold text-primary-800 dark:text-primary-200">
                   Demo Mode Active
                 </p>
-                <p className="text-xs text-amber-700/80 dark:text-amber-300/80 mt-0.5">
+                <p className="text-xs text-primary-700/80 dark:text-primary-300/80 mt-0.5">
                   You&apos;re viewing sample data. Connect Supabase to manage real content.
                 </p>
               </div>
               <a
                 href="/setup"
-                className="hidden sm:flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-800/30 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-800/50 transition-colors flex-shrink-0"
+                className="hidden sm:flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-primary-700 dark:text-primary-300 bg-primary-100 dark:bg-primary-800/30 rounded-lg hover:bg-primary-200 dark:hover:bg-primary-800/50 transition-colors flex-shrink-0"
               >
                 Setup
               </a>

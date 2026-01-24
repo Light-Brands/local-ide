@@ -6,6 +6,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { Bug, Sparkles, HelpCircle, FileText, type LucideIcon } from 'lucide-react';
 import { useFeedback } from '@/contexts/FeedbackContext';
 import {
   categoryConfig,
@@ -13,8 +14,17 @@ import {
   statusConfig,
   type FeedbackItem,
   type FeedbackStatus,
+  type FeedbackCategory,
 } from '@/lib/feedback/types';
 import { isBrowser } from '@/lib/feedback';
+
+// Icon mapping for categories
+const categoryIcons: Record<FeedbackCategory, LucideIcon> = {
+  bug: Bug,
+  enhancement: Sparkles,
+  question: HelpCircle,
+  content: FileText,
+};
 
 interface FeedbackDetailProps {
   feedback: FeedbackItem;
@@ -91,7 +101,7 @@ export function FeedbackDetail({ feedback, onClose, onNavigate }: FeedbackDetail
         {/* Header */}
         <div className="bg-neutral-800/50 border-b border-neutral-700 px-6 py-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">{category.icon}</span>
+            {(() => { const Icon = categoryIcons[feedback.category]; return <Icon className="w-6 h-6 text-neutral-300" />; })()}
             <div>
               <h2 className="text-lg font-black text-neutral-100">{feedback.title}</h2>
               <div className="text-xs text-neutral-400">{feedback.section_path}</div>

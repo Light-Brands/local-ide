@@ -159,8 +159,8 @@ export function ContentStatCard({
           <span
             className={cn(
               'text-xs font-semibold px-2 py-1 rounded-full',
-              changeType === 'up' && 'text-emerald-700 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/30',
-              changeType === 'down' && 'text-red-700 bg-red-50 dark:text-red-400 dark:bg-red-900/30',
+              changeType === 'up' && 'text-success bg-success/10 dark:text-success dark:bg-success/20',
+              changeType === 'down' && 'text-error bg-error/10 dark:text-error dark:bg-error/20',
               changeType === 'neutral' && 'text-neutral-600 bg-neutral-100 dark:text-neutral-400 dark:bg-neutral-800'
             )}
           >

@@ -14,6 +14,31 @@ import {
   Tablet,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { colors, statusColors } from '@/lib/design/tokens';
+
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.06,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 16 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.4,
+      ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
+    },
+  },
+};
 
 // Demo analytics data
 const overviewStats = [
@@ -64,34 +89,48 @@ const topCountries = [
 ];
 
 const devices = [
-  { device: 'Desktop', icon: Monitor, percentage: 58, color: 'bg-primary-500' },
-  { device: 'Mobile', icon: Smartphone, percentage: 35, color: 'bg-secondary-500' },
-  { device: 'Tablet', icon: Tablet, percentage: 7, color: 'bg-green-500' },
+  { device: 'Desktop', icon: Monitor, percentage: 58, color: colors.primary.solid },
+  { device: 'Mobile', icon: Smartphone, percentage: 35, color: colors.secondary.solid },
+  { device: 'Tablet', icon: Tablet, percentage: 7, color: 'bg-neutral-400 dark:bg-neutral-500' },
 ];
 
 export default function AnalyticsPage() {
   return (
-    <div className="space-y-6">
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="admin-section"
+    >
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
+      <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white tracking-tight">
             Analytics
           </h1>
-          <p className="text-neutral-500 mt-1">
+          <p className="text-neutral-500 dark:text-neutral-400 mt-1">
             Track your site&apos;s performance and visitor behavior
           </p>
         </div>
-        <select className="px-4 py-2 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm text-neutral-600 dark:text-neutral-400">
+        <select
+          className={cn(
+            'px-4 py-2.5 rounded-xl text-sm cursor-pointer',
+            'bg-white dark:bg-neutral-900',
+            'border border-neutral-200 dark:border-neutral-800',
+            'text-neutral-900 dark:text-white',
+            'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary'
+          )}
+          aria-label="Select date range"
+        >
           <option>Last 7 days</option>
           <option>Last 30 days</option>
           <option>Last 90 days</option>
           <option>This year</option>
         </select>
-      </div>
+      </motion.div>
 
       {/* Overview Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" role="region" aria-label="Analytics overview">
         {overviewStats.map((stat, index) => {
           const Icon = stat.icon;
           return (
@@ -99,67 +138,92 @@ export default function AnalyticsPage() {
               key={stat.label}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 hover:shadow-lg hover:shadow-neutral-200/50 dark:hover:shadow-neutral-900/50 transition-shadow"
+              transition={{ delay: index * 0.08, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              whileHover={{ y: -2, transition: { duration: 0.2 } }}
+              className={cn(
+                'p-5 rounded-xl border transition-all',
+                'bg-white dark:bg-neutral-900',
+                'border-neutral-200/60 dark:border-neutral-800/60',
+                'hover:shadow-sm'
+              )}
             >
               <div className="flex items-center justify-between mb-4">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500/10 to-secondary-500/10 dark:from-primary-500/20 dark:to-secondary-500/20 flex items-center justify-center">
-                  <Icon className="w-5 h-5 text-primary-500" />
+                <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', colors.primary.bg)} aria-hidden="true">
+                  <Icon className={cn('w-5 h-5', colors.primary.text)} />
                 </div>
-                <div
+                <span
                   className={cn(
-                    'flex items-center gap-0.5 text-xs font-semibold px-2 py-1 rounded-full',
+                    'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium',
                     stat.trend === 'up'
-                      ? 'text-emerald-700 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/30'
-                      : 'text-red-700 bg-red-50 dark:text-red-400 dark:bg-red-900/30'
+                      ? cn(colors.success.text, colors.success.bg)
+                      : cn(colors.error.text, colors.error.bg)
                   )}
                 >
                   {stat.trend === 'up' ? (
-                    <ArrowUpRight className="w-3 h-3" />
+                    <ArrowUpRight className="w-3 h-3" aria-hidden="true" />
                   ) : (
-                    <ArrowDownRight className="w-3 h-3" />
+                    <ArrowDownRight className="w-3 h-3" aria-hidden="true" />
                   )}
                   {stat.change}
-                </div>
+                </span>
               </div>
               <p className="text-2xl font-bold text-neutral-900 dark:text-white tabular-nums">
                 {stat.value}
               </p>
-              <p className="text-xs font-medium text-neutral-500 mt-1">
+              <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400 mt-1">
                 {stat.label}
               </p>
             </motion.div>
           );
         })}
-      </div>
+      </motion.div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Visitors Chart Placeholder */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-6"
-        >
-          <h2 className="text-lg font-semibold text-neutral-900 dark:text-white mb-4">
-            Visitors Over Time
-          </h2>
-          <div className="h-64 flex flex-col items-center justify-center bg-neutral-50 dark:bg-neutral-800/50 rounded-xl border-2 border-dashed border-neutral-200 dark:border-neutral-700">
-            <TrendingUp className="w-8 h-8 text-neutral-300 dark:text-neutral-600 mb-2" />
-            <p className="text-sm text-neutral-500">Chart visualization</p>
-            <p className="text-xs text-neutral-400 mt-1">Connect analytics to view data</p>
+      <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Visitors Chart */}
+        <div className={cn(
+          'p-5 rounded-xl border',
+          'bg-white dark:bg-neutral-900',
+          'border-neutral-200/60 dark:border-neutral-800/60'
+        )} role="region" aria-labelledby="visitors-chart-heading">
+          <div className="flex items-center justify-between mb-4">
+            <h2 id="visitors-chart-heading" className="text-xs font-semibold text-neutral-900 dark:text-white uppercase tracking-wider">
+              Visitors Over Time
+            </h2>
+            <div className={cn('flex items-center gap-2 text-xs', colors.success.text)}>
+              <span className={cn('w-2 h-2 rounded-full animate-pulse', colors.success.solid)}></span>
+              <span>Growing</span>
+            </div>
           </div>
-        </motion.div>
+          <div className="flex items-end gap-0.5 h-12 mb-3">
+            {Array.from({ length: 48 }).map((_, i) => {
+              const height = 20 + Math.random() * 80;
+              const isRecent = i >= 43;
+              return (
+                <div
+                  key={i}
+                  className={cn(
+                    'flex-1 rounded-sm transition-all',
+                    isRecent ? colors.success.solid : 'bg-neutral-200 dark:bg-neutral-800'
+                  )}
+                  style={{ height: `${height}%` }}
+                />
+              );
+            })}
+          </div>
+          <div className="flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400">
+            <span>24,521 visitors today</span>
+            <span>+18.2% from yesterday</span>
+          </div>
+        </div>
 
         {/* Device Breakdown */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-6"
-        >
-          <h2 className="text-lg font-semibold text-neutral-900 dark:text-white mb-6">
+        <div className={cn(
+          'p-5 rounded-xl border',
+          'bg-white dark:bg-neutral-900',
+          'border-neutral-200/60 dark:border-neutral-800/60'
+        )} role="region" aria-labelledby="devices-heading">
+          <h2 id="devices-heading" className="text-xs font-semibold text-neutral-900 dark:text-white uppercase tracking-wider mb-6">
             Devices
           </h2>
           <div className="space-y-5">
@@ -169,7 +233,7 @@ export default function AnalyticsPage() {
                 <div key={item.device}>
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center" aria-hidden="true">
                         <Icon className="w-4 h-4 text-neutral-600 dark:text-neutral-400" />
                       </div>
                       <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
@@ -180,7 +244,7 @@ export default function AnalyticsPage() {
                       {item.percentage}%
                     </span>
                   </div>
-                  <div className="h-2 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden" role="progressbar" aria-valuenow={item.percentage} aria-valuemin={0} aria-valuemax={100} aria-label={`${item.device}: ${item.percentage}%`}>
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${item.percentage}%` }}
@@ -192,34 +256,34 @@ export default function AnalyticsPage() {
               );
             })}
           </div>
-        </motion.div>
-      </div>
+        </div>
+      </motion.div>
 
       {/* Tables Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Pages */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden"
-        >
-          <div className="p-5 border-b border-neutral-200 dark:border-neutral-800">
-            <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
-              Top Pages
-            </h2>
-          </div>
-          <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
-            {topPages.map((page) => (
+        <div className={cn(
+          'p-5 rounded-xl border',
+          'bg-white dark:bg-neutral-900',
+          'border-neutral-200/60 dark:border-neutral-800/60'
+        )} role="region" aria-labelledby="top-pages-heading">
+          <h2 id="top-pages-heading" className="text-xs font-semibold text-neutral-900 dark:text-white uppercase tracking-wider mb-4">
+            Top Pages
+          </h2>
+          <div className="space-y-0">
+            {topPages.map((page, index) => (
               <div
                 key={page.path}
-                className="px-5 py-3.5 flex items-center justify-between hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
+                className={cn(
+                  'flex items-center justify-between py-3',
+                  index < topPages.length - 1 && 'border-b border-neutral-200/60 dark:border-neutral-800/60'
+                )}
               >
                 <div>
                   <p className="text-sm font-medium text-neutral-900 dark:text-white">
                     {page.title}
                   </p>
-                  <p className="text-xs text-neutral-500 mt-0.5">{page.path}</p>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{page.path}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-bold text-neutral-900 dark:text-white tabular-nums">
@@ -227,10 +291,10 @@ export default function AnalyticsPage() {
                   </p>
                   <p
                     className={cn(
-                      'text-xs font-medium mt-0.5',
+                      'text-xs font-medium mt-0.5 tabular-nums',
                       page.change.startsWith('+')
-                        ? 'text-emerald-600 dark:text-emerald-400'
-                        : 'text-red-600 dark:text-red-400'
+                        ? colors.success.text
+                        : colors.error.text
                     )}
                   >
                     {page.change}
@@ -239,29 +303,31 @@ export default function AnalyticsPage() {
               </div>
             ))}
           </div>
-        </motion.div>
+        </div>
 
         {/* Top Countries */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
-          className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden"
-        >
-          <div className="p-5 border-b border-neutral-200 dark:border-neutral-800 flex items-center gap-2">
-            <Globe className="w-5 h-5 text-neutral-400" />
-            <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
+        <div className={cn(
+          'p-5 rounded-xl border',
+          'bg-white dark:bg-neutral-900',
+          'border-neutral-200/60 dark:border-neutral-800/60'
+        )} role="region" aria-labelledby="top-countries-heading">
+          <div className="flex items-center gap-2 mb-4">
+            <Globe className="w-4 h-4 text-neutral-400 dark:text-neutral-500" aria-hidden="true" />
+            <h2 id="top-countries-heading" className="text-xs font-semibold text-neutral-900 dark:text-white uppercase tracking-wider">
               Top Countries
             </h2>
           </div>
-          <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
-            {topCountries.map((item) => (
+          <div className="space-y-0">
+            {topCountries.map((item, index) => (
               <div
                 key={item.country}
-                className="px-5 py-3.5 flex items-center justify-between hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
+                className={cn(
+                  'flex items-center justify-between py-3',
+                  index < topCountries.length - 1 && 'border-b border-neutral-200/60 dark:border-neutral-800/60'
+                )}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center" aria-hidden="true">
                     <span className="text-[10px] font-bold text-neutral-600 dark:text-neutral-400">
                       {item.country.slice(0, 2).toUpperCase()}
                     </span>
@@ -274,13 +340,13 @@ export default function AnalyticsPage() {
                   <p className="text-sm font-bold text-neutral-900 dark:text-white tabular-nums">
                     {item.visitors.toLocaleString()}
                   </p>
-                  <p className="text-xs text-neutral-500 mt-0.5">{item.percentage}%</p>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 tabular-nums">{item.percentage}%</p>
                 </div>
               </div>
             ))}
           </div>
-        </motion.div>
-      </div>
-    </div>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }

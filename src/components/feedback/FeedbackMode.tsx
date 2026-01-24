@@ -155,10 +155,10 @@ function FeedbackModeInner() {
       {/* Instruction banner at top */}
       <div
         data-feedback-ui
-        className="fixed top-0 left-0 right-0 bg-neutral-900/95 border-b border-amber-500/30 py-3 px-6 flex items-center justify-between z-[61]"
+        className="fixed top-0 left-0 right-0 bg-neutral-900/95 border-b border-slate-600/30 py-3 px-6 flex items-center justify-between z-[61]"
       >
         <div className="flex items-center gap-3">
-          <div className="w-3 h-3 bg-amber-500 rounded-full animate-pulse" />
+          <div className="w-3 h-3 bg-slate-600 rounded-full animate-pulse" />
           <span className="text-neutral-100 font-bold">Feedback Mode</span>
           <span className="text-neutral-400">Hover to highlight elements, click to capture</span>
         </div>
@@ -180,7 +180,7 @@ function FeedbackModeInner() {
         <div
           id="feedback-highlight-box"
           data-feedback-ui
-          className="fixed pointer-events-none z-[60] border-2 border-amber-500 bg-amber-500/10 rounded-lg transition-all duration-75"
+          className="fixed pointer-events-none z-[60] border-2 border-slate-600 bg-slate-600/10 rounded-lg transition-all duration-75"
           style={{
             left: highlightBox.left - 4,
             top: highlightBox.top - 4,
@@ -189,7 +189,7 @@ function FeedbackModeInner() {
           }}
         >
           {/* Label showing element info */}
-          <div className="absolute -top-6 left-0 px-2 py-0.5 bg-amber-500 text-neutral-900 text-[10px] font-bold rounded whitespace-nowrap">
+          <div className="absolute -top-6 left-0 px-2 py-0.5 bg-slate-600 text-neutral-900 text-[10px] font-bold rounded whitespace-nowrap">
             {hoveredElement?.tagName.toLowerCase()}
             {hoveredElement?.id ? `#${hoveredElement.id}` : ''}
             {hoveredElement?.className && typeof hoveredElement.className === 'string'
@@ -205,8 +205,8 @@ function FeedbackModeInner() {
           data-feedback-ui
           className="fixed inset-0 flex items-center justify-center z-[63] bg-black/50"
         >
-          <div className="bg-neutral-800 border border-amber-500/30 rounded-2xl px-8 py-6 flex items-center gap-4">
-            <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+          <div className="bg-neutral-800 border border-slate-600/30 rounded-2xl px-8 py-6 flex items-center gap-4">
+            <div className="w-6 h-6 border-2 border-slate-600 border-t-transparent rounded-full animate-spin" />
             <span className="text-neutral-100 font-bold">Capturing element...</span>
           </div>
         </div>

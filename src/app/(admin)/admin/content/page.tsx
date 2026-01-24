@@ -29,6 +29,7 @@ import {
   containerVariants,
   itemVariants,
 } from '@/components/content/shared';
+import { colors, gradients } from '@/lib/design/tokens';
 
 // Quick action cards
 const quickActions = [
@@ -37,24 +38,21 @@ const quickActions = [
     description: 'Create a new blog post',
     href: '/admin/content/posts',
     icon: FileText,
-    color: 'from-blue-500 to-indigo-500',
-    shadowColor: 'shadow-blue-500/20',
+    gradient: gradients.primary,
   },
   {
     title: 'Upload Media',
     description: 'Add images, videos, or files',
     href: '/admin/content/media',
     icon: Image,
-    color: 'from-emerald-500 to-teal-500',
-    shadowColor: 'shadow-emerald-500/20',
+    gradient: gradients.secondary,
   },
   {
     title: 'AI Generator',
     description: 'Generate content with AI',
     href: '/admin/content/generator',
     icon: Sparkles,
-    color: 'from-violet-500 to-purple-500',
-    shadowColor: 'shadow-violet-500/20',
+    gradient: gradients.brand,
   },
 ];
 
@@ -67,29 +65,27 @@ export default function ContentOverview() {
       variants={containerVariants}
       initial="hidden"
       animate="show"
-      className="space-y-6"
+      className="admin-section"
     >
       {/* Header */}
       <motion.div variants={itemVariants}>
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white tracking-tight">
-            Content & Media
-          </h1>
-          <p className="text-neutral-500 dark:text-neutral-400 text-sm">
-            Manage your posts, media library, and AI-powered content generation
-          </p>
-        </div>
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white tracking-tight">
+          Content & Media
+        </h1>
+        <p className="text-neutral-500 dark:text-neutral-400 mt-1">
+          Manage your posts, media library, and AI-powered content generation
+        </p>
       </motion.div>
 
       {/* Stats Grid */}
-      <motion.div variants={itemVariants} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <motion.div variants={itemVariants} className="admin-stats-grid">
         <ContentStatCard
           label="Total Posts"
           value={stats.totalPosts}
           change={`${stats.publishedPosts} published`}
           changeType="neutral"
           icon={<FileText className="w-5 h-5 text-white" />}
-          gradient="from-blue-500 to-indigo-500"
+          gradient={gradients.primary}
         />
         <ContentStatCard
           label="Page Views"
@@ -97,7 +93,7 @@ export default function ContentOverview() {
           change="+12.5%"
           changeType="up"
           icon={<Eye className="w-5 h-5 text-white" />}
-          gradient="from-emerald-500 to-teal-500"
+          gradient={gradients.success}
         />
         <ContentStatCard
           label="Media Files"
@@ -105,7 +101,7 @@ export default function ContentOverview() {
           change={formatFileSize(stats.totalStorage)}
           changeType="neutral"
           icon={<HardDrive className="w-5 h-5 text-white" />}
-          gradient="from-amber-500 to-orange-500"
+          gradient={gradients.secondary}
         />
         <ContentStatCard
           label="AI Generations"
@@ -113,18 +109,16 @@ export default function ContentOverview() {
           change="This month"
           changeType="neutral"
           icon={<Sparkles className="w-5 h-5 text-white" />}
-          gradient="from-violet-500 to-purple-500"
+          gradient={gradients.brand}
         />
       </motion.div>
 
       {/* Quick Actions */}
-      <motion.div variants={itemVariants}>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-neutral-900 dark:text-white uppercase tracking-wider">
-            Quick Actions
-          </h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <motion.div variants={itemVariants} role="region" aria-labelledby="quick-actions-heading">
+        <h2 id="quick-actions-heading" className="text-xs font-semibold text-neutral-900 dark:text-white uppercase tracking-wider mb-4">
+          Quick Actions
+        </h2>
+        <nav className="grid grid-cols-1 md:grid-cols-3 gap-4" aria-label="Content quick actions">
           {quickActions.map((action, index) => {
             const Icon = action.icon;
             return (
@@ -138,22 +132,15 @@ export default function ContentOverview() {
                 <Link
                   href={action.href}
                   className={cn(
-                    'block p-5 rounded-2xl',
+                    'p-5 rounded-xl border block hover:shadow-lg transition-all duration-300',
                     'bg-white dark:bg-neutral-900',
-                    'border border-neutral-200/60 dark:border-neutral-800/60',
-                    'hover:shadow-lg transition-all duration-300',
-                    action.shadowColor
+                    'border-neutral-200/60 dark:border-neutral-800/60',
+                    'hover:border-neutral-300 dark:hover:border-neutral-700',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20'
                   )}
                 >
-                  <div
-                    className={cn(
-                      'w-12 h-12 rounded-xl flex items-center justify-center mb-4',
-                      'bg-gradient-to-br text-white shadow-lg',
-                      action.color,
-                      action.shadowColor
-                    )}
-                  >
-                    <Icon className="w-6 h-6" />
+                  <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center text-white mb-4', action.gradient)}>
+                    <Icon className="w-6 h-6" aria-hidden="true" />
                   </div>
                   <h3 className="text-base font-semibold text-neutral-900 dark:text-white mb-1">
                     {action.title}
@@ -161,44 +148,44 @@ export default function ContentOverview() {
                   <p className="text-sm text-neutral-500 dark:text-neutral-400">
                     {action.description}
                   </p>
-                  <div className="mt-4 flex items-center text-sm font-medium text-primary-600 dark:text-primary-400">
+                  <span className={cn('mt-4 flex items-center text-sm font-medium', colors.primary.text)}>
                     Get started
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                  </div>
+                    <ChevronRight className="w-4 h-4 ml-1" aria-hidden="true" />
+                  </span>
                 </Link>
               </motion.div>
             );
           })}
-        </div>
+        </nav>
       </motion.div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         {/* Recent Posts */}
         <motion.div
           variants={itemVariants}
           className={cn(
-            'lg:col-span-2',
+            'p-5 rounded-xl border overflow-hidden',
             'bg-white dark:bg-neutral-900',
-            'rounded-2xl',
-            'border border-neutral-200/60 dark:border-neutral-800/60',
-            'overflow-hidden'
+            'border-neutral-200/60 dark:border-neutral-800/60'
           )}
+          role="region"
+          aria-labelledby="recent-posts-title"
         >
-          <div className="p-5 border-b border-neutral-200/60 dark:border-neutral-800/60 flex items-center justify-between">
-            <h2 className="text-base font-semibold text-neutral-900 dark:text-white">
+          <div className="flex items-center justify-between mb-4">
+            <h2 id="recent-posts-title" className="text-xs font-semibold text-neutral-900 dark:text-white uppercase tracking-wider">
               Recent Posts
             </h2>
             <Link
               href="/admin/content/posts"
-              className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline flex items-center"
+              className={cn('text-sm font-medium hover:underline flex items-center', colors.primary.text)}
             >
               View all
-              <ChevronRight className="w-4 h-4 ml-0.5" />
+              <ChevronRight className="w-4 h-4 ml-0.5" aria-hidden="true" />
             </Link>
           </div>
 
-          <div className="divide-y divide-neutral-100 dark:divide-neutral-800/60">
+          <div className="space-y-0" role="list">
             <AnimatePresence>
               {demoPosts.slice(0, 4).map((post, index) => (
                 <motion.div
@@ -206,83 +193,78 @@ export default function ContentOverview() {
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05, duration: 0.3 }}
-                  onMouseEnter={() => setHoveredCard(post.id)}
-                  onMouseLeave={() => setHoveredCard(null)}
-                  className="p-4 sm:px-5 flex items-center gap-3 sm:gap-4 hover:bg-neutral-50/80 dark:hover:bg-neutral-800/40 transition-colors"
+                  className={cn(
+                    'flex items-center gap-3 py-3',
+                    index < demoPosts.slice(0, 4).length - 1 && 'border-b border-neutral-200/60 dark:border-neutral-800/60'
+                  )}
                 >
-                  {/* Thumbnail or icon */}
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-primary-500/10">
-                    <FileText className="w-5 h-5 text-white" />
+                  <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center text-white', gradients.primary)} aria-hidden="true">
+                    <FileText className="w-5 h-5" />
                   </div>
 
-                  {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <h3 className="text-sm font-semibold text-neutral-900 dark:text-white truncate">
                         {post.title}
                       </h3>
                       <ContentStatusBadge status={post.status} />
                     </div>
                     <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                      {post.author} &middot; {new Date(post.updatedAt).toLocaleDateString()}
+                      {post.author} &middot; <time>{new Date(post.updatedAt).toLocaleDateString()}</time>
                     </p>
                   </div>
 
-                  {/* Stats */}
-                  <div className="hidden sm:flex items-center gap-4 text-sm text-neutral-500 dark:text-neutral-400">
-                    <span className="flex items-center gap-1">
-                      <Eye className="w-4 h-4" />
+                  <div className="hidden sm:flex items-center gap-4 text-sm text-neutral-500 dark:text-neutral-400 tabular-nums">
+                    <span className="flex items-center gap-1" aria-label={`${post.viewCount.toLocaleString()} views`}>
+                      <Eye className="w-4 h-4" aria-hidden="true" />
                       {post.viewCount.toLocaleString()}
                     </span>
                   </div>
 
-                  {/* Actions */}
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
+                    className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                    aria-label={`More options for ${post.title}`}
                   >
-                    <MoreHorizontal className="w-4 h-4 text-neutral-400" />
+                    <MoreHorizontal className="w-4 h-4 text-neutral-400 dark:text-neutral-500" />
                   </motion.button>
                 </motion.div>
               ))}
             </AnimatePresence>
           </div>
 
-          <div className="p-4 sm:p-5 border-t border-neutral-200/60 dark:border-neutral-800/60">
+          <div className="pt-4 mt-4 border-t border-neutral-200/60 dark:border-neutral-800/60">
             <Link
               href="/admin/content/posts"
-              className="inline-flex items-center gap-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors group"
+              className={cn('inline-flex items-center gap-2 text-sm font-medium transition-colors', colors.primary.text)}
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4" aria-hidden="true" />
               Create new post
             </Link>
           </div>
         </motion.div>
 
         {/* Right Sidebar */}
-        <motion.div variants={itemVariants} className="space-y-5 lg:space-y-6">
+        <motion.div variants={itemVariants} className="flex flex-col gap-6">
           {/* Batch Queue Status */}
-          <div
-            className={cn(
-              'bg-white dark:bg-neutral-900',
-              'rounded-2xl',
-              'border border-neutral-200/60 dark:border-neutral-800/60',
-              'overflow-hidden'
-            )}
-          >
-            <div className="p-5 border-b border-neutral-200/60 dark:border-neutral-800/60 flex items-center justify-between">
-              <h2 className="text-base font-semibold text-neutral-900 dark:text-white">
+          <div className={cn(
+            'p-5 rounded-xl border overflow-hidden',
+            'bg-white dark:bg-neutral-900',
+            'border-neutral-200/60 dark:border-neutral-800/60'
+          )} role="region" aria-labelledby="queue-status-title">
+            <div className="flex items-center justify-between mb-4">
+              <h2 id="queue-status-title" className="text-xs font-semibold text-neutral-900 dark:text-white uppercase tracking-wider">
                 Queue Status
               </h2>
               <Link
                 href="/admin/content/batch"
-                className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
+                className={cn('text-xs font-medium hover:underline', colors.primary.text)}
               >
                 View all
               </Link>
             </div>
-            <div className="p-4 space-y-3">
+            <div className="space-y-3">
               {demoBatchJobs
                 .filter((job) => job.status === 'processing' || job.status === 'queued')
                 .slice(0, 2)
@@ -293,8 +275,9 @@ export default function ContentOverview() {
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.2 + index * 0.05, duration: 0.3 }}
                     className={cn(
-                      'p-3 rounded-xl',
-                      'bg-neutral-50 dark:bg-neutral-800/50'
+                      'p-3 rounded-lg border',
+                      'bg-neutral-50 dark:bg-neutral-800/50',
+                      'border-neutral-200/50 dark:border-neutral-700/50'
                     )}
                   >
                     <div className="flex items-center justify-between mb-2">
@@ -307,15 +290,15 @@ export default function ContentOverview() {
                     </div>
                     {job.status === 'processing' && (
                       <div className="mt-2">
-                        <div className="h-1.5 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
+                        <div className="h-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden" role="progressbar" aria-valuenow={job.progress} aria-valuemin={0} aria-valuemax={100} aria-label={`${job.title}: ${job.progress}% complete`}>
                           <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${job.progress}%` }}
                             transition={{ duration: 0.5 }}
-                            className="h-full bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full"
+                            className={cn('h-full rounded-full', colors.primary.solid)}
                           />
                         </div>
-                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 tabular-nums">
                           {job.progress}% complete
                         </p>
                       </div>
@@ -332,92 +315,85 @@ export default function ContentOverview() {
           </div>
 
           {/* Content Overview */}
-          <div
-            className={cn(
-              'bg-white dark:bg-neutral-900',
-              'rounded-2xl',
-              'border border-neutral-200/60 dark:border-neutral-800/60',
-              'overflow-hidden'
-            )}
-          >
-            <div className="p-5 border-b border-neutral-200/60 dark:border-neutral-800/60">
-              <h2 className="text-base font-semibold text-neutral-900 dark:text-white">
-                Content Overview
-              </h2>
-            </div>
-            <div className="p-5 space-y-4">
+          <div className={cn(
+            'p-5 rounded-xl border overflow-hidden',
+            'bg-white dark:bg-neutral-900',
+            'border-neutral-200/60 dark:border-neutral-800/60'
+          )} role="region" aria-labelledby="content-overview-title">
+            <h2 id="content-overview-title" className="text-xs font-semibold text-neutral-900 dark:text-white uppercase tracking-wider mb-4">
+              Content Overview
+            </h2>
+            <div className="space-y-4">
               {[
                 {
                   label: 'Published',
                   value: stats.publishedPosts,
                   total: stats.totalPosts,
-                  color: 'bg-emerald-500',
+                  color: colors.success.solid,
                 },
                 {
                   label: 'Drafts',
                   value: stats.draftPosts,
                   total: stats.totalPosts,
-                  color: 'bg-amber-500',
+                  color: colors.primary.solid,
                 },
                 {
                   label: 'Scheduled',
                   value: stats.scheduledPosts,
                   total: stats.totalPosts,
-                  color: 'bg-blue-500',
+                  color: colors.secondary.solid,
                 },
-              ].map((item, index) => (
-                <motion.div
-                  key={item.label}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.3 + index * 0.1 }}
-                >
-                  <div className="flex items-center justify-between text-sm mb-2">
-                    <span className="text-neutral-600 dark:text-neutral-400">{item.label}</span>
-                    <span className="font-semibold text-neutral-900 dark:text-white">
-                      {item.value}
-                    </span>
-                  </div>
-                  <div className="h-2 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{
-                        width: `${item.total > 0 ? (item.value / item.total) * 100 : 0}%`,
-                      }}
-                      transition={{
-                        duration: 0.8,
-                        ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
-                        delay: 0.4 + index * 0.1,
-                      }}
-                      className={cn('h-full rounded-full', item.color)}
-                    />
-                  </div>
-                </motion.div>
-              ))}
+              ].map((item, index) => {
+                const percentage = item.total > 0 ? (item.value / item.total) * 100 : 0;
+                return (
+                  <motion.div
+                    key={item.label}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 + index * 0.1 }}
+                  >
+                    <div className="flex items-center justify-between text-sm mb-2">
+                      <span className="text-neutral-600 dark:text-neutral-400">{item.label}</span>
+                      <span className="font-semibold text-neutral-900 dark:text-white tabular-nums">
+                        {item.value}
+                      </span>
+                    </div>
+                    <div className="h-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden" role="progressbar" aria-valuenow={item.value} aria-valuemax={item.total} aria-label={`${item.label}: ${item.value} of ${item.total}`}>
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${percentage}%` }}
+                        transition={{
+                          duration: 0.8,
+                          ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
+                          delay: 0.4 + index * 0.1,
+                        }}
+                        className={cn('h-full rounded-full', item.color)}
+                      />
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
           </div>
 
           {/* Recent AI Generations */}
-          <div
-            className={cn(
-              'bg-white dark:bg-neutral-900',
-              'rounded-2xl',
-              'border border-neutral-200/60 dark:border-neutral-800/60',
-              'overflow-hidden'
-            )}
-          >
-            <div className="p-5 border-b border-neutral-200/60 dark:border-neutral-800/60 flex items-center justify-between">
-              <h2 className="text-base font-semibold text-neutral-900 dark:text-white">
+          <div className={cn(
+            'p-5 rounded-xl border overflow-hidden',
+            'bg-white dark:bg-neutral-900',
+            'border-neutral-200/60 dark:border-neutral-800/60'
+          )} role="region" aria-labelledby="ai-generations-title">
+            <div className="flex items-center justify-between mb-4">
+              <h2 id="ai-generations-title" className="text-xs font-semibold text-neutral-900 dark:text-white uppercase tracking-wider">
                 Recent AI Generations
               </h2>
               <Link
                 href="/admin/content/generator"
-                className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
+                className={cn('text-xs font-medium hover:underline', colors.primary.text)}
               >
                 Generate
               </Link>
             </div>
-            <div className="p-4 space-y-2">
+            <div className="space-y-2" role="list">
               {demoAIGenerations.slice(0, 3).map((gen, index) => (
                 <motion.div
                   key={gen.id}
@@ -426,7 +402,7 @@ export default function ContentOverview() {
                   transition={{ delay: 0.3 + index * 0.05 }}
                   className="flex items-center gap-3 p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
                 >
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center text-white">
+                  <div className={cn('w-8 h-8 rounded-full flex items-center justify-center text-white', gradients.brand)} aria-hidden="true">
                     <Sparkles className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">

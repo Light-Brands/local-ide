@@ -5,12 +5,22 @@
 // =============================================================================
 
 import React from 'react';
+import { Bug, Sparkles, HelpCircle, FileText, type LucideIcon } from 'lucide-react';
 import {
   categoryConfig,
   priorityConfig,
   statusConfig,
   type FeedbackItem,
+  type FeedbackCategory,
 } from '@/lib/feedback/types';
+
+// Icon mapping for categories
+const categoryIcons: Record<FeedbackCategory, LucideIcon> = {
+  bug: Bug,
+  enhancement: Sparkles,
+  question: HelpCircle,
+  content: FileText,
+};
 
 interface FeedbackPreviewProps {
   feedback: FeedbackItem;
@@ -45,7 +55,7 @@ export function FeedbackPreview({ feedback }: FeedbackPreviewProps) {
       <div className="p-3 space-y-2">
         {/* Title */}
         <div className="flex items-start gap-2">
-          <span className="text-sm">{category.icon}</span>
+          {(() => { const Icon = categoryIcons[feedback.category]; return <Icon className="w-4 h-4 text-neutral-300 shrink-0 mt-0.5" />; })()}
           <h4 className="text-sm font-bold text-neutral-100 line-clamp-2">{feedback.title}</h4>
         </div>
 

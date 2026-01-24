@@ -77,7 +77,7 @@ export function TerminalUnavailable({ reason, onRetry }: TerminalUnavailableProp
 
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="text-center max-w-sm">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-500/20 to-orange-500/20 flex items-center justify-center mx-auto mb-6">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-500/20 to-slate-600/20 flex items-center justify-center mx-auto mb-6">
               <Terminal className="w-8 h-8 text-yellow-400" />
             </div>
 
@@ -120,7 +120,7 @@ export function TerminalUnavailable({ reason, onRetry }: TerminalUnavailableProp
 
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="text-center max-w-sm">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500/20 to-orange-500/20 flex items-center justify-center mx-auto mb-6">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-500/20 to-slate-600/20 flex items-center justify-center mx-auto mb-6">
             <Terminal className="w-8 h-8 text-red-400" />
           </div>
 

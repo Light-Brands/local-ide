@@ -1,6 +1,12 @@
 /**
  * Theme CSS Variables
- * Premium design system with light/dark mode support
+ * Gold/Orange, Off-Black, Off-White Design System
+ *
+ * Color Distribution:
+ * - 85-90% neutral tones (off-black/off-white)
+ * - 5-10% gold/orange accents
+ * - 3-5% slate blue accents
+ * - 1-2% gold tints
  */
 
 /* =============================================================================
@@ -11,66 +17,80 @@
   /* Color mode */
   color-scheme: light;
 
-  /* Primary Colors */
-  --color-primary-50: #f0f4ff;
-  --color-primary-100: #e0e8ff;
-  --color-primary-200: #c7d4fe;
-  --color-primary-300: #a4b8fc;
-  --color-primary-400: #7c93f8;
-  --color-primary-500: #5a6df2;
-  --color-primary-600: #4450e6;
-  --color-primary-700: #3840cb;
-  --color-primary-800: #3036a4;
-  --color-primary-900: #2d3382;
-  --color-primary-950: #1c1f4d;
+  /* Slate Blue/Grey - Primary Brand Color (replaces gold/orange) */
+  --color-slate-primary-50: #f8fafc;
+  --color-slate-primary-100: #f1f5f9;
+  --color-slate-primary-200: #e2e8f0;
+  --color-slate-primary-300: #cbd5e1;
+  --color-slate-primary-400: #94a3b8;
+  --color-slate-primary-500: #64748b;
+  --color-slate-primary-600: #475569;
+  --color-slate-primary-700: #334155;
+  --color-slate-primary-800: #1e293b;
+  --color-slate-primary-900: #0f172a;
 
-  /* Secondary Colors */
-  --color-secondary-50: #faf5ff;
-  --color-secondary-100: #f3e8ff;
-  --color-secondary-200: #e9d5ff;
-  --color-secondary-300: #d8b4fe;
-  --color-secondary-400: #c084fc;
-  --color-secondary-500: #a855f7;
-  --color-secondary-600: #9333ea;
-  --color-secondary-700: #7c22ce;
-  --color-secondary-800: #6821a8;
-  --color-secondary-900: #581c87;
-  --color-secondary-950: #3b0764;
+  /* Off-Black to Off-White - Neutral Scale */
+  --color-neutral-0: #fafaf9;
+  --color-neutral-50: #f5f5f4;
+  --color-neutral-100: #e7e5e4;
+  --color-neutral-200: #d6d3d1;
+  --color-neutral-300: #a8a29e;
+  --color-neutral-400: #78716c;
+  --color-neutral-500: #57534e;
+  --color-neutral-600: #44403c;
+  --color-neutral-700: #292524;
+  --color-neutral-800: #1c1917;
+  --color-neutral-900: #0f0e0d;
 
-  /* Neutral Colors */
-  --color-neutral-0: #ffffff;
-  --color-neutral-50: #fafafa;
-  --color-neutral-100: #f5f5f5;
-  --color-neutral-200: #e8e8e8;
-  --color-neutral-300: #d4d4d4;
-  --color-neutral-400: #a3a3a3;
-  --color-neutral-500: #737373;
-  --color-neutral-600: #525252;
-  --color-neutral-700: #404040;
-  --color-neutral-800: #262626;
-  --color-neutral-900: #171717;
-  --color-neutral-950: #0a0a0a;
+  /* Slate Blue - Secondary Accent */
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-300: #cbd5e1;
+  --color-slate-400: #94a3b8;
+  --color-slate-500: #64748b;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1e293b;
+  --color-slate-900: #0f172a;
 
   /* Semantic Colors - Light Mode */
   --color-background: var(--color-neutral-0);
   --color-background-subtle: var(--color-neutral-50);
   --color-background-muted: var(--color-neutral-100);
   --color-background-elevated: var(--color-neutral-0);
-  --color-background-overlay: rgba(0, 0, 0, 0.5);
+  --color-background-overlay: rgba(15, 14, 13, 0.5);
 
   --color-foreground: var(--color-neutral-900);
-  --color-foreground-subtle: var(--color-neutral-700);
-  --color-foreground-muted: var(--color-neutral-500);
-  --color-foreground-faint: var(--color-neutral-400);
+  --color-foreground-subtle: var(--color-neutral-600);
+  --color-foreground-muted: var(--color-neutral-400);
+  --color-foreground-faint: var(--color-neutral-300);
 
   --color-border: var(--color-neutral-200);
   --color-border-subtle: var(--color-neutral-100);
   --color-border-strong: var(--color-neutral-300);
 
-  --color-accent: var(--color-primary-500);
-  --color-accent-foreground: var(--color-neutral-0);
-  --color-accent-hover: var(--color-primary-600);
-  --color-accent-subtle: var(--color-primary-50);
+  /* Primary - Slate Blue/Grey */
+  --color-primary: var(--color-slate-600);
+  --color-primary-hover: var(--color-slate-700);
+  --color-primary-foreground: var(--color-neutral-0);
+  --color-primary-subtle: var(--color-slate-50);
+
+  /* Secondary - Slate Blue */
+  --color-secondary: var(--color-slate-500);
+  --color-secondary-hover: var(--color-slate-600);
+  --color-secondary-foreground: var(--color-neutral-0);
+  --color-secondary-subtle: var(--color-slate-50);
+
+  /* Accent - Light Slate Tint */
+  --color-accent: var(--color-slate-100);
+  --color-accent-foreground: var(--color-neutral-900);
+  --color-accent-hover: var(--color-slate-200);
+
+  /* Card */
+  --color-card: var(--color-neutral-50);
+  --color-card-hover: var(--color-neutral-100);
+  --color-card-foreground: var(--color-neutral-900);
 
   /* Status Colors */
   --color-success: #10b981;
@@ -79,27 +99,27 @@
   --color-warning-subtle: #fffbeb;
   --color-error: #ef4444;
   --color-error-subtle: #fef2f2;
-  --color-info: #3b82f6;
-  --color-info-subtle: #eff6ff;
+  --color-info: var(--color-slate-500);
+  --color-info-subtle: var(--color-slate-50);
 
   /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #5a6df2 0%, #a855f7 100%);
-  --gradient-secondary: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
-  --gradient-subtle: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 100%);
-  --gradient-mesh: radial-gradient(at 40% 20%, rgba(90, 109, 242, 0.15) 0px, transparent 50%),
-                   radial-gradient(at 80% 0%, rgba(168, 85, 247, 0.15) 0px, transparent 50%),
-                   radial-gradient(at 0% 50%, rgba(236, 72, 153, 0.1) 0px, transparent 50%);
+  --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  --gradient-secondary: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+  --gradient-subtle: linear-gradient(135deg, #f0f4ff 0%, #fdf4ff 100%);
+  --gradient-mesh: radial-gradient(at 40% 20%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                   radial-gradient(at 80% 0%, rgba(139, 92, 246, 0.1) 0px, transparent 50%),
+                   radial-gradient(at 0% 50%, rgba(217, 70, 239, 0.08) 0px, transparent 50%);
 
   /* Shadows */
-  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
-  --shadow-primary: 0 4px 14px 0 rgb(90 109 242 / 0.25);
-  --shadow-primary-lg: 0 10px 40px 0 rgb(90 109 242 / 0.35);
-  --shadow-glass: 0 8px 32px 0 rgb(0 0 0 / 0.08);
+  --shadow-xs: 0 1px 2px 0 rgb(15 14 13 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(15 14 13 / 0.1), 0 1px 2px -1px rgb(15 14 13 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(15 14 13 / 0.1), 0 2px 4px -2px rgb(15 14 13 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(15 14 13 / 0.1), 0 4px 6px -4px rgb(15 14 13 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(15 14 13 / 0.1), 0 8px 10px -6px rgb(15 14 13 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(15 14 13 / 0.25);
+  --shadow-primary: 0 4px 14px 0 rgb(245 158 11 / 0.25);
+  --shadow-primary-lg: 0 10px 40px 0 rgb(245 158 11 / 0.35);
+  --shadow-glass: 0 8px 32px 0 rgb(15 14 13 / 0.08);
 
   /* Typography */
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -154,9 +174,9 @@
   --blur-2xl: 24px;
 
   /* Glass Effect */
-  --glass-background: rgba(255, 255, 255, 0.8);
-  --glass-border: rgba(255, 255, 255, 0.2);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
+  --glass-background: rgba(250, 250, 249, 0.8);
+  --glass-border: rgba(250, 250, 249, 0.2);
+  --glass-shadow: 0 8px 32px 0 rgba(15, 14, 13, 0.08);
 }
 
 /* =============================================================================
@@ -168,37 +188,54 @@
   color-scheme: dark;
 
   /* Semantic Colors - Dark Mode */
-  --color-background: var(--color-neutral-950);
-  --color-background-subtle: var(--color-neutral-900);
-  --color-background-muted: var(--color-neutral-800);
-  --color-background-elevated: var(--color-neutral-900);
-  --color-background-overlay: rgba(0, 0, 0, 0.7);
+  --color-background: var(--color-neutral-900);
+  --color-background-subtle: var(--color-neutral-800);
+  --color-background-muted: var(--color-neutral-700);
+  --color-background-elevated: var(--color-neutral-800);
+  --color-background-overlay: rgba(15, 14, 13, 0.7);
 
-  --color-foreground: var(--color-neutral-50);
-  --color-foreground-subtle: var(--color-neutral-200);
-  --color-foreground-muted: var(--color-neutral-400);
-  --color-foreground-faint: var(--color-neutral-500);
+  --color-foreground: var(--color-neutral-0);
+  --color-foreground-subtle: var(--color-neutral-300);
+  --color-foreground-muted: var(--color-neutral-500);
+  --color-foreground-faint: var(--color-neutral-600);
 
-  --color-border: var(--color-neutral-800);
-  --color-border-subtle: var(--color-neutral-900);
-  --color-border-strong: var(--color-neutral-700);
+  --color-border: var(--color-neutral-700);
+  --color-border-subtle: var(--color-neutral-800);
+  --color-border-strong: var(--color-neutral-600);
 
-  --color-accent: var(--color-primary-400);
-  --color-accent-foreground: var(--color-neutral-950);
-  --color-accent-hover: var(--color-primary-300);
-  --color-accent-subtle: rgba(90, 109, 242, 0.15);
+  /* Primary - Lighter Slate for Dark Mode */
+  --color-primary: var(--color-slate-400);
+  --color-primary-hover: var(--color-slate-300);
+  --color-primary-foreground: var(--color-neutral-900);
+  --color-primary-subtle: rgba(100, 116, 139, 0.15);
+
+  /* Secondary - Lighter Slate for Dark Mode */
+  --color-secondary: var(--color-slate-300);
+  --color-secondary-hover: var(--color-slate-200);
+  --color-secondary-foreground: var(--color-neutral-900);
+  --color-secondary-subtle: rgba(100, 116, 139, 0.15);
+
+  /* Accent - Dark Slate Tint */
+  --color-accent: var(--color-slate-800);
+  --color-accent-foreground: var(--color-neutral-0);
+  --color-accent-hover: var(--color-slate-700);
+
+  /* Card */
+  --color-card: var(--color-neutral-800);
+  --color-card-hover: var(--color-neutral-700);
+  --color-card-foreground: var(--color-neutral-0);
 
   /* Status Colors - Dark Mode */
   --color-success-subtle: rgba(16, 185, 129, 0.15);
   --color-warning-subtle: rgba(245, 158, 11, 0.15);
   --color-error-subtle: rgba(239, 68, 68, 0.15);
-  --color-info-subtle: rgba(59, 130, 246, 0.15);
+  --color-info-subtle: rgba(100, 116, 139, 0.15);
 
   /* Gradients - Dark Mode */
-  --gradient-subtle: linear-gradient(135deg, rgba(90, 109, 242, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
-  --gradient-mesh: radial-gradient(at 40% 20%, rgba(90, 109, 242, 0.2) 0px, transparent 50%),
-                   radial-gradient(at 80% 0%, rgba(168, 85, 247, 0.2) 0px, transparent 50%),
-                   radial-gradient(at 0% 50%, rgba(236, 72, 153, 0.15) 0px, transparent 50%);
+  --gradient-subtle: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+  --gradient-mesh: radial-gradient(at 40% 20%, rgba(99, 102, 241, 0.2) 0px, transparent 50%),
+                   radial-gradient(at 80% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
+                   radial-gradient(at 0% 50%, rgba(217, 70, 239, 0.1) 0px, transparent 50%);
 
   /* Shadows - Dark Mode (more subtle) */
   --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.3);
@@ -207,13 +244,13 @@
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.4);
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.4);
   --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.6);
-  --shadow-primary: 0 4px 14px 0 rgb(90 109 242 / 0.3);
-  --shadow-primary-lg: 0 10px 40px 0 rgb(90 109 242 / 0.4);
+  --shadow-primary: 0 4px 14px 0 rgb(251 191 36 / 0.3);
+  --shadow-primary-lg: 0 10px 40px 0 rgb(251 191 36 / 0.4);
   --shadow-glass: 0 8px 32px 0 rgb(0 0 0 / 0.3);
 
   /* Glass Effect - Dark Mode */
-  --glass-background: rgba(23, 23, 23, 0.8);
-  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-background: rgba(28, 25, 23, 0.8);
+  --glass-border: rgba(250, 250, 249, 0.1);
   --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
 }
 
@@ -286,7 +323,7 @@
 }
 
 .focus-ring:focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
@@ -311,10 +348,10 @@ body {
   line-height: 1.6;
 }
 
-/* Selection styling */
+/* Selection styling - Gold accent */
 ::selection {
-  background-color: var(--color-accent);
-  color: var(--color-accent-foreground);
+  background-color: var(--color-primary);
+  color: var(--color-primary-foreground);
 }
 
 /* Scrollbar styling */

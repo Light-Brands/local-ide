@@ -47,7 +47,7 @@ export function FeedbackMarker({ feedback, onClick }: FeedbackMarkerProps) {
           fill="currentColor"
           className={`w-full h-full drop-shadow-lg ${
             feedback.status === 'new'
-              ? 'text-amber-500'
+              ? 'text-slate-600'
               : feedback.status === 'in-progress'
               ? 'text-cyan-500'
               : feedback.status === 'resolved'
