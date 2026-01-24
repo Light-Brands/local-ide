@@ -6,7 +6,7 @@
  * - Development: Writing, reviewing, testing, shipping code
  */
 
-import type { Pillar, AgentColor } from './types';
+import type { Pillar, AgentColor, WorkflowDefinition, WorkflowComplexity } from './types';
 
 // ============================================================================
 // Types
@@ -962,6 +962,490 @@ const developmentSkills: DictionaryItem[] = [
 ];
 
 // ============================================================================
+// Orchestration Workflows (8)
+// Pre-built workflows that load the right agents, commands, and skills
+// ============================================================================
+
+export const workflowDefinitions: WorkflowDefinition[] = [
+  // 1. Quick Fix - Fast bug fix with minimal process
+  {
+    id: 'workflow-quick-fix',
+    name: 'quick-fix',
+    displayName: 'Quick Fix',
+    description: 'Fast bug fix or small change with minimal process overhead',
+    complexity: 'quick',
+    estimatedTime: '10-30 min',
+    color: 'emerald',
+    icon: 'Zap',
+    agents: ['quick-dev', 'debugger', 'test-runner'],
+    commands: ['quick-fix', 'verify-fix'],
+    skills: ['systematic-debugging'],
+    strategyPrompt: `You are orchestrating a Quick Fix workflow. This is for small, well-scoped changes.
+
+**Workflow Strategy:**
+1. @quick-dev (Barry) leads - rapid development with minimal process
+2. Use *systematic-debugging to understand the issue before fixing
+3. @debugger assists if root cause is unclear
+4. @test-runner verifies the fix works
+5. Use /verify-fix before declaring success
+
+**Rules:**
+- No PRD needed - just a clear tech spec
+- Focus on surgical fixes, not refactoring
+- Test the specific fix, not comprehensive coverage
+- Commit with clear message explaining the fix`,
+    examples: [
+      'Fix the login button not responding on mobile',
+      'Correct the date formatting in the dashboard',
+      'Fix the API returning 500 on empty input',
+    ],
+  },
+
+  // 2. Feature Sprint - Single feature development
+  {
+    id: 'workflow-feature-sprint',
+    name: 'feature-sprint',
+    displayName: 'Feature Sprint',
+    description: 'Develop a single well-defined feature from spec to deployment',
+    complexity: 'sprint',
+    estimatedTime: '2-4 hrs',
+    color: 'sky',
+    icon: 'Rocket',
+    agents: ['pm', 'dev-lead', 'autonomous-developer', 'test-engineer', 'security-reviewer'],
+    commands: ['user-stories', 'autotask', 'multi-review'],
+    skills: ['systematic-debugging', 'playwright-browser'],
+    strategyPrompt: `You are orchestrating a Feature Sprint workflow. This is for building a single, well-defined feature.
+
+**Workflow Strategy:**
+1. @pm (John) creates user stories with acceptance criteria using /user-stories
+2. @dev-lead (Amelia) reviews the approach and identifies risks
+3. @autonomous-developer implements the feature using /autotask
+4. @test-engineer writes and runs tests
+5. @security-reviewer checks for vulnerabilities
+6. Use /multi-review for final quality check
+
+**Phases:**
+- **Plan (15 min):** User stories, acceptance criteria, edge cases
+- **Build (1-2 hrs):** Implementation with incremental commits
+- **Verify (30 min):** Tests, security review, manual verification
+- **Ship (15 min):** Final review, documentation, PR
+
+**Quality Gates:**
+- All acceptance criteria met
+- Tests pass with good coverage
+- No security vulnerabilities
+- Code reviewed and approved`,
+    examples: [
+      'Add user profile image upload',
+      'Implement password reset flow',
+      'Build notification preferences panel',
+    ],
+  },
+
+  // 3. Component Build - Build a complete UI component
+  {
+    id: 'workflow-component-build',
+    name: 'component-build',
+    displayName: 'Component Build',
+    description: 'Build a polished, reusable UI component with full design consideration',
+    complexity: 'sprint',
+    estimatedTime: '1-3 hrs',
+    color: 'purple',
+    icon: 'Layers',
+    agents: ['ux-designer', 'design-reviewer', 'autonomous-developer', 'mobile-ux-reviewer', 'test-engineer'],
+    commands: ['autotask', 'multi-review'],
+    skills: ['playwright-browser'],
+    strategyPrompt: `You are orchestrating a Component Build workflow. This is for creating polished, reusable UI components.
+
+**Workflow Strategy:**
+1. @ux-designer (Sally) defines the component spec - states, variants, accessibility
+2. @autonomous-developer implements with Tailwind/design system
+3. @design-reviewer checks visual consistency and polish
+4. @mobile-ux-reviewer verifies responsive behavior
+5. @test-engineer writes component tests
+6. Use *playwright-browser to visually verify
+
+**Component Checklist:**
+- [ ] All states (default, hover, active, disabled, loading, error)
+- [ ] Responsive at all breakpoints
+- [ ] Keyboard navigation works
+- [ ] Screen reader accessible (ARIA)
+- [ ] Matches design system tokens
+- [ ] Documented with examples
+- [ ] Unit tests for logic
+- [ ] Visual regression baseline
+
+**Quality Focus:**
+- Pixel-perfect implementation
+- Smooth animations (60fps)
+- Accessible by default
+- Props API is intuitive`,
+    examples: [
+      'Build a dropdown select component',
+      'Create an image carousel with lightbox',
+      'Design a data table with sorting and filtering',
+    ],
+  },
+
+  // 4. Full Stack Feature - End-to-end with frontend + backend
+  {
+    id: 'workflow-fullstack-feature',
+    name: 'fullstack-feature',
+    displayName: 'Full Stack Feature',
+    description: 'End-to-end feature spanning frontend, backend, and database',
+    complexity: 'project',
+    estimatedTime: '4-8 hrs',
+    color: 'indigo',
+    icon: 'Database',
+    agents: ['architect', 'pm', 'dev-lead', 'autonomous-developer', 'security-reviewer', 'performance-reviewer', 'test-engineer'],
+    commands: ['prd', 'architecture', 'user-stories', 'autotask', 'multi-review'],
+    skills: ['systematic-debugging', 'research'],
+    strategyPrompt: `You are orchestrating a Full Stack Feature workflow. This spans frontend, backend, and data layers.
+
+**Workflow Strategy:**
+1. @pm (John) writes a focused PRD with /prd
+2. @architect (Winston) designs the technical approach:
+   - API contracts (OpenAPI/GraphQL schema)
+   - Database schema changes
+   - Component architecture
+3. @dev-lead (Amelia) breaks into implementation tasks
+4. @autonomous-developer implements in order:
+   - Database migrations first
+   - Backend API endpoints
+   - Frontend components
+   - Integration wiring
+5. @security-reviewer audits each layer
+6. @performance-reviewer checks for N+1 queries, bundle size
+7. @test-engineer writes integration tests
+
+**Architecture First:**
+- Define API contract before implementation
+- Design database schema with indexes
+- Plan error handling across layers
+- Consider caching strategy
+
+**Integration Points:**
+- Type safety end-to-end (TypeScript + Zod/Prisma)
+- Error propagation from backend to UI
+- Loading and optimistic states
+- Real-time updates if needed`,
+    examples: [
+      'Build user comments system with replies',
+      'Implement payment processing integration',
+      'Create team permissions and roles system',
+    ],
+  },
+
+  // 5. Code Quality Audit - Comprehensive review and improvement
+  {
+    id: 'workflow-quality-audit',
+    name: 'quality-audit',
+    displayName: 'Code Quality Audit',
+    description: 'Comprehensive code review with security, performance, and quality fixes',
+    complexity: 'sprint',
+    estimatedTime: '2-4 hrs',
+    color: 'red',
+    icon: 'Shield',
+    agents: [
+      'security-reviewer',
+      'performance-reviewer',
+      'logic-reviewer',
+      'error-handling-reviewer',
+      'architecture-auditor',
+      'test-analyzer',
+      'simplifier',
+    ],
+    commands: ['multi-review', 'load-rules'],
+    skills: ['systematic-debugging'],
+    strategyPrompt: `You are orchestrating a Code Quality Audit workflow. This is a comprehensive review of code health.
+
+**Workflow Strategy:**
+Run these reviews in parallel, then synthesize findings:
+
+1. **Security Sweep** - @security-reviewer
+   - OWASP Top 10 vulnerabilities
+   - Authentication/authorization gaps
+   - Input validation
+   - Secrets exposure
+
+2. **Performance Analysis** - @performance-reviewer
+   - N+1 queries
+   - Bundle size issues
+   - Memory leaks
+   - Render performance
+
+3. **Logic Review** - @logic-reviewer
+   - Edge cases
+   - Race conditions
+   - Null handling
+
+4. **Error Handling** - @error-handling-reviewer
+   - Silent failures
+   - Error recovery
+   - User feedback
+
+5. **Architecture** - @architecture-auditor
+   - Technical debt
+   - Coupling issues
+   - Pattern violations
+
+6. **Test Coverage** - @test-analyzer
+   - Coverage gaps
+   - Test quality
+   - Missing edge cases
+
+7. **Simplification** - @simplifier
+   - Complexity reduction
+   - Dead code removal
+   - Redundancy elimination
+
+**Output:**
+- Prioritized issues list (Critical/High/Medium/Low)
+- Specific fixes with line numbers
+- Refactoring recommendations
+- Test improvement plan`,
+    examples: [
+      'Audit the authentication module before launch',
+      'Review the checkout flow for production readiness',
+      'Analyze the API layer for security issues',
+    ],
+  },
+
+  // 6. Product Discovery - Research and planning phase
+  {
+    id: 'workflow-product-discovery',
+    name: 'product-discovery',
+    displayName: 'Product Discovery',
+    description: 'Research, brainstorm, and plan before building - the thinking phase',
+    complexity: 'sprint',
+    estimatedTime: '1-2 hrs',
+    color: 'violet',
+    icon: 'Lightbulb',
+    agents: ['analyst', 'pm', 'architect', 'ux-designer', 'bmad-master'],
+    commands: ['brainstorm', 'research', 'product-intel', 'prd', 'architecture', 'party-mode'],
+    skills: ['brainstorming', 'elicitation', 'research', 'synthesis'],
+    strategyPrompt: `You are orchestrating a Product Discovery workflow. This is the thinking phase before building.
+
+**Workflow Strategy:**
+1. @bmad-master (BMAD) coordinates the discovery process
+2. @analyst (Mary) leads discovery:
+   - /brainstorm to explore solutions (60+ techniques)
+   - /research for technical feasibility
+   - /product-intel for competitive analysis
+3. @pm (John) synthesizes into requirements:
+   - Problem statement
+   - Success metrics
+   - User stories
+4. @architect (Winston) evaluates technical approaches:
+   - /architecture for key decisions
+   - Trade-off analysis
+5. @ux-designer (Sally) considers user experience:
+   - User journeys
+   - Key interactions
+6. /party-mode for multi-agent discussion on hard decisions
+
+**Discovery Outputs:**
+- Problem Definition (why are we building this?)
+- Solution Options (what could we build?)
+- Technical Feasibility (can we build it?)
+- User Impact (will users want it?)
+- Recommendation (what should we build?)
+
+**Techniques to Use:**
+- First Principles thinking
+- Jobs-to-be-Done framework
+- SWOT analysis
+- 5 Whys for problem clarity
+- Design thinking exercises`,
+    examples: [
+      'Explore how to add AI features to the product',
+      'Research approaches for improving onboarding',
+      'Analyze competitor features and find gaps',
+    ],
+  },
+
+  // 7. MVP Build - Minimum viable product development
+  {
+    id: 'workflow-mvp-build',
+    name: 'mvp-build',
+    displayName: 'MVP Build',
+    description: 'Build a minimum viable product with core features only',
+    complexity: 'project',
+    estimatedTime: '1-2 days',
+    color: 'teal',
+    icon: 'Package',
+    agents: [
+      'bmad-master',
+      'analyst',
+      'pm',
+      'architect',
+      'ux-designer',
+      'dev-lead',
+      'autonomous-developer',
+      'test-architect',
+      'test-engineer',
+      'security-reviewer',
+    ],
+    commands: ['brainstorm', 'prd', 'architecture', 'user-stories', 'autotask', 'multi-review', 'handoff-context'],
+    skills: ['brainstorming', 'research', 'systematic-debugging', 'playwright-browser'],
+    strategyPrompt: `You are orchestrating an MVP Build workflow. Build the smallest thing that delivers value.
+
+**Workflow Strategy:**
+@bmad-master coordinates using the BMad Method:
+
+**Phase 1: Discovery (30 min)**
+- @analyst (Mary) clarifies the core problem
+- Define the ONE key metric for success
+- Ruthlessly cut scope to essentials
+
+**Phase 2: Planning (1 hr)**
+- @pm (John) writes lean PRD - only core features
+- @architect (Winston) designs simple architecture
+- @ux-designer (Sally) sketches minimal UI
+- @test-architect (Murat) defines quality bar
+
+**Phase 3: Build (4-8 hrs)**
+- @dev-lead (Amelia) sequences the work
+- @autonomous-developer implements features
+- Focus on happy path first
+- Ship incremental slices
+
+**Phase 4: Verify (1 hr)**
+- @test-engineer writes critical path tests
+- @security-reviewer checks auth and data handling
+- Manual testing of core flows
+- /multi-review final check
+
+**MVP Principles:**
+- If in doubt, leave it out
+- Optimize for learning, not perfection
+- Ship something users can try
+- Plan for iteration, not completion
+- Document what's deferred, not deleted`,
+    examples: [
+      'Build MVP for a todo app with sharing',
+      'Create basic landing page with waitlist',
+      'Ship minimal dashboard with key metrics',
+    ],
+  },
+
+  // 8. Platform Build - Full platform from scratch
+  {
+    id: 'workflow-platform-build',
+    name: 'platform-build',
+    displayName: 'Platform Build',
+    description: 'Build an entire platform from concept to production - the full BMAD method',
+    complexity: 'platform',
+    estimatedTime: '1-2 weeks',
+    color: 'orange',
+    icon: 'Building',
+    agents: [
+      'bmad-master',
+      'analyst',
+      'pm',
+      'architect',
+      'ux-designer',
+      'scrum-master',
+      'dev-lead',
+      'test-architect',
+      'tech-writer',
+      'autonomous-developer',
+      'security-reviewer',
+      'performance-reviewer',
+      'architecture-auditor',
+      'test-engineer',
+      'observability-reviewer',
+      'site-keeper',
+    ],
+    commands: [
+      'brainstorm',
+      'research',
+      'product-intel',
+      'prd',
+      'architecture',
+      'user-stories',
+      'knowledge',
+      'party-mode',
+      'autotask',
+      'enterprise-task',
+      'multi-review',
+      'session',
+      'handoff-context',
+      'generate-AGENTS-file',
+    ],
+    skills: ['brainstorming', 'elicitation', 'research', 'synthesis', 'systematic-debugging', 'playwright-browser'],
+    strategyPrompt: `You are orchestrating a Platform Build workflow. This is the full BMAD Method for building complete platforms.
+
+**BMAD Method - Full Orchestration:**
+
+@bmad-master coordinates all phases and agent handoffs.
+
+**Phase 1: Discovery & Research (2-4 hrs)**
+- @analyst (Mary) leads comprehensive discovery
+  - /brainstorm with multiple techniques
+  - /research for technical landscape
+  - /product-intel for competitive analysis
+  - Stakeholder interviews and synthesis
+- Output: Problem Definition, Opportunity Assessment
+
+**Phase 2: Product Definition (2-4 hrs)**
+- @pm (John) creates comprehensive PRD
+  - User personas and journeys
+  - Feature prioritization (MoSCoW)
+  - Success metrics and KPIs
+- @ux-designer (Sally) designs user experience
+  - Information architecture
+  - Key user flows
+  - Accessibility requirements
+- Output: PRD, User Stories, Design Specs
+
+**Phase 3: Architecture & Planning (2-4 hrs)**
+- @architect (Winston) designs the system
+  - /architecture for key decisions (ADRs)
+  - Data model design
+  - API contracts
+  - Infrastructure requirements
+- @test-architect (Murat) defines quality strategy
+- @dev-lead (Amelia) creates implementation plan
+- @scrum-master (Bob) organizes into sprints
+- Output: Technical Spec, Sprint Plan
+
+**Phase 4: Implementation (days)**
+- @autonomous-developer builds features
+- Use /autotask for each work item
+- @test-engineer writes tests alongside
+- Daily /multi-review cycles
+- @security-reviewer audits as features complete
+- @performance-reviewer monitors metrics
+
+**Phase 5: Quality & Polish (4-8 hrs)**
+- Full /multi-review with all reviewers
+- @observability-reviewer adds monitoring
+- @site-keeper sets up alerting
+- @tech-writer creates documentation
+- Performance optimization pass
+
+**Phase 6: Launch Prep (2-4 hrs)**
+- Final security audit
+- Load testing
+- Runbook creation
+- /handoff-context for operations team
+- /generate-AGENTS-file for future development
+
+**Orchestration Patterns:**
+- Use /party-mode for complex decisions
+- Use /session save to checkpoint progress
+- Use /knowledge to maintain context
+- Regular /handoff-context for continuity`,
+    examples: [
+      'Build a SaaS analytics platform',
+      'Create a marketplace with payments',
+      'Develop a real-time collaboration tool',
+    ],
+  },
+];
+
+// ============================================================================
 // Full Dictionary
 // ============================================================================
 
@@ -1129,3 +1613,83 @@ export function searchForAutocomplete(
     development: grouped.development.slice(0, maxPerPillar),
   };
 }
+
+// ============================================================================
+// Workflow Helper Functions
+// ============================================================================
+
+/**
+ * Get all workflow definitions
+ */
+export function getWorkflows(): WorkflowDefinition[] {
+  return workflowDefinitions;
+}
+
+/**
+ * Get workflow by name
+ */
+export function getWorkflow(name: string): WorkflowDefinition | undefined {
+  return workflowDefinitions.find((w) => w.name === name);
+}
+
+/**
+ * Get workflow by ID
+ */
+export function getWorkflowById(id: string): WorkflowDefinition | undefined {
+  return workflowDefinitions.find((w) => w.id === id);
+}
+
+/**
+ * Filter workflows by complexity
+ */
+export function filterWorkflowsByComplexity(complexity: WorkflowComplexity): WorkflowDefinition[] {
+  return workflowDefinitions.filter((w) => w.complexity === complexity);
+}
+
+/**
+ * Search workflows by query
+ */
+export function searchWorkflows(query: string): WorkflowDefinition[] {
+  const term = query.toLowerCase().trim();
+  if (!term) return workflowDefinitions;
+
+  return workflowDefinitions.filter(
+    (w) =>
+      w.name.toLowerCase().includes(term) ||
+      w.displayName.toLowerCase().includes(term) ||
+      w.description.toLowerCase().includes(term) ||
+      w.examples.some((e) => e.toLowerCase().includes(term))
+  );
+}
+
+/**
+ * Group workflows by complexity for UI display
+ */
+export function groupWorkflowsByComplexity(): Record<WorkflowComplexity, WorkflowDefinition[]> {
+  return {
+    quick: workflowDefinitions.filter((w) => w.complexity === 'quick'),
+    sprint: workflowDefinitions.filter((w) => w.complexity === 'sprint'),
+    project: workflowDefinitions.filter((w) => w.complexity === 'project'),
+    platform: workflowDefinitions.filter((w) => w.complexity === 'platform'),
+  };
+}
+
+/**
+ * Complexity labels for display
+ */
+export const COMPLEXITY_LABELS: Record<WorkflowComplexity, { label: string; description: string }> = {
+  quick: { label: 'Quick', description: 'Minutes to complete' },
+  sprint: { label: 'Sprint', description: 'Hours to complete' },
+  project: { label: 'Project', description: 'Days to complete' },
+  platform: { label: 'Platform', description: 'Weeks to complete' },
+};
+
+/**
+ * Complexity colors for UI
+ */
+export const COMPLEXITY_COLORS: Record<WorkflowComplexity, string> = {
+  quick: '#10b981', // Emerald
+  sprint: '#0ea5e9', // Sky
+  project: '#8b5cf6', // Violet
+  platform: '#f97316', // Orange
+};
