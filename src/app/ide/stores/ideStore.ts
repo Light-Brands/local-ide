@@ -801,16 +801,32 @@ export const useIDEStore = create<IDEStore>()(
         return sessionId;
       },
 
-      removeChatSession: (sessionId) => set((state) => {
-        const newSessions = state.chatSessions.filter((s) => s.id !== sessionId);
-        const newActiveId = state.activeChatSessionId === sessionId
-          ? (newSessions[0]?.id ?? null)
-          : state.activeChatSessionId;
-        return {
-          chatSessions: newSessions,
-          activeChatSessionId: newActiveId,
-        };
-      }),
+      removeChatSession: (sessionId) => {
+        // Find the session to get its backend ID before removing
+        const session = get().chatSessions.find((s) => s.id === sessionId);
+        const backendSessionId = session?.backendSessionId;
+
+        // Update frontend state immediately
+        set((state) => {
+          const newSessions = state.chatSessions.filter((s) => s.id !== sessionId);
+          const newActiveId = state.activeChatSessionId === sessionId
+            ? (newSessions[0]?.id ?? null)
+            : state.activeChatSessionId;
+          return {
+            chatSessions: newSessions,
+            activeChatSessionId: newActiveId,
+          };
+        });
+
+        // Kill the backend session asynchronously (fire and forget)
+        if (backendSessionId) {
+          fetch(`/api/chat/sessions/${encodeURIComponent(backendSessionId)}`, {
+            method: 'DELETE',
+          }).catch((err) => {
+            console.error('[ideStore] Failed to kill backend session:', err);
+          });
+        }
+      },
 
       setActiveChatSession: (sessionId) => set((state) => {
         // Update lastActiveAt for the session
