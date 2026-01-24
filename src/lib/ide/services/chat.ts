@@ -89,28 +89,28 @@ export class ChatService {
     this.isIntentionallyClosed = false;
 
     // Check if chat server is available before attempting WebSocket connection
+    // Use the proxied API route to avoid CORS issues
     try {
-      const healthCheck = await fetch('http://localhost:4002/health', {
+      const healthCheck = await fetch('/api/services', {
         method: 'GET',
         signal: AbortSignal.timeout(3000)
       });
-      if (!healthCheck.ok) {
-        console.warn('[ChatService] Chat server health check failed');
-        this.emit('error', { type: 'error', error: 'Chat server not ready' });
-        if (this.shouldReconnect()) {
-          this.scheduleReconnect();
+      if (healthCheck.ok) {
+        const data = await healthCheck.json();
+        const chatService = data.services?.find((s: { id: string }) => s.id === 'chat');
+        if (chatService?.status !== 'healthy') {
+          console.warn('[ChatService] Chat server not ready');
+          if (this.shouldReconnect()) {
+            this.scheduleReconnect();
+          }
+          return;
         }
-        return;
       }
-      // Small delay after health check to ensure WebSocket endpoint is ready
+      // Small delay to ensure WebSocket endpoint is ready
       await new Promise(resolve => setTimeout(resolve, 100));
     } catch {
-      console.warn('[ChatService] Chat server not available on port 4002');
-      this.emit('error', { type: 'error', error: 'Chat server unavailable' });
-      if (this.shouldReconnect()) {
-        this.scheduleReconnect();
-      }
-      return;
+      // If health check fails, still try WebSocket - it might work
+      console.warn('[ChatService] Could not verify chat server status, attempting connection anyway');
     }
 
     console.log('[ChatService] Connecting to:', this.config.url);
@@ -154,14 +154,14 @@ export class ChatService {
       };
 
       this.ws.onerror = () => {
-        // Only log as error if we're not in the initial connection phase
-        // Initial connection failures are expected if chat server isn't running
-        if (this.reconnectAttempt > 0) {
-          console.error('[ChatService] WebSocket error during reconnect');
+        // Only log and emit errors after multiple failed attempts
+        // Initial connection failures are expected during startup
+        if (this.reconnectAttempt >= 3) {
+          console.error('[ChatService] WebSocket connection failed after retries');
+          this.emit('error', { type: 'error', error: 'Chat server unavailable' });
         } else {
-          console.warn('[ChatService] WebSocket connection failed - is chat server running on port 4002?');
+          console.warn('[ChatService] WebSocket connection attempt failed, will retry...');
         }
-        this.emit('error', { type: 'error', error: 'Chat server unavailable' });
       };
     } catch (error) {
       console.error('[ChatService] Connection failed:', error);

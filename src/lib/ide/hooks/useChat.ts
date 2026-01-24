@@ -290,6 +290,8 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
     cleanups.push(service.on('connected', (e) => {
       console.log('[useChat] WebSocket connected, session:', e.sessionId);
       isConnectedRef.current = true;
+      // Clear any previous connection errors now that we're connected
+      dispatch({ type: 'SET_ERROR', error: null });
       if (e.sessionId) {
         onBackendSessionIdRef.current?.(e.sessionId);
       }
