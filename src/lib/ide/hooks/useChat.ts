@@ -7,11 +7,14 @@
  * - Handles errors gracefully
  * - Provides stable callbacks
  * - Uses existing Message/ContentBlock types for compatibility
+ * - Supports WebSocket mode for persistent chat via tmux
  */
 
 'use client';
 
-import { useCallback, useRef, useReducer } from 'react';
+import { useCallback, useRef, useReducer, useEffect } from 'react';
+import { IDE_FEATURES } from '../features';
+import { ChatService, getChatService, getChatWebSocketUrl } from '../services/chat';
 import type {
   Message,
   ContentBlock,
@@ -120,6 +123,20 @@ export interface UseChatOptions {
   externalMessages?: Message[];
   /** Callback when messages change (for external state sync) */
   onMessagesChange?: (messages: Message[]) => void;
+  /** Called when tool starts (for operation tracking) */
+  onToolStart?: (toolName: string, input: Record<string, unknown>, id: string) => void;
+  /** Called when tool ends (for operation tracking) */
+  onToolEnd?: (id: string, status: 'success' | 'error', error?: string) => void;
+  /** Called when thinking starts */
+  onThinkingStart?: () => void;
+  /** Called when thinking ends */
+  onThinkingEnd?: () => void;
+  /** Use WebSocket mode for persistent chat */
+  useWebSocket?: boolean;
+  /** Backend session ID for reconnection */
+  backendSessionId?: string;
+  /** Callback when backend session ID is received */
+  onBackendSessionId?: (id: string) => void;
 }
 
 export interface UseChatReturn {
@@ -155,7 +172,18 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
     maxHistory = 20,
     externalMessages,
     onMessagesChange,
+    onToolStart,
+    onToolEnd,
+    onThinkingStart,
+    onThinkingEnd,
+    useWebSocket = false,
+    backendSessionId,
+    onBackendSessionId,
   } = options;
+
+  // WebSocket service ref
+  const chatServiceRef = useRef<ChatService | null>(null);
+  const wsCleanupRef = useRef<(() => void)[]>([]);
 
   // Use reducer for predictable state updates
   const [state, dispatch] = useReducer(chatReducer, {
@@ -179,9 +207,26 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
   const onToolUseRef = useRef(onToolUse);
   const onErrorRef = useRef(onError);
   const onMessagesChangeRef = useRef(onMessagesChange);
+  const onToolStartRef = useRef(onToolStart);
+  const onToolEndRef = useRef(onToolEnd);
+  const onThinkingStartRef = useRef(onThinkingStart);
+  const onThinkingEndRef = useRef(onThinkingEnd);
   onToolUseRef.current = onToolUse;
   onErrorRef.current = onError;
   onMessagesChangeRef.current = onMessagesChange;
+  onToolStartRef.current = onToolStart;
+  onToolEndRef.current = onToolEnd;
+  onThinkingStartRef.current = onThinkingStart;
+  onThinkingEndRef.current = onThinkingEnd;
+
+  // Refs for WebSocket streaming state
+  const wsCurrentBlocksRef = useRef<ContentBlock[]>([]);
+  const wsCurrentTextRef = useRef<string>('');
+  const wsCurrentThinkingRef = useRef<string>('');
+  const wsToolBlocksRef = useRef<Map<string, ToolUseBlock>>(new Map());
+  const wsAssistantIdRef = useRef<string | null>(null);
+  const onBackendSessionIdRef = useRef(onBackendSessionId);
+  onBackendSessionIdRef.current = onBackendSessionId;
 
   // Helper to update messages (uses external callback or internal state)
   const updateMessages = useCallback((updater: Message[] | ((prev: Message[]) => Message[])) => {
@@ -209,8 +254,181 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
     [maxHistory]
   );
 
+  // WebSocket connection effect
+  useEffect(() => {
+    if (!useWebSocket || !IDE_FEATURES.persistentChat) {
+      return;
+    }
+
+    const wsUrl = getChatWebSocketUrl(backendSessionId);
+    const service = getChatService({ url: wsUrl }, true);
+    chatServiceRef.current = service;
+
+    // Helper to update assistant message in WebSocket mode
+    const updateWsAssistant = (blocks: ContentBlock[], isStreaming = true) => {
+      const assistantId = wsAssistantIdRef.current;
+      if (!assistantId) return;
+
+      wsCurrentBlocksRef.current = blocks;
+      updateMessages((prev) => {
+        const newMessages = [...prev];
+        const idx = newMessages.findIndex((m) => m.id === assistantId);
+        if (idx !== -1) {
+          newMessages[idx] = {
+            ...newMessages[idx],
+            content: [...blocks],
+            isStreaming,
+          };
+        }
+        return newMessages;
+      });
+    };
+
+    // Event handlers
+    const cleanups: (() => void)[] = [];
+
+    cleanups.push(service.on('connected', (e) => {
+      console.log('[useChat] WebSocket connected, session:', e.sessionId);
+      isConnectedRef.current = true;
+      if (e.sessionId) {
+        onBackendSessionIdRef.current?.(e.sessionId);
+      }
+    }));
+
+    cleanups.push(service.on('text', (e) => {
+      if (!e.content) return;
+      wsCurrentTextRef.current += e.content;
+      const textBlockIndex = wsCurrentBlocksRef.current.findIndex(b => b.type === 'text');
+      if (textBlockIndex !== -1) {
+        wsCurrentBlocksRef.current[textBlockIndex] = {
+          type: 'text',
+          content: wsCurrentTextRef.current,
+        } as TextBlock;
+      } else {
+        wsCurrentBlocksRef.current.push({
+          type: 'text',
+          content: wsCurrentTextRef.current,
+        } as TextBlock);
+      }
+      updateWsAssistant(wsCurrentBlocksRef.current);
+    }));
+
+    cleanups.push(service.on('thinking', (e) => {
+      if (!e.content) return;
+      if (!wsCurrentThinkingRef.current) {
+        onThinkingStartRef.current?.();
+      }
+      wsCurrentThinkingRef.current += e.content;
+      const thinkingIndex = wsCurrentBlocksRef.current.findIndex(b => b.type === 'thinking');
+      if (thinkingIndex !== -1) {
+        wsCurrentBlocksRef.current[thinkingIndex] = {
+          type: 'thinking',
+          content: wsCurrentThinkingRef.current,
+          collapsed: true,
+        } as ThinkingBlock;
+      } else {
+        wsCurrentBlocksRef.current.push({
+          type: 'thinking',
+          content: wsCurrentThinkingRef.current,
+          collapsed: true,
+        } as ThinkingBlock);
+      }
+      updateWsAssistant(wsCurrentBlocksRef.current);
+    }));
+
+    cleanups.push(service.on('tool_use_start', (e) => {
+      if (wsCurrentThinkingRef.current) {
+        onThinkingEndRef.current?.();
+      }
+      const toolBlock: ToolUseBlock = {
+        type: 'tool_use',
+        id: e.id || '',
+        tool: e.tool || '',
+        input: e.input || {},
+        status: 'running',
+      };
+      wsToolBlocksRef.current.set(e.id || '', toolBlock);
+      wsCurrentBlocksRef.current.push(toolBlock);
+      updateWsAssistant(wsCurrentBlocksRef.current);
+      onToolUseRef.current?.(e.tool || '', e.input || {});
+      onToolStartRef.current?.(e.tool || '', e.input || {}, e.id || '');
+    }));
+
+    cleanups.push(service.on('tool_use_output', (e) => {
+      const toolBlock = wsToolBlocksRef.current.get(e.id || '');
+      if (toolBlock) {
+        toolBlock.output = (toolBlock.output || '') + (e.output || '');
+        updateWsAssistant(wsCurrentBlocksRef.current);
+      }
+    }));
+
+    cleanups.push(service.on('tool_use_end', (e) => {
+      const toolBlock = wsToolBlocksRef.current.get(e.id || '');
+      if (toolBlock) {
+        toolBlock.status = e.status || 'success';
+        if (e.error) {
+          toolBlock.error = e.error;
+        }
+        updateWsAssistant(wsCurrentBlocksRef.current);
+        onToolEndRef.current?.(e.id || '', e.status === 'success' ? 'success' : 'error', e.error);
+      }
+    }));
+
+    cleanups.push(service.on('done', () => {
+      updateWsAssistant(wsCurrentBlocksRef.current, false);
+      dispatch({ type: 'SET_LOADING', isLoading: false });
+      // Reset streaming state
+      wsCurrentBlocksRef.current = [];
+      wsCurrentTextRef.current = '';
+      wsCurrentThinkingRef.current = '';
+      wsToolBlocksRef.current.clear();
+      wsAssistantIdRef.current = null;
+    }));
+
+    cleanups.push(service.on('error', (e) => {
+      const errorMsg = e.error || 'Unknown error';
+      dispatch({ type: 'SET_ERROR', error: errorMsg });
+      onErrorRef.current?.(errorMsg);
+      wsCurrentBlocksRef.current.push({ type: 'error', content: errorMsg } as ErrorBlock);
+      updateWsAssistant(wsCurrentBlocksRef.current, false);
+      dispatch({ type: 'SET_LOADING', isLoading: false });
+    }));
+
+    cleanups.push(service.on('close', () => {
+      isConnectedRef.current = false;
+    }));
+
+    cleanups.push(service.on('reconnecting', (e) => {
+      console.log('[useChat] Reconnecting, attempt:', e.attempt);
+    }));
+
+    cleanups.push(service.on('output-buffer', (e) => {
+      // Handle buffered output on reconnect
+      if (e.data) {
+        console.log('[useChat] Received buffered output:', e.data.length, 'chars');
+      }
+    }));
+
+    wsCleanupRef.current = cleanups;
+
+    // Connect
+    service.connect();
+
+    return () => {
+      cleanups.forEach(fn => fn());
+      wsCleanupRef.current = [];
+      // Don't disconnect - let the service persist for reconnection
+    };
+  }, [useWebSocket, backendSessionId, updateMessages]);
+
   // Check connection to chat service
   const checkConnection = useCallback(async () => {
+    // If Claude chat is disabled, report as disconnected silently
+    if (!IDE_FEATURES.claudeChat) {
+      isConnectedRef.current = false;
+      return { connected: false, error: 'Claude chat is disabled' };
+    }
+
     try {
       const response = await fetch('/api/ide/chat/status');
       const status = await response.json();
@@ -225,24 +443,47 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
 
   // Abort current stream
   const abort = useCallback(() => {
+    // WebSocket mode
+    if (useWebSocket && chatServiceRef.current) {
+      chatServiceRef.current.abort();
+      dispatch({ type: 'SET_LOADING', isLoading: false });
+      return;
+    }
+    // HTTP mode
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
       dispatch({ type: 'SET_LOADING', isLoading: false });
     }
-  }, []);
+  }, [useWebSocket]);
 
   // Send message
   const sendMessage = useCallback(
     async (content: string) => {
       if (!content.trim() || state.isLoading) return;
 
+      // If Claude chat is disabled, show a friendly message
+      if (!IDE_FEATURES.claudeChat) {
+        const userMessage: Message = {
+          id: generateId(),
+          role: 'user',
+          content: [{ type: 'text', content } as TextBlock],
+          timestamp: new Date(),
+        };
+        const assistantMessage: Message = {
+          id: generateId(),
+          role: 'assistant',
+          content: [{ type: 'text', content: 'Chat is not available in this environment.' } as TextBlock],
+          timestamp: new Date(),
+          isStreaming: false,
+        };
+        updateMessages((prev) => [...prev, userMessage, assistantMessage]);
+        return;
+      }
+
       // Clear previous error
       dispatch({ type: 'SET_ERROR', error: null });
       dispatch({ type: 'SET_LOADING', isLoading: true });
-
-      // Create abort controller
-      abortControllerRef.current = new AbortController();
 
       // Add user message
       const userMessage: Message = {
@@ -264,6 +505,21 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
 
       // Add both messages
       updateMessages((prev) => [...prev, userMessage, assistantMessage]);
+
+      // WebSocket mode - send via service
+      if (useWebSocket && chatServiceRef.current?.isConnected) {
+        wsAssistantIdRef.current = assistantId;
+        wsCurrentBlocksRef.current = [];
+        wsCurrentTextRef.current = '';
+        wsCurrentThinkingRef.current = '';
+        wsToolBlocksRef.current.clear();
+        chatServiceRef.current.sendMessage(content);
+        return;
+      }
+
+      // HTTP+SSE mode - fall through to existing implementation
+      // Create abort controller
+      abortControllerRef.current = new AbortController();
 
       // Track current content blocks for updates
       let currentBlocks: ContentBlock[] = [];
@@ -351,8 +607,12 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
                   break;
 
                 case 'thinking':
-                  currentThinkingContent += event.content;
                   {
+                    // Notify thinking start if this is the first thinking content
+                    if (!currentThinkingContent) {
+                      onThinkingStartRef.current?.();
+                    }
+                    currentThinkingContent += event.content;
                     const thinkingIndex = currentBlocks.findIndex(
                       (b) => b.type === 'thinking'
                     );
@@ -375,6 +635,10 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
 
                 case 'tool_use_start':
                   {
+                    // Notify thinking end when tool starts (thinking phase is over)
+                    if (currentThinkingContent) {
+                      onThinkingEndRef.current?.();
+                    }
                     const toolBlock: ToolUseBlock = {
                       type: 'tool_use',
                       id: event.id,
@@ -386,6 +650,8 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
                     currentBlocks.push(toolBlock);
                     updateAssistant(currentBlocks);
                     onToolUseRef.current?.(event.tool, event.input);
+                    // Notify operation tracking
+                    onToolStartRef.current?.(event.tool, event.input, event.id);
                   }
                   break;
 
@@ -408,6 +674,12 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
                         toolBlock.error = event.error;
                       }
                       updateAssistant(currentBlocks);
+                      // Notify operation tracking
+                      onToolEndRef.current?.(
+                        event.id,
+                        event.status === 'success' ? 'success' : 'error',
+                        event.error
+                      );
                     }
                   }
                   break;
@@ -453,7 +725,7 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
         abortControllerRef.current = null;
       }
     },
-    [endpoint, workspacePath, buildHistory, state.isLoading, updateMessages]
+    [endpoint, workspacePath, buildHistory, state.isLoading, updateMessages, useWebSocket]
   );
 
   // Clear messages

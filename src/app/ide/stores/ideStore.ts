@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 import { useState, useEffect } from 'react';
 import type { Message as ChatMessage, ContentBlock } from '@/types/chat';
+import type { Operation, OperationFilter } from '@/lib/ide/services/operations';
 
 // =============================================================================
 // TYPES
@@ -25,6 +26,8 @@ export interface ChatSession {
   createdAt: Date;
   lastActiveAt: Date;
   messages: ChatMessage[];
+  backendSessionId?: string;      // Server-side session for reconnection
+  isServerPersistent?: boolean;   // Has server-side persistence via tmux
 }
 
 export interface PortInfo {
@@ -186,6 +189,7 @@ interface IDEStore {
   updateChatSessionMessages: (sessionId: string, messages: ChatMessage[]) => void;
   clearSessionMessages: (sessionId: string) => void;
   getActiveSession: () => ChatSession | null;
+  setChatSessionBackend: (frontendId: string, backendSessionId: string) => void;
 
   // === PREVIEW STATE ===
   previewMode: 'local' | 'deployed';
@@ -253,6 +257,15 @@ interface IDEStore {
   // === COMMAND PALETTE ===
   commandPaletteOpen: boolean;
   setCommandPaletteOpen: (open: boolean) => void;
+
+  // === OPERATIONS TRACKING ===
+  operations: Operation[];
+  operationsPanelOpen: boolean;
+  operationsFilter: OperationFilter;
+  setOperations: (operations: Operation[]) => void;
+  toggleOperationsPanel: () => void;
+  setOperationsPanelOpen: (open: boolean) => void;
+  setOperationsFilter: (filter: OperationFilter) => void;
 
   // === COMMAND DICTIONARY ===
   commandDictionaryOpen: boolean;
@@ -466,6 +479,11 @@ const initialState = {
 
   // Command palette
   commandPaletteOpen: false,
+
+  // Operations tracking
+  operations: [] as Operation[],
+  operationsPanelOpen: false,
+  operationsFilter: 'all' as OperationFilter,
 
   // Command dictionary
   commandDictionaryOpen: false,
@@ -821,6 +839,14 @@ export const useIDEStore = create<IDEStore>()(
         return state.chatSessions.find((s) => s.id === state.activeChatSessionId) ?? null;
       },
 
+      setChatSessionBackend: (frontendId, backendSessionId) => set((state) => ({
+        chatSessions: state.chatSessions.map((s) =>
+          s.id === frontendId
+            ? { ...s, backendSessionId, isServerPersistent: true }
+            : s
+        ),
+      })),
+
       // === PREVIEW ACTIONS ===
       setPreviewMode: (mode) => set({ previewMode: mode }),
 
@@ -963,6 +989,12 @@ export const useIDEStore = create<IDEStore>()(
 
       // === COMMAND PALETTE ===
       setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
+
+      // === OPERATIONS TRACKING ===
+      setOperations: (operations) => set({ operations }),
+      toggleOperationsPanel: () => set((state) => ({ operationsPanelOpen: !state.operationsPanelOpen })),
+      setOperationsPanelOpen: (open) => set({ operationsPanelOpen: open }),
+      setOperationsFilter: (filter) => set({ operationsFilter: filter }),
 
       // === COMMAND DICTIONARY ===
       setCommandDictionaryOpen: (open) => set({ commandDictionaryOpen: open }),
@@ -1379,6 +1411,7 @@ export function useChatSessions() {
     updateMessages: state.updateChatSessionMessages,
     clearMessages: state.clearSessionMessages,
     setIsTyping: state.setIsTyping,
+    setBackendSession: state.setChatSessionBackend,
   })));
 }
 
@@ -1480,5 +1513,17 @@ export function useIntegrations() {
     setVercel: state.setVercelConnection,
     setSupabase: state.setSupabaseConnection,
     setClaude: state.setClaudeConnection,
+  })));
+}
+
+export function useOperations() {
+  return useIDEStore(useShallow((state) => ({
+    operations: state.operations,
+    panelOpen: state.operationsPanelOpen,
+    filter: state.operationsFilter,
+    setOperations: state.setOperations,
+    togglePanel: state.toggleOperationsPanel,
+    setPanelOpen: state.setOperationsPanelOpen,
+    setFilter: state.setOperationsFilter,
   })));
 }

@@ -1,11 +1,12 @@
 'use client';
 
 import { useRef, useEffect, useState, useCallback } from 'react';
-import { cn } from '@/lib/utils';
 import { useIDEStore, useChatSessions, useStoreHydrated } from '../../../stores/ideStore';
 import { useMobileDetect } from '../../../hooks';
 import { useChat } from '@/lib/ide/hooks';
+import { useOperationSync } from '@/lib/ide/hooks/useOperationSync';
 import { getActivityService } from '@/lib/ide/services/activity';
+import { IDE_FEATURES } from '@/lib/ide/features';
 import { useToolingOptional } from '../../../contexts/ToolingContext';
 import { ChatInput } from '../../chat/ChatInput';
 import { ChatSessionTabs } from '../../chat/ChatSessionTabs';
@@ -35,6 +36,15 @@ function ChatSessionContent({ sessionId }: ChatSessionContentProps) {
   const [connectionChecked, setConnectionChecked] = useState(false);
   const tooling = useToolingOptional();
 
+  // Operation tracking
+  const {
+    handleToolStart,
+    handleToolEnd,
+    handleThinkingStart,
+    handleThinkingEnd,
+  } = useOperationSync();
+  const thinkingIdRef = useRef<string | null>(null);
+
   // Command Dictionary
   const openCommandDictionary = useIDEStore((state) => state.openCommandDictionary);
 
@@ -43,6 +53,12 @@ function ChatSessionContent({ sessionId }: ChatSessionContentProps) {
   const fileContents = useIDEStore((state) => state.editor.fileContents);
   const clearMobileChatUnread = useIDEStore((state) => state.clearMobileChatUnread);
 
+  // Get current session with backend info
+  const session = useIDEStore((state) =>
+    state.chatSessions.find((s) => s.id === sessionId)
+  );
+  const setChatSessionBackend = useIDEStore((state) => state.setChatSessionBackend);
+
   // Get workspace path from GitHub integration or default to temp workspace
   const github = useIDEStore((state) => state.integrations.github);
   const workspacePath = github.repo
@@ -50,9 +66,7 @@ function ChatSessionContent({ sessionId }: ChatSessionContentProps) {
     : '/tmp/workspace';
 
   // Get session messages from store and create update callback
-  const sessionMessages = useIDEStore((state) =>
-    state.chatSessions.find((s) => s.id === sessionId)?.messages ?? []
-  );
+  const sessionMessages = session?.messages ?? [];
   const updateChatSessionMessages = useIDEStore((state) => state.updateChatSessionMessages);
 
   // Memoize the callback to prevent unnecessary re-renders
@@ -60,7 +74,13 @@ function ChatSessionContent({ sessionId }: ChatSessionContentProps) {
     updateChatSessionMessages(sessionId, newMessages);
   }, [sessionId, updateChatSessionMessages]);
 
+  // Handle backend session ID callback
+  const handleBackendSessionId = useCallback((backendId: string) => {
+    setChatSessionBackend(sessionId, backendId);
+  }, [sessionId, setChatSessionBackend]);
+
   // Use robust chat hook with external message state (store is source of truth)
+  // Enable WebSocket mode if persistentChat feature is enabled
   const {
     messages,
     isLoading,
@@ -73,13 +93,47 @@ function ChatSessionContent({ sessionId }: ChatSessionContentProps) {
     workspacePath,
     externalMessages: sessionMessages,
     onMessagesChange: handleMessagesChange,
+    useWebSocket: IDE_FEATURES.persistentChat,
+    backendSessionId: session?.backendSessionId,
+    onBackendSessionId: handleBackendSessionId,
     onToolUse: (tool) => {
-      getActivityService().trackAIResponse(`Tool: ${tool}`);
+      if (IDE_FEATURES.activityTracking) {
+        getActivityService().trackAIResponse(`Tool: ${tool}`);
+      }
     },
     onError: (errorMsg) => {
-      getActivityService().trackError('AI Error', errorMsg);
+      if (IDE_FEATURES.activityTracking) {
+        getActivityService().trackError('AI Error', errorMsg);
+      }
+    },
+    // Operation tracking callbacks
+    onToolStart: handleToolStart,
+    onToolEnd: handleToolEnd,
+    onThinkingStart: () => {
+      const op = handleThinkingStart();
+      thinkingIdRef.current = op.id;
+    },
+    onThinkingEnd: () => {
+      if (thinkingIdRef.current) {
+        handleThinkingEnd(thinkingIdRef.current);
+        thinkingIdRef.current = null;
+      }
     },
   });
+
+  // Page unload handler to save chat output
+  useEffect(() => {
+    const handleUnload = () => {
+      if (session?.backendSessionId) {
+        navigator.sendBeacon(
+          '/api/chat/save-output',
+          JSON.stringify({ sessionId: session.backendSessionId })
+        );
+      }
+    };
+    window.addEventListener('beforeunload', handleUnload);
+    return () => window.removeEventListener('beforeunload', handleUnload);
+  }, [session?.backendSessionId]);
 
   // Check connection on mount
   useEffect(() => {

@@ -7,7 +7,7 @@ import { Copy, Check, FileCode, Slash, Bot, ExternalLink, GitBranch, ZoomIn, Zoo
 // Mermaid config for dark theme
 const mermaidConfig = {
   startOnLoad: false,
-  theme: 'dark',
+  theme: 'dark' as const,
   themeVariables: {
     primaryColor: '#3b82f6',
     primaryTextColor: '#f5f5f5',
@@ -25,7 +25,7 @@ const mermaidConfig = {
   },
   flowchart: {
     htmlLabels: true,
-    curve: 'basis',
+    curve: 'basis' as const,
   },
   securityLevel: 'loose',
 } as const;

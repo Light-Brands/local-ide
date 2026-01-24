@@ -3,6 +3,9 @@
  * Tracks and manages IDE activity events
  */
 
+import { IDE_FEATURES } from '../features';
+import { safeIDEOperation } from '../error-handler';
+
 // =============================================================================
 // TYPES
 // =============================================================================
@@ -76,58 +79,80 @@ export function clearActivities(): void {
 // =============================================================================
 
 async function fetchActivitiesFromServer(): Promise<Activity[]> {
-  try {
-    const response = await fetch('/api/activity?limit=500');
-    if (!response.ok) return [];
-    const data = await response.json();
-    return data.activities.map((a: Activity & { timestamp: string }) => ({
-      ...a,
-      timestamp: new Date(a.timestamp),
-    }));
-  } catch {
-    return [];
-  }
+  if (!IDE_FEATURES.activityTracking) return [];
+
+  const result = await safeIDEOperation(
+    'Activity',
+    'fetchFromServer',
+    async () => {
+      const response = await fetch('/api/activity?limit=500');
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data.activities.map((a: Activity & { timestamp: string }) => ({
+        ...a,
+        timestamp: new Date(a.timestamp),
+      }));
+    },
+    { fallback: [], severity: 'silent' }
+  );
+
+  return result ?? [];
 }
 
 async function syncActivitiesToServer(activities: Activity[]): Promise<void> {
-  try {
-    await fetch('/api/activity', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sync: true,
-        activities: activities.map(a => ({
-          ...a,
-          timestamp: a.timestamp.toISOString(),
-        })),
-      }),
-    });
-  } catch (error) {
-    console.error('Failed to sync activities to server:', error);
-  }
+  if (!IDE_FEATURES.activityTracking) return;
+
+  await safeIDEOperation(
+    'Activity',
+    'syncToServer',
+    async () => {
+      await fetch('/api/activity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sync: true,
+          activities: activities.map(a => ({
+            ...a,
+            timestamp: a.timestamp.toISOString(),
+          })),
+        }),
+      });
+    },
+    { severity: 'silent' }
+  );
 }
 
 async function saveActivityToServer(activity: Activity): Promise<void> {
-  try {
-    await fetch('/api/activity', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...activity,
-        timestamp: activity.timestamp.toISOString(),
-      }),
-    });
-  } catch (error) {
-    console.error('Failed to save activity to server:', error);
-  }
+  if (!IDE_FEATURES.activityTracking) return;
+
+  await safeIDEOperation(
+    'Activity',
+    'saveToServer',
+    async () => {
+      await fetch('/api/activity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...activity,
+          timestamp: activity.timestamp.toISOString(),
+        }),
+      });
+    },
+    { severity: 'silent' }
+  );
 }
 
 async function clearActivitiesOnServer(): Promise<void> {
-  try {
-    await fetch('/api/activity', { method: 'DELETE' });
-  } catch (error) {
-    console.error('Failed to clear activities on server:', error);
-  }
+  if (!IDE_FEATURES.activityTracking) return;
+
+  await safeIDEOperation(
+    'Activity',
+    'clearOnServer',
+    async () => {
+      await fetch('/api/activity', { method: 'DELETE' });
+    },
+    { severity: 'silent' }
+  );
 }
 
 // =============================================================================

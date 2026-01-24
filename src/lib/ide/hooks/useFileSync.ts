@@ -7,6 +7,7 @@ import {
   type SyncStrategy,
   type FileSyncEvent,
 } from '../services/file-sync';
+import { IDE_FEATURES } from '../features';
 
 export interface UseFileSyncOptions {
   /** Enable automatic sync monitoring */
@@ -48,6 +49,19 @@ export function useFileSync(options: UseFileSyncOptions = {}): UseFileSyncReturn
   const [isChecking, setIsChecking] = useState(false);
   const [pendingStrategy, setPendingStrategy] = useState<SyncStrategy | null>(null);
   const serviceRef = useRef(getFileSyncService());
+
+  // If file sync is disabled, return a no-op version
+  if (!IDE_FEATURES.fileSync) {
+    return {
+      status: { inSync: true, serverVersion: 'disabled', clientVersion: 'disabled', stalePaths: [], lastCheck: Date.now() },
+      isChecking: false,
+      pendingStrategy: null,
+      checkSync: async () => {},
+      executeSync: async () => {},
+      dismiss: () => {},
+      acknowledge: () => {},
+    };
+  }
 
   // Handle sync events
   useEffect(() => {

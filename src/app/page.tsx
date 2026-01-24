@@ -178,7 +178,7 @@ export default function Home() {
         cta={{ label: 'Open IDE', href: '/ide' }}
       />
 
-      <main>
+      <main className="relative">
         <HeroCentered
           badge={{ text: 'Self-Evolving Platform', href: '/ide' }}
           title="Build Apps That Build Themselves"

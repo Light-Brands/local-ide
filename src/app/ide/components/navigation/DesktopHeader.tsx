@@ -17,6 +17,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
+import { OperationStatusBar } from '../operations';
 
 export function DesktopHeader() {
   // Use service context for live integration status
@@ -175,6 +176,12 @@ export function DesktopHeader() {
 
       {/* Right: Actions */}
       <div className="flex items-center gap-2">
+        {/* Operations Status */}
+        <OperationStatusBar />
+
+        {/* Divider */}
+        <div className="w-px h-5 bg-neutral-200 dark:bg-neutral-800" />
+
         {/* Connection status */}
         <div className="flex items-center gap-1.5 px-2 py-1">
           {isConnected ? (

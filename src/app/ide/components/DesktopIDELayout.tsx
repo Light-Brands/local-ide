@@ -37,6 +37,7 @@ const DeployPane = dynamic(() => import('./panes/DeployPane').then((m) => m.Depl
 const TerminalPane = dynamic(() => import('./panes/TerminalPane').then((m) => m.TerminalPane), { ssr: false }); // Legacy
 
 import { ActivitySlidePanel } from './panels/ActivitySlidePanel';
+import { OperationsPanel } from './operations';
 
 // Pane components mapping (Activity is now a slide-out panel, not a regular pane)
 const PANE_COMPONENTS: Record<number, React.ComponentType> = {
@@ -204,6 +205,9 @@ function DesktopLayoutContent() {
 
       {/* Activity Slide Panel */}
       <ActivitySlidePanel />
+
+      {/* Operations Panel */}
+      <OperationsPanel />
     </div>
   );
 }

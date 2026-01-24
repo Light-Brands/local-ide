@@ -4,6 +4,7 @@
  */
 
 import { getActivityService } from './activity';
+import { IDE_FEATURES } from '../features';
 
 // =============================================================================
 // TYPES
@@ -520,6 +521,15 @@ export function getTerminalWebSocketUrl(): string {
 const TERMINAL_SERVER_URL = getTerminalWebSocketUrl();
 
 export function getTerminalService(config?: TerminalConfig, forceNew = false): TerminalService {
+  // If terminal is disabled, always return a mock
+  if (!IDE_FEATURES.terminal) {
+    if (!terminalInstance) {
+      console.log('[TerminalService] Terminal disabled, using mock');
+      terminalInstance = new MockTerminalService({ url: 'mock' });
+    }
+    return terminalInstance;
+  }
+
   // If forceNew is true, disconnect and clear the existing instance to use new config
   if (forceNew && terminalInstance) {
     terminalInstance.disconnect();

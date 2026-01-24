@@ -10,6 +10,8 @@
 
 import { createHash } from 'crypto';
 import { getWorkspaceService, isIDEContext } from './workspace';
+import { IDE_FEATURES } from '../features';
+import { safeIDEOperation } from '../error-handler';
 
 export interface FileVersion {
   path: string;
@@ -44,6 +46,9 @@ class FileSyncService {
   private clientBuildId: string | null = null;
   private checkInterval: NodeJS.Timeout | null = null;
   private isChecking = false;
+  private appAvailable = true; // Assume available, stop polling if not
+  private appCheckAttempts = 0;
+  private maxAppCheckAttempts = 3; // Stop trying after 3 failures
 
   // IDE paths - changes here should NOT trigger any refresh
   // The IDE shell should remain stable
@@ -72,6 +77,12 @@ class FileSyncService {
    * Start monitoring for sync issues
    */
   start(intervalMs = 2000): void {
+    // Skip if file sync is disabled
+    if (!IDE_FEATURES.fileSync) {
+      console.log('[FileSync] File sync is disabled');
+      return;
+    }
+
     if (this.checkInterval) return;
 
     // Initial check
@@ -106,6 +117,15 @@ class FileSyncService {
   }
 
   /**
+   * Reset app availability check (e.g., when app might have started)
+   */
+  resetAppCheck(): void {
+    this.appAvailable = true;
+    this.appCheckAttempts = 0;
+    console.log('[FileSync] Reset app availability check');
+  }
+
+  /**
    * Subscribe to sync events
    */
   subscribe(listener: FileSyncListener): () => void {
@@ -130,6 +150,17 @@ class FileSyncService {
    * Check if client and server are in sync
    */
   async checkSync(): Promise<SyncStatus> {
+    // If file sync is disabled, always report as in sync
+    if (!IDE_FEATURES.fileSync) {
+      return {
+        inSync: true,
+        serverVersion: 'disabled',
+        clientVersion: 'disabled',
+        stalePaths: [],
+        lastCheck: Date.now(),
+      };
+    }
+
     if (this.isChecking) {
       return {
         inSync: true,
@@ -140,80 +171,109 @@ class FileSyncService {
       };
     }
 
-    this.isChecking = true;
-
-    try {
-      // Fetch server's current build info from the APP (port 3000)
-      // The IDE (port 4000) checks the APP's sync status
-      const appUrl = typeof window !== 'undefined' && window.location.port === '4000'
-        ? 'http://localhost:3000'
-        : '';
-      const response = await fetch(`${appUrl}/api/ide/sync-status`, {
-        cache: 'no-store',
-        headers: { 'Cache-Control': 'no-cache' },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Sync check failed: ${response.status}`);
-      }
-
-      const serverStatus = await response.json();
-
-      // Compare build IDs
-      const newServerBuildId = serverStatus.buildId;
-
-      // First time - just store the ID
-      if (!this.clientBuildId) {
-        this.clientBuildId = newServerBuildId;
-        this.serverBuildId = newServerBuildId;
-      }
-
-      // Check for mismatch
-      const inSync = this.clientBuildId === newServerBuildId;
-
-      if (!inSync) {
-        console.log('[FileSync] Out of sync detected', {
-          client: this.clientBuildId,
-          server: newServerBuildId,
-        });
-
-        // Determine best strategy based on what changed
-        const strategy = this.determineStrategy(serverStatus.changedPaths || []);
-
-        this.emit({
-          type: 'sync-required',
-          strategy,
-        });
-
-        // Update server build ID
-        this.serverBuildId = newServerBuildId;
-      }
-
+    // Skip if app has been detected as unavailable
+    if (!this.appAvailable) {
+      this.isChecking = false;
       return {
-        inSync,
-        serverVersion: newServerBuildId,
-        clientVersion: this.clientBuildId || 'unknown',
-        stalePaths: serverStatus.changedPaths || [],
-        lastCheck: Date.now(),
-      };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-
-      // Don't spam errors for expected failures (e.g., during server restart)
-      if (!message.includes('fetch')) {
-        console.warn('[FileSync] Check failed:', message);
-      }
-
-      return {
-        inSync: true, // Assume in sync if we can't check
-        serverVersion: 'unknown',
+        inSync: true,
+        serverVersion: 'standalone',
         clientVersion: this.clientBuildId || 'unknown',
         stalePaths: [],
         lastCheck: Date.now(),
       };
-    } finally {
-      this.isChecking = false;
     }
+
+    this.isChecking = true;
+
+    const result = await safeIDEOperation(
+      'FileSync',
+      'checkSync',
+      async () => {
+        // Fetch server's current build info from the APP (port 3000)
+        // The IDE (port 4000) checks the APP's sync status
+        const isIDEPort = typeof window !== 'undefined' && window.location.port === '4000';
+        const appUrl = isIDEPort ? 'http://localhost:3000' : '';
+
+        // Use short timeout to fail fast if app isn't running
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+
+        const response = await fetch(`${appUrl}/api/ide/sync-status`, {
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        // App is available, reset failure counter
+        this.appCheckAttempts = 0;
+        this.appAvailable = true;
+
+        if (!response.ok) {
+          throw new Error(`Sync check failed: ${response.status}`);
+        }
+
+        const serverStatus = await response.json();
+
+        // Compare build IDs
+        const newServerBuildId = serverStatus.buildId;
+
+        // First time - just store the ID
+        if (!this.clientBuildId) {
+          this.clientBuildId = newServerBuildId;
+          this.serverBuildId = newServerBuildId;
+        }
+
+        // Check for mismatch
+        const inSync = this.clientBuildId === newServerBuildId;
+
+        if (!inSync) {
+          console.log('[FileSync] Out of sync detected', {
+            client: this.clientBuildId,
+            server: newServerBuildId,
+          });
+
+          // Determine best strategy based on what changed
+          const strategy = this.determineStrategy(serverStatus.changedPaths || []);
+
+          this.emit({
+            type: 'sync-required',
+            strategy,
+          });
+
+          // Update server build ID
+          this.serverBuildId = newServerBuildId;
+        }
+
+        return {
+          inSync,
+          serverVersion: newServerBuildId,
+          clientVersion: this.clientBuildId || 'unknown',
+          stalePaths: serverStatus.changedPaths || [],
+          lastCheck: Date.now(),
+        };
+      },
+      {
+        fallback: {
+          inSync: true,
+          serverVersion: 'standalone',
+          clientVersion: this.clientBuildId || 'unknown',
+          stalePaths: [],
+          lastCheck: Date.now(),
+        },
+        severity: 'silent',
+        onError: () => {
+          // Track connection failures - stop polling if app consistently unavailable
+          this.appCheckAttempts++;
+          if (this.appCheckAttempts >= this.maxAppCheckAttempts) {
+            this.appAvailable = false;
+            console.log('[FileSync] App on port 3000 not available, disabling sync checks');
+          }
+        },
+      }
+    );
+
+    this.isChecking = false;
+    return result!;
   }
 
   /**
