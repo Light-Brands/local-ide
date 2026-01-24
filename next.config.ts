@@ -56,8 +56,9 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  // Disable Turbopack for stable HMR (lucide-react has issues)
-  // turbopack: {},
+  // Enable Turbopack (default in Next.js 16)
+  // Empty config acknowledges Turbopack usage while webpack config exists for fallback
+  turbopack: {},
 
   // Handle native module imports that might leak into the build (for webpack fallback)
   webpack: (config, { isServer }) => {
