@@ -19,6 +19,7 @@ import {
   Maximize2,
   Minimize2,
   Copy,
+  ClipboardPaste,
   AlertCircle,
   Plus,
   List,
@@ -290,9 +291,27 @@ export function TerminalPane() {
         }
       });
 
-      // Handle user input
+      // Handle user input - but intercept paste events for better handling
       terminal.onData((data: string) => {
-        service.send(data);
+        // Check if this looks like a large paste (xterm sends pasted content through onData)
+        // For large pastes, we want to chunk them
+        if (data.length > 1024) {
+          // Large paste detected - chunk it
+          console.log('[TerminalPane] Large onData detected, chunking:', data.length);
+          const CHUNK_SIZE = 4096;
+
+          // Send with bracketed paste mode
+          service.send('\x1b[200~');
+
+          for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+            const chunk = data.slice(i, i + CHUNK_SIZE);
+            service.send(chunk);
+          }
+
+          service.send('\x1b[201~');
+        } else {
+          service.send(data);
+        }
       });
 
       // Handle resize
@@ -527,6 +546,51 @@ export function TerminalPane() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [activeTabId, terminalTabs]);
 
+  // Intercept native paste events on the terminal container
+  // This ensures we handle large pastes properly instead of relying on xterm's default
+  useEffect(() => {
+    const container = xtermContainerRef.current;
+    if (!container) return;
+
+    const handleNativePaste = async (e: ClipboardEvent) => {
+      const instance = activeInstanceRef.current;
+      if (!instance) return;
+
+      // Get the pasted text
+      const text = e.clipboardData?.getData('text');
+      if (!text) return;
+
+      // Prevent default xterm paste handling for large content
+      if (text.length > 512) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        console.log('[TerminalPane] Intercepted large native paste:', text.length);
+
+        const CHUNK_SIZE = 4096;
+
+        // Send with bracketed paste mode
+        instance.service.send('\x1b[200~');
+
+        for (let i = 0; i < text.length; i += CHUNK_SIZE) {
+          const chunk = text.slice(i, i + CHUNK_SIZE);
+          instance.service.send(chunk);
+
+          // Small delay between chunks for very large content
+          if (text.length > CHUNK_SIZE * 4 && i + CHUNK_SIZE < text.length) {
+            await new Promise(resolve => setTimeout(resolve, 10));
+          }
+        }
+
+        instance.service.send('\x1b[201~');
+        console.log('[TerminalPane] Native paste handled');
+      }
+    };
+
+    container.addEventListener('paste', handleNativePaste, true);
+    return () => container.removeEventListener('paste', handleNativePaste, true);
+  }, [isInitialized]);
+
   // Handlers
   const handleKeyPress = useCallback((key: string) => {
     activeInstanceRef.current?.service.send(key);
@@ -553,6 +617,71 @@ export function TerminalPane() {
     const selection = activeInstanceRef.current?.terminal.getSelection();
     if (selection) {
       navigator.clipboard.writeText(selection);
+    }
+  }, []);
+
+  // Dedicated paste handler that properly reads clipboard and sends to terminal
+  // Handles large content by chunking to avoid WebSocket/JSON issues
+  const handlePaste = useCallback(async () => {
+    const instance = activeInstanceRef.current;
+    if (!instance) return;
+
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text) {
+        console.log('[TerminalPane] Clipboard is empty');
+        return;
+      }
+
+      console.log('[TerminalPane] Pasting content, length:', text.length);
+
+      // For small content, send directly
+      // For larger content, chunk it to avoid WebSocket message size limits
+      const CHUNK_SIZE = 4096; // 4KB chunks
+
+      if (text.length <= CHUNK_SIZE) {
+        // Small content - send directly with bracketed paste mode
+        const bracketedPasteStart = '\x1b[200~';
+        const bracketedPasteEnd = '\x1b[201~';
+        instance.service.send(bracketedPasteStart + text + bracketedPasteEnd);
+      } else {
+        // Large content - chunk it
+        console.log('[TerminalPane] Large paste, chunking into', Math.ceil(text.length / CHUNK_SIZE), 'chunks');
+
+        // Send start of bracketed paste
+        instance.service.send('\x1b[200~');
+
+        // Send content in chunks with small delays to prevent overwhelming the connection
+        for (let i = 0; i < text.length; i += CHUNK_SIZE) {
+          const chunk = text.slice(i, i + CHUNK_SIZE);
+          instance.service.send(chunk);
+
+          // Small delay between chunks for very large content
+          if (text.length > CHUNK_SIZE * 4) {
+            await new Promise(resolve => setTimeout(resolve, 10));
+          }
+        }
+
+        // Send end of bracketed paste
+        instance.service.send('\x1b[201~');
+      }
+
+      // Focus the terminal after paste
+      instance.terminal.focus();
+      console.log('[TerminalPane] Paste completed');
+    } catch (err) {
+      console.error('[TerminalPane] Paste failed:', err);
+
+      // Fallback: try direct send without bracketed mode
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text) {
+          console.log('[TerminalPane] Fallback paste, length:', text.length);
+          activeInstanceRef.current?.service.send(text);
+        }
+      } catch (fallbackErr) {
+        console.error('[TerminalPane] Fallback paste also failed:', fallbackErr);
+      }
     }
   }, []);
 
@@ -809,6 +938,14 @@ export function TerminalPane() {
             title="Copy selection"
           >
             <Copy className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            onClick={handlePaste}
+            className="p-1.5 rounded hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 transition-colors"
+            title="Paste from clipboard"
+          >
+            <ClipboardPaste className="w-3.5 h-3.5" />
           </button>
 
           <button
