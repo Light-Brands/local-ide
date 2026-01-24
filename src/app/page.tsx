@@ -33,7 +33,6 @@ export default function Home() {
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Animate features on scroll with staggered reveal
       gsap.from('.feature-card', {
         y: 48,
         opacity: 0,
@@ -46,7 +45,6 @@ export default function Home() {
         },
       });
 
-      // Animate stats with counter effect
       gsap.from('.stat-item', {
         y: 32,
         opacity: 0,
@@ -66,8 +64,8 @@ export default function Home() {
   const features = [
     {
       icon: Zap,
-      title: 'Lightning Fast',
-      description: 'Optimized for Core Web Vitals with 90+ Lighthouse scores out of the box.',
+      title: 'Self-Evolving',
+      description: 'An intelligent platform that improves itself over time with AI-powered development.',
     },
     {
       icon: Palette,
@@ -76,13 +74,13 @@ export default function Home() {
     },
     {
       icon: Shield,
-      title: 'Type Safe',
-      description: 'Full TypeScript support with strict type checking for better developer experience.',
+      title: 'Built-in IDE',
+      description: 'Full development environment embedded in your app. Edit code, preview changes, deploy.',
     },
     {
       icon: Code2,
       title: 'AI-First Workflow',
-      description: 'Built-in AI rules and guidelines for consistent, high-quality development.',
+      description: 'Claude AI integration for intelligent code generation and continuous improvement.',
     },
     {
       icon: Layers,
@@ -91,24 +89,24 @@ export default function Home() {
     },
     {
       icon: Sparkles,
-      title: 'Dark Mode Ready',
-      description: 'Seamless light and dark mode support with automatic system detection.',
+      title: 'Deploy Once',
+      description: 'Ship your app with the IDE included. Develop from anywhere, evolve continuously.',
     },
   ];
 
   const pricingPlans = [
     {
-      name: 'Starter',
-      description: 'Perfect for side projects',
+      name: 'Open Source',
+      description: 'Self-host and customize',
       price: 0,
       period: '/forever',
       features: [
-        'All core components',
-        'Design system tokens',
-        'Basic documentation',
+        'Full source code access',
+        'Built-in IDE',
+        'All components',
         'Community support',
       ],
-      cta: { label: 'Get Started', href: '#' },
+      cta: { label: 'Get Started', href: '/ide' },
     },
     {
       name: 'Pro',
@@ -116,13 +114,13 @@ export default function Home() {
       price: 49,
       period: '/one-time',
       features: [
-        'Everything in Starter',
+        'Everything in Open Source',
         'Premium components',
         'Advanced animations',
         'Priority support',
         'Lifetime updates',
       ],
-      cta: { label: 'Buy Now', href: '#' },
+      cta: { label: 'Coming Soon', href: '/ide' },
       popular: true,
     },
     {
@@ -133,11 +131,11 @@ export default function Home() {
       features: [
         'Everything in Pro',
         'Multiple project license',
-        'Custom component requests',
+        'Custom integrations',
         'Dedicated support',
         'White-label option',
       ],
-      cta: { label: 'Contact Sales', href: '#' },
+      cta: { label: 'Contact Us', href: '/admin' },
     },
   ];
 
@@ -170,38 +168,43 @@ export default function Home() {
 
   return (
     <>
-      <Navigation transparent />
+      <Navigation
+        transparent
+        items={[
+          { label: 'Features', href: '#features' },
+          { label: 'IDE', href: '/ide' },
+          { label: 'Admin', href: '/admin' },
+        ]}
+        cta={{ label: 'Open IDE', href: '/ide' }}
+      />
 
       <main>
-        {/* Hero Section */}
         <HeroCentered
-          badge={{ text: 'v1.0 Now Available', href: '#' }}
-          title="Build Premium Websites at Lightning Speed"
-          titleHighlight="Lightning Speed"
-          description="A production-ready Next.js boilerplate with a premium design system, AI-first workflows, and beautiful animations. Ship faster, look better."
-          primaryCta={{ label: 'Get Started Free', href: '#' }}
-          secondaryCta={{ label: 'View Demo', href: '#', icon: 'play' }}
+          badge={{ text: 'Self-Evolving Platform', href: '/ide' }}
+          title="Build Apps That Build Themselves"
+          titleHighlight="Build Themselves"
+          description="A complete foundation for building modern applications with an intelligent IDE built right in. Deploy a single time, develop from anywhere, and watch your app evolve on its own."
+          primaryCta={{ label: 'Open IDE', href: '/ide' }}
+          secondaryCta={{ label: 'View Admin', href: '/admin', icon: 'arrow' }}
           trustedBy={{
-            label: 'Trusted by developers at',
+            label: 'Powered by',
             logos: [
-              <span key={1} className="text-neutral-400 font-semibold tracking-tight">Vercel</span>,
-              <span key={2} className="text-neutral-400 font-semibold tracking-tight">Stripe</span>,
-              <span key={3} className="text-neutral-400 font-semibold tracking-tight">Linear</span>,
-              <span key={4} className="text-neutral-400 font-semibold tracking-tight">Notion</span>,
+              <span key={1} className="text-neutral-400 font-semibold tracking-tight">Next.js</span>,
+              <span key={2} className="text-neutral-400 font-semibold tracking-tight">TypeScript</span>,
+              <span key={3} className="text-neutral-400 font-semibold tracking-tight">Tailwind</span>,
+              <span key={4} className="text-neutral-400 font-semibold tracking-tight">Claude AI</span>,
             ],
           }}
         />
 
-        {/* Features Section - Refined with asymmetric header alignment */}
         <section
+          id="features"
           ref={featuresRef}
           className="section-padding bg-white dark:bg-neutral-950 relative overflow-hidden"
         >
-          {/* Subtle background accent */}
           <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary-500/[0.02] dark:bg-primary-400/[0.03] rounded-full blur-[120px] -translate-y-1/2 translate-x-1/3" />
 
           <div className="container-premium relative">
-            {/* Section Header - Refined with left-aligned option for variation */}
             <div className="max-w-2xl mb-14 lg:mb-16">
               <motion.span
                 initial={{ opacity: 0, y: 12 }}
@@ -219,7 +222,7 @@ export default function Home() {
                 transition={{ duration: 0.5, delay: 0.1 }}
                 className="text-3xl md:text-4xl lg:text-[2.75rem] font-bold tracking-tight text-neutral-900 dark:text-white mb-4 leading-tight"
               >
-                Everything you need to build premium sites
+                Everything you need to build and evolve
               </motion.h2>
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
@@ -228,12 +231,11 @@ export default function Home() {
                 transition={{ duration: 0.5, delay: 0.2 }}
                 className="text-lg text-neutral-600 dark:text-neutral-400 leading-relaxed"
               >
-                A carefully crafted foundation that helps you build beautiful,
-                performant websites without starting from scratch.
+                A carefully crafted foundation with a built-in IDE that helps you
+                build, iterate, and evolve your application continuously.
               </motion.p>
             </div>
 
-            {/* Features Grid - Refined with asymmetric gap */}
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
               {features.map((feature, index) => (
                 <div key={index} className="feature-card">
@@ -249,7 +251,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Stats Section - Refined with better visual hierarchy */}
         <section
           ref={statsRef}
           className="py-16 lg:py-20 bg-neutral-50 dark:bg-neutral-900/50 border-y border-neutral-200/50 dark:border-neutral-800/50"
@@ -257,10 +258,10 @@ export default function Home() {
           <div className="container-premium">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
               {[
-                { value: '10k+', label: 'Downloads', suffix: '' },
                 { value: '90+', label: 'Lighthouse Score', suffix: '' },
                 { value: '50+', label: 'Components', suffix: '' },
-                { value: '4.9', label: 'Rating', suffix: '/5' },
+                { value: '∞', label: 'Evolution Potential', suffix: '' },
+                { value: '1', label: 'Deploy', suffix: '' },
               ].map((stat, index) => (
                 <motion.div
                   key={index}
@@ -281,11 +282,9 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Code Preview Section - Refined with better balance */}
         <section className="section-padding bg-white dark:bg-neutral-950">
           <div className="container-premium">
             <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 xl:gap-20 items-center">
-              {/* Content */}
               <motion.div
                 initial={{ opacity: 0, x: -24 }}
                 whileInView={{ opacity: 1, x: 0 }}
@@ -324,12 +323,11 @@ export default function Home() {
                     </motion.li>
                   ))}
                 </ul>
-                <Button href="#" variant="primary" icon={<ArrowRight className="w-4 h-4" />}>
-                  View Documentation
+                <Button href="/ide" variant="primary" icon={<ArrowRight className="w-4 h-4" />}>
+                  Open IDE
                 </Button>
               </motion.div>
 
-              {/* Code Block - Refined styling */}
               <motion.div
                 initial={{ opacity: 0, x: 24 }}
                 whileInView={{ opacity: 1, x: 0 }}
@@ -342,7 +340,6 @@ export default function Home() {
                   'shadow-2xl shadow-neutral-900/20'
                 )}
               >
-                {/* Window controls */}
                 <div className="flex items-center gap-2 px-4 py-3.5 border-b border-neutral-800/80 bg-neutral-900/50">
                   <div className="flex gap-2">
                     <div className="w-3 h-3 rounded-full bg-[#ff5f56]" />
@@ -351,7 +348,6 @@ export default function Home() {
                   </div>
                   <span className="ml-4 text-sm text-neutral-500 font-mono">tokens.ts</span>
                 </div>
-                {/* Code content */}
                 <pre className="p-5 text-sm overflow-x-auto scrollbar-thin">
                   <code className="text-neutral-300 font-mono leading-relaxed">
                     <span className="text-[#ff7b72]">export const</span>{' '}
@@ -407,10 +403,8 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Pricing Section - Refined spacing */}
         <section className="section-padding bg-neutral-50 dark:bg-neutral-900/50">
           <div className="container-premium">
-            {/* Section Header - Centered for pricing */}
             <div className="max-w-2xl mx-auto text-center mb-12 lg:mb-14">
               <motion.span
                 initial={{ opacity: 0, y: 12 }}
@@ -441,7 +435,6 @@ export default function Home() {
               </motion.p>
             </div>
 
-            {/* Pricing Grid */}
             <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
               {pricingPlans.map((plan, index) => (
                 <PricingCard key={index} {...plan} />
@@ -450,13 +443,10 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Testimonials Section - Refined */}
         <section className="section-padding bg-white dark:bg-neutral-950 relative overflow-hidden">
-          {/* Background accent */}
           <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-secondary-500/[0.02] dark:bg-secondary-400/[0.03] rounded-full blur-[100px] translate-y-1/2 -translate-x-1/3" />
 
           <div className="container-premium relative">
-            {/* Section Header */}
             <div className="max-w-2xl mx-auto text-center mb-12 lg:mb-14">
               <motion.span
                 initial={{ opacity: 0, y: 12 }}
@@ -478,7 +468,6 @@ export default function Home() {
               </motion.h2>
             </div>
 
-            {/* Testimonials Grid */}
             <div className="grid md:grid-cols-3 gap-5 lg:gap-6">
               {testimonials.map((testimonial, index) => (
                 <TestimonialCard key={index} {...testimonial} />
@@ -487,27 +476,37 @@ export default function Home() {
           </div>
         </section>
 
-        {/* CTA Section */}
         <CTASection
           variant="gradient"
-          eyebrow="Ready to start?"
-          title="Build your next premium website today"
-          description="Get started with the most complete Next.js boilerplate and ship faster than ever."
-          primaryCta={{ label: 'Get Started Free', href: '#' }}
-          secondaryCta={{ label: 'View Documentation', href: '#' }}
+          eyebrow="Ready to evolve?"
+          title="Start building your self-evolving app today"
+          description="Open the IDE and experience the future of application development. Your app learns and improves as you use it."
+          primaryCta={{ label: 'Launch IDE', href: '/ide' }}
+          secondaryCta={{ label: 'Explore Admin', href: '/admin' }}
         />
       </main>
 
       <Footer
-        newsletter={{
-          title: 'Stay updated',
-          description: 'Get notified about new features and updates.',
-          placeholder: 'Enter your email',
-          buttonText: 'Subscribe',
-        }}
+        columns={[
+          {
+            title: 'Platform',
+            links: [
+              { label: 'Features', href: '#features' },
+              { label: 'Open IDE', href: '/ide' },
+              { label: 'Admin Dashboard', href: '/admin' },
+            ],
+          },
+          {
+            title: 'Resources',
+            links: [
+              { label: 'GitHub', href: 'https://github.com', external: true },
+              { label: 'Next.js Docs', href: 'https://nextjs.org/docs', external: true },
+              { label: 'Tailwind CSS', href: 'https://tailwindcss.com', external: true },
+            ],
+          },
+        ]}
         bottomLinks={[
-          { label: 'Privacy Policy', href: '/privacy' },
-          { label: 'Terms of Service', href: '/terms' },
+          { label: 'Built with Next.js', href: 'https://nextjs.org', external: true },
         ]}
       />
     </>
