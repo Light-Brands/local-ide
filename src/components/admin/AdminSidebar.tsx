@@ -158,14 +158,14 @@ export function AdminSidebar({
             isOpen ? 'px-4 py-4' : 'py-4'
           )}
         >
-          <div className={cn('flex flex-col', isOpen ? 'items-start' : 'items-center')}>
+          <div className={cn('flex items-center', isOpen ? 'gap-3' : 'justify-center')}>
             <Logo
               href="/admin"
               size="md"
               className={cn('transition-all duration-200', !isOpen && 'justify-center')}
             />
             {isOpen && (
-              <span className="text-[10px] font-medium tracking-[0.15em] uppercase text-neutral-400 dark:text-neutral-500 mt-1.5 transition-colors duration-200">
+              <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-neutral-400 dark:text-neutral-500 transition-colors duration-200">
                 STUDIO
               </span>
             )}
@@ -347,13 +347,13 @@ export function AdminSidebar({
           >
             {/* Mobile header */}
             <div className="flex items-center justify-between px-4 py-4 border-b border-neutral-200/80 dark:border-neutral-800">
-              <div className="flex flex-col">
+              <div className="flex items-center gap-3">
                 <Logo
                   href="/admin"
                   size="md"
                   onClick={onMobileClose}
                 />
-                <span className="text-[10px] font-medium tracking-[0.15em] uppercase text-neutral-400 dark:text-neutral-500 mt-1.5 transition-colors duration-200">
+                <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-neutral-400 dark:text-neutral-500 transition-colors duration-200">
                   STUDIO
                 </span>
               </div>
