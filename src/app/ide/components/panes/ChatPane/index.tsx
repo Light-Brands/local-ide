@@ -4,7 +4,7 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { useIDEStore, useChatSessions, useStoreHydrated } from '../../../stores/ideStore';
 import { useMobileDetect } from '../../../hooks';
-import { useClaudeChat } from '../../../hooks/useClaudeChat';
+import { useChat } from '@/lib/ide/hooks';
 import { getActivityService } from '@/lib/ide/services/activity';
 import { useToolingOptional } from '../../../contexts/ToolingContext';
 import { ChatInput } from '../../chat/ChatInput';
@@ -60,7 +60,7 @@ function ChatSessionContent({ sessionId }: ChatSessionContentProps) {
     updateChatSessionMessages(sessionId, newMessages);
   }, [sessionId, updateChatSessionMessages]);
 
-  // Use Claude CLI chat hook with external message state (store is source of truth)
+  // Use robust chat hook with external message state (store is source of truth)
   const {
     messages,
     isLoading,
@@ -69,15 +69,15 @@ function ChatSessionContent({ sessionId }: ChatSessionContentProps) {
     sendMessage,
     toggleThinking,
     checkConnection,
-  } = useClaudeChat({
+  } = useChat({
     workspacePath,
     externalMessages: sessionMessages,
     onMessagesChange: handleMessagesChange,
     onToolUse: (tool) => {
       getActivityService().trackAIResponse(`Tool: ${tool}`);
     },
-    onError: (error) => {
-      getActivityService().trackError('AI Error', error);
+    onError: (errorMsg) => {
+      getActivityService().trackError('AI Error', errorMsg);
     },
   });
 

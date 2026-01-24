@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { useIDEStore, type TerminalTab as StoreTerminalTab } from '../../../stores/ideStore';
 import { useMobileDetect } from '../../../hooks';
 import { useTerminalAvailability } from '../../../hooks/useTerminalAvailability';
-import { TerminalService, type TerminalEvent } from '@/lib/ide/services/terminal';
+import { TerminalService, type TerminalEvent, getTerminalWebSocketUrl } from '@/lib/ide/services/terminal';
 import { KeyboardToolbar } from '../../mobile/KeyboardToolbar';
 import { TerminalTabs, type TerminalTab } from './TerminalTabs';
 import { SessionManager } from './SessionManager';
@@ -219,7 +219,7 @@ export function TerminalPane() {
 
       // Create terminal service with session ID
       // Server will check if tmux session exists - only start Claude if explicitly requested AND no tmux
-      const baseWsUrl = process.env.NEXT_PUBLIC_TERMINAL_WS_URL || 'ws://localhost:4001/ws/terminal';
+      const baseWsUrl = getTerminalWebSocketUrl();
       const terminalWsUrl = `${baseWsUrl}?session=${sessionId}&startClaude=${startClaude}`;
 
       console.log(`[TerminalPane] Creating terminal instance:`, {

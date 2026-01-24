@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useIDEStore } from '../stores/ideStore';
 import { MobileHeader } from './navigation/MobileHeader';
@@ -11,21 +10,6 @@ import { SettingsModal } from './modals/SettingsModal';
 
 export function MobileIDELayout() {
   const drawerHeight = useIDEStore((state) => state.drawer.height);
-  const [isPWA, setIsPWA] = useState(false);
-
-  // Detect if running as installed PWA
-  useEffect(() => {
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
-      || (window.navigator as any).standalone === true
-      || document.referrer.includes('android-app://');
-    setIsPWA(isStandalone);
-
-    // Listen for display mode changes
-    const mediaQuery = window.matchMedia('(display-mode: standalone)');
-    const handler = (e: MediaQueryListEvent) => setIsPWA(e.matches);
-    mediaQuery.addEventListener('change', handler);
-    return () => mediaQuery.removeEventListener('change', handler);
-  }, []);
 
   // Calculate main pane height based on drawer state
   const getMainPaneClass = () => {
@@ -45,11 +29,7 @@ export function MobileIDELayout() {
 
   return (
     <div
-      className={cn(
-        "h-full w-full flex flex-col bg-neutral-950 overflow-hidden",
-        // Use safe area padding only when NOT in PWA mode (browser has its own chrome)
-        !isPWA && "pt-[env(safe-area-inset-top)]"
-      )}
+      className="h-full w-full flex flex-col bg-neutral-950 overflow-hidden"
     >
       {/* Header - always visible unless fullscreen drawer */}
       {drawerHeight !== 'fullscreen' && <MobileHeader />}

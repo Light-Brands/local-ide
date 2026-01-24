@@ -62,12 +62,12 @@ export default function IDELayout({
 }) {
   return (
     <IDEProviders>
-      {/* PWA container with safe area handling */}
+      {/* PWA container - safe area handled by child components */}
       <div
         className="h-[100dvh] w-full overflow-hidden bg-neutral-950"
         style={{
-          paddingTop: 'env(safe-area-inset-top)',
-          paddingBottom: 'env(safe-area-inset-bottom)',
+          // Only apply horizontal safe areas here
+          // Top/bottom handled by header/nav components
           paddingLeft: 'env(safe-area-inset-left)',
           paddingRight: 'env(safe-area-inset-right)',
         }}

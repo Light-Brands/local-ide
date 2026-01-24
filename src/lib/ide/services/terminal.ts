@@ -491,7 +491,33 @@ export function createTerminalService(
 let terminalInstance: TerminalService | null = null;
 
 // Terminal server configuration
-const TERMINAL_SERVER_URL = process.env.NEXT_PUBLIC_TERMINAL_WS_URL || 'ws://localhost:4001/ws/terminal';
+// Dynamically determine WebSocket URL based on current protocol
+export function getTerminalWebSocketUrl(): string {
+  // Check for env override first
+  if (process.env.NEXT_PUBLIC_TERMINAL_WS_URL) {
+    return process.env.NEXT_PUBLIC_TERMINAL_WS_URL;
+  }
+
+  // In browser, determine based on current protocol/host
+  if (typeof window !== 'undefined') {
+    const isSecure = window.location.protocol === 'https:';
+    const host = window.location.host;
+    const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1');
+
+    if (isLocalhost) {
+      // Local development - always use ws:// to localhost:4001
+      return 'ws://localhost:4001/ws/terminal';
+    } else {
+      // Remote access (e.g., Cloudflare tunnel) - use same host with wss://
+      return `wss://${host}/ws/terminal`;
+    }
+  }
+
+  // Server-side fallback
+  return 'ws://localhost:4001/ws/terminal';
+}
+
+const TERMINAL_SERVER_URL = getTerminalWebSocketUrl();
 
 export function getTerminalService(config?: TerminalConfig, forceNew = false): TerminalService {
   // If forceNew is true, disconnect and clear the existing instance to use new config

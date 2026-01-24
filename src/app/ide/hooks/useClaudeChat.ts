@@ -107,10 +107,23 @@ export function useClaudeChat(options: UseClaudeChatOptions = {}): UseClaudeChat
     setIsLoading(false);
   }, []);
 
+  // Store refs for stable callback access
+  const isLoadingRef = useRef(isLoading);
+  const workspacePathRef = useRef(workspacePath);
+  const onToolUseRef = useRef(onToolUse);
+  const onErrorRef = useRef(onError);
+  const buildHistoryRef = useRef(buildHistory);
+
+  isLoadingRef.current = isLoading;
+  workspacePathRef.current = workspacePath;
+  onToolUseRef.current = onToolUse;
+  onErrorRef.current = onError;
+  buildHistoryRef.current = buildHistory;
+
   // Send a message and stream the response
   const sendMessage = useCallback(
     async (content: string) => {
-      if (!content.trim() || isLoading) return;
+      if (!content.trim() || isLoadingRef.current) return;
 
       setError(null);
       setIsLoading(true);
@@ -147,8 +160,8 @@ export function useClaudeChat(options: UseClaudeChatOptions = {}): UseClaudeChat
           },
           body: JSON.stringify({
             message: content,
-            workspacePath: workspacePath || '/tmp/workspace',
-            conversationHistory: buildHistory(messages),
+            workspacePath: workspacePathRef.current || '/tmp/workspace',
+            conversationHistory: buildHistoryRef.current(messagesRef.current),
           }),
           signal: abortControllerRef.current.signal,
         });
@@ -263,7 +276,7 @@ export function useClaudeChat(options: UseClaudeChatOptions = {}): UseClaudeChat
                   toolUseBlocks.set(event.id, toolBlock);
 
                   // Callback for tool use tracking
-                  onToolUse?.(event.tool, event.input);
+                  onToolUseRef.current?.(event.tool, event.input);
 
                   updateAssistantMessage((blocks) => [...blocks, toolBlock]);
                   break;
@@ -319,7 +332,7 @@ export function useClaudeChat(options: UseClaudeChatOptions = {}): UseClaudeChat
 
                   updateAssistantMessage((blocks) => [...blocks, errorBlock]);
                   setError(event.content);
-                  onError?.(event.content);
+                  onErrorRef.current?.(event.content);
                   break;
                 }
 
@@ -369,7 +382,7 @@ export function useClaudeChat(options: UseClaudeChatOptions = {}): UseClaudeChat
         } else {
           const errorMsg = err instanceof Error ? err.message : 'Unknown error';
           setError(errorMsg);
-          onError?.(errorMsg);
+          onErrorRef.current?.(errorMsg);
 
           // Add error to message
           setMessages((prev) => {
@@ -393,7 +406,7 @@ export function useClaudeChat(options: UseClaudeChatOptions = {}): UseClaudeChat
         abortControllerRef.current = null;
       }
     },
-    [isLoading, workspacePath, messages, buildHistory, onToolUse, onError]
+    [setMessages] // All other deps are accessed via refs for stability
   );
 
   // Clear all messages
