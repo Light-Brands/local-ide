@@ -80,7 +80,7 @@ export default function AdminLoginPage() {
           </div>
 
           <div className="max-w-md">
-            <h1 className="text-4xl font-bold leading-tight mb-4">
+            <h1 className="text-4xl font-bold leading-tight mb-4 tracking-tight">
               Welcome to your
               <br />
               <span className="text-white/80">admin dashboard</span>
@@ -113,10 +113,10 @@ export default function AdminLoginPage() {
 
           {/* Form header */}
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">
+            <h2 className="text-2xl font-bold text-neutral-900 dark:text-white tracking-tight">
               Sign in
             </h2>
-            <p className="text-neutral-500 mt-2">
+            <p className="text-neutral-500 dark:text-neutral-400 mt-1">
               Enter your credentials to access the dashboard
             </p>
           </div>
@@ -127,19 +127,25 @@ export default function AdminLoginPage() {
             onClick={fillDemoCredentials}
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
-            className="w-full mb-6 p-4 rounded-2xl bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 border border-primary-100 dark:border-primary-800/50 text-left group transition-all hover:shadow-md hover:shadow-primary-500/5"
+            className={cn(
+              'w-full mb-6 p-4 rounded-xl',
+              'bg-white dark:bg-neutral-900',
+              'border border-neutral-200/60 dark:border-neutral-800/60',
+              'text-left group transition-all',
+              'hover:shadow-sm hover:border-primary-500/20'
+            )}
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-semibold text-primary-700 dark:text-primary-300">
+                <p className="text-sm font-semibold text-neutral-900 dark:text-white">
                   Try Demo Mode
                 </p>
-                <p className="text-xs text-primary-600/70 dark:text-primary-400/70 mt-0.5">
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
                   Click to fill demo credentials
                 </p>
               </div>
-              <div className="w-8 h-8 rounded-full bg-primary-500/10 flex items-center justify-center group-hover:bg-primary-500/20 transition-colors">
-                <ArrowRight className="w-4 h-4 text-primary-500" />
+              <div className="w-8 h-8 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center group-hover:bg-primary-500/10 transition-colors">
+                <ArrowRight className="w-4 h-4 text-neutral-600 dark:text-neutral-400 group-hover:text-primary-500" />
               </div>
             </div>
           </motion.button>
@@ -149,7 +155,12 @@ export default function AdminLoginPage() {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/50 flex items-start gap-3"
+              className={cn(
+                'mb-6 p-4 rounded-xl',
+                'bg-red-50 dark:bg-red-900/20',
+                'border border-red-200/60 dark:border-red-800/60',
+                'flex items-start gap-3'
+              )}
             >
               <div className="w-5 h-5 rounded-full bg-red-100 dark:bg-red-800/50 flex items-center justify-center flex-shrink-0 mt-0.5">
                 <AlertCircle className="w-3 h-3 text-red-600 dark:text-red-400" />
@@ -174,7 +185,7 @@ export default function AdminLoginPage() {
                     'absolute left-0 top-0 bottom-0 w-12 flex items-center justify-center pointer-events-none transition-colors',
                     focusedField === 'email'
                       ? 'text-primary-500'
-                      : 'text-neutral-400'
+                      : 'text-neutral-400 dark:text-neutral-500'
                   )}
                 >
                   <Mail className="w-[18px] h-[18px]" />
@@ -191,12 +202,12 @@ export default function AdminLoginPage() {
                   className={cn(
                     'w-full pl-12 pr-4 py-3 rounded-xl',
                     'bg-white dark:bg-neutral-900',
-                    'border-2 transition-all duration-200',
+                    'border transition-all duration-200',
                     'text-neutral-900 dark:text-white',
-                    'placeholder:text-neutral-400',
+                    'placeholder:text-neutral-400 dark:placeholder:text-neutral-500',
                     focusedField === 'email'
-                      ? 'border-primary-500 ring-4 ring-primary-500/10'
-                      : 'border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700'
+                      ? 'border-primary-500 ring-2 ring-primary-500/20'
+                      : 'border-neutral-200/60 dark:border-neutral-800/60 hover:border-neutral-300 dark:hover:border-neutral-700'
                   )}
                 />
               </div>
@@ -216,7 +227,7 @@ export default function AdminLoginPage() {
                     'absolute left-0 top-0 bottom-0 w-12 flex items-center justify-center pointer-events-none transition-colors',
                     focusedField === 'password'
                       ? 'text-primary-500'
-                      : 'text-neutral-400'
+                      : 'text-neutral-400 dark:text-neutral-500'
                   )}
                 >
                   <Lock className="w-[18px] h-[18px]" />
@@ -233,18 +244,18 @@ export default function AdminLoginPage() {
                   className={cn(
                     'w-full pl-12 pr-12 py-3 rounded-xl',
                     'bg-white dark:bg-neutral-900',
-                    'border-2 transition-all duration-200',
+                    'border transition-all duration-200',
                     'text-neutral-900 dark:text-white',
-                    'placeholder:text-neutral-400',
+                    'placeholder:text-neutral-400 dark:placeholder:text-neutral-500',
                     focusedField === 'password'
-                      ? 'border-primary-500 ring-4 ring-primary-500/10'
-                      : 'border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700'
+                      ? 'border-primary-500 ring-2 ring-primary-500/20'
+                      : 'border-neutral-200/60 dark:border-neutral-800/60 hover:border-neutral-300 dark:hover:border-neutral-700'
                   )}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-0 top-0 bottom-0 w-12 flex items-center justify-center text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
+                  className="absolute right-0 top-0 bottom-0 w-12 flex items-center justify-center text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
                 >
                   {showPassword ? (
                     <EyeOff className="w-[18px] h-[18px]" />
@@ -262,7 +273,7 @@ export default function AdminLoginPage() {
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
               className={cn(
-                'relative w-full py-3.5 px-4 rounded-xl',
+                'relative w-full py-3 px-4 rounded-xl',
                 'bg-neutral-900 dark:bg-white',
                 'text-white dark:text-neutral-900',
                 'font-semibold text-sm',
@@ -291,7 +302,7 @@ export default function AdminLoginPage() {
           </form>
 
           {/* Footer */}
-          <p className="text-center text-sm text-neutral-500 mt-8">
+          <p className="text-center text-sm text-neutral-500 dark:text-neutral-400 mt-8">
             <a href="/" className="hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors">
               ← Back to website
             </a>
