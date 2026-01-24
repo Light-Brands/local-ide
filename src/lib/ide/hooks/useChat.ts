@@ -254,8 +254,8 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
     [maxHistory]
   );
 
-  // Track the current session URL to detect changes
-  const currentWsUrlRef = useRef<string | null>(null);
+  // Track the current backend session to detect actual session changes
+  const currentBackendSessionRef = useRef<string | undefined>(undefined);
 
   // WebSocket connection effect
   useEffect(() => {
@@ -265,9 +265,22 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
 
     const wsUrl = getChatWebSocketUrl(backendSessionId);
 
-    // Only create a new service if the URL/session changed
-    const shouldCreateNew = currentWsUrlRef.current !== wsUrl;
-    currentWsUrlRef.current = wsUrl;
+    // Only create a new service if:
+    // 1. We don't have one yet (currentBackendSessionRef.current is undefined AND no service)
+    // 2. We're switching to a DIFFERENT session (not just receiving our own session ID back)
+    const existingService = chatServiceRef.current;
+    const isNewSession = backendSessionId !== currentBackendSessionRef.current;
+    const isJustReceivingOurSessionId = !currentBackendSessionRef.current && backendSessionId && existingService?.isConnected;
+
+    // Don't recreate if we just received our session ID back from the server
+    if (isJustReceivingOurSessionId) {
+      console.log('[useChat] Received session ID, keeping existing connection:', backendSessionId);
+      currentBackendSessionRef.current = backendSessionId;
+      return;
+    }
+
+    const shouldCreateNew = !existingService || isNewSession;
+    currentBackendSessionRef.current = backendSessionId;
 
     const service = getChatService({ url: wsUrl }, shouldCreateNew);
     chatServiceRef.current = service;
