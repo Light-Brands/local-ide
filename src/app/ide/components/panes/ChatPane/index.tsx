@@ -2,57 +2,99 @@
 
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
-import { useIDEStore, type Message } from '../../../stores/ideStore';
+import { useIDEStore, useChatSessions, useStoreHydrated } from '../../../stores/ideStore';
 import { useMobileDetect } from '../../../hooks';
-import {
-  getClaudeService,
-  getStoredClaudeApiKey,
-  buildContextualPrompt,
-  type ClaudeStreamEvent,
-} from '@/lib/ide/services/claude';
+import { useClaudeChat } from '../../../hooks/useClaudeChat';
 import { getActivityService } from '@/lib/ide/services/activity';
-import { isProduction } from '@/lib/ide/env';
 import { useToolingOptional } from '../../../contexts/ToolingContext';
 import { ChatInput } from '../../chat/ChatInput';
+import { ChatSessionTabs } from '../../chat/ChatSessionTabs';
 import { MessageList } from './MessageList';
 import { ContextPanel, ContextPanelCompact } from './ContextPanel';
 import {
   Sparkles,
   Trash2,
-  Code,
-  Terminal,
   Settings,
-  ChevronDown,
-  AlertCircle,
   Zap,
+  AlertCircle,
+  RefreshCw,
+  StopCircle,
+  BookOpen,
 } from 'lucide-react';
 
-export function ChatPane() {
+// ============================================================================
+// CHAT SESSION CONTENT - Inner component for a single session
+// ============================================================================
+
+interface ChatSessionContentProps {
+  sessionId: string;
+}
+
+function ChatSessionContent({ sessionId }: ChatSessionContentProps) {
   const isMobile = useMobileDetect();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState('');
-  const [isStreaming, setIsStreaming] = useState(false);
   const [showContext, setShowContext] = useState(!isMobile);
+  const [connectionChecked, setConnectionChecked] = useState(false);
   const tooling = useToolingOptional();
-  const inProduction = isProduction();
+
+  // Command Dictionary
+  const openCommandDictionary = useIDEStore((state) => state.openCommandDictionary);
 
   // Store state
-  const chatMode = useIDEStore((state) => state.chatMode);
-  const terminalMessages = useIDEStore((state) => state.terminalMessages);
-  const workspaceMessages = useIDEStore((state) => state.workspaceMessages);
-  const isTyping = useIDEStore((state) => state.isTyping);
-  const claude = useIDEStore((state) => state.integrations.claude);
   const activeFile = useIDEStore((state) => state.editor.activeFile);
   const fileContents = useIDEStore((state) => state.editor.fileContents);
-  const setChatMode = useIDEStore((state) => state.setChatMode);
-  const addMessage = useIDEStore((state) => state.addMessage);
-  const updateLastMessage = useIDEStore((state) => state.updateLastMessage);
-  const setIsTyping = useIDEStore((state) => state.setIsTyping);
-  const clearMessages = useIDEStore((state) => state.clearMessages);
   const clearMobileChatUnread = useIDEStore((state) => state.clearMobileChatUnread);
+  const clearSessionMessages = useIDEStore((state) => state.clearSessionMessages);
 
-  const messages = chatMode === 'terminal' ? terminalMessages : workspaceMessages;
-  const hasApiKey = !!getStoredClaudeApiKey();
+  // Get workspace path from GitHub integration or default to temp workspace
+  const github = useIDEStore((state) => state.integrations.github);
+  const workspacePath = github.repo
+    ? `/tmp/workspace/${github.owner}/${github.repo}`
+    : '/tmp/workspace';
+
+  // Get session messages from store and create update callback
+  const sessionMessages = useIDEStore((state) =>
+    state.chatSessions.find((s) => s.id === sessionId)?.messages ?? []
+  );
+  const updateChatSessionMessages = useIDEStore((state) => state.updateChatSessionMessages);
+
+  // Memoize the callback to prevent unnecessary re-renders
+  const handleMessagesChange = useCallback((newMessages: typeof sessionMessages) => {
+    updateChatSessionMessages(sessionId, newMessages);
+  }, [sessionId, updateChatSessionMessages]);
+
+  // Use Claude CLI chat hook with external message state (store is source of truth)
+  const {
+    messages,
+    isLoading,
+    isConnected,
+    error,
+    sendMessage,
+    clearMessages: hookClearMessages,
+    toggleThinking,
+    checkConnection,
+    abortStream,
+  } = useClaudeChat({
+    workspacePath,
+    externalMessages: sessionMessages,
+    onMessagesChange: handleMessagesChange,
+    onToolUse: (tool) => {
+      getActivityService().trackAIResponse(`Tool: ${tool}`);
+    },
+    onError: (error) => {
+      getActivityService().trackError('AI Error', error);
+    },
+  });
+
+  // Check connection on mount
+  useEffect(() => {
+    if (!connectionChecked) {
+      checkConnection().then(() => {
+        setConnectionChecked(true);
+      });
+    }
+  }, [connectionChecked, checkConnection]);
 
   // Clear unread count when viewing chat
   useEffect(() => {
@@ -64,7 +106,7 @@ export function ChatPane() {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, isTyping]);
+  }, [messages, isLoading]);
 
   // Build enhanced prompt with tooling context
   const buildPromptWithTooling = useCallback(
@@ -86,13 +128,13 @@ export function ChatPane() {
       const contextParts: string[] = [];
 
       // Add active file context
-      const codeContext = {
-        currentFile: activeFile || undefined,
-        selectedCode:
-          activeFile && fileContents[activeFile]
-            ? fileContents[activeFile].content.slice(0, 2000)
-            : undefined,
-      };
+      if (activeFile) {
+        contextParts.push(`[Current File: ${activeFile}]`);
+        const fileContent = fileContents[activeFile]?.content;
+        if (fileContent) {
+          contextParts.push(`\`\`\`\n${fileContent.slice(0, 2000)}\n\`\`\``);
+        }
+      }
 
       // Add command context if tooling available
       if (tooling && commands.length > 0) {
@@ -124,141 +166,130 @@ export function ChatPane() {
         }
       }
 
-      return buildContextualPrompt(
-        contextParts.length > 0
-          ? `${contextParts.join('\n\n')}\n\n[User Message]\n${userMessage}`
-          : userMessage,
-        codeContext
-      );
+      if (contextParts.length > 0) {
+        return `${contextParts.join('\n\n')}\n\n[User Message]\n${userMessage}`;
+      }
+
+      return userMessage;
     },
     [activeFile, fileContents, tooling]
   );
 
   // Handle message submission
   const handleSubmit = useCallback(async () => {
-    if (!input.trim() || isStreaming || !hasApiKey) return;
+    if (!input.trim() || isLoading) return;
 
     const userMessage = input.trim();
     setInput('');
-    setIsStreaming(true);
-    setIsTyping(true);
-
-    // Add user message
-    addMessage(chatMode, { role: 'user', content: userMessage });
 
     // Track activity
     getActivityService().trackAIMessage(userMessage.slice(0, 100));
 
-    try {
-      const service = getClaudeService();
-      let responseContent = '';
+    // Build enhanced prompt with tooling context
+    const prompt = buildPromptWithTooling(userMessage);
 
-      // Add empty assistant message
-      addMessage(chatMode, { role: 'assistant', content: '' });
+    // Send message through CLI
+    await sendMessage(prompt);
+  }, [input, isLoading, buildPromptWithTooling, sendMessage]);
 
-      // Build enhanced prompt with tooling context
-      const prompt = buildPromptWithTooling(userMessage);
+  // Handle stop/abort
+  const handleStop = useCallback(() => {
+    abortStream();
+  }, [abortStream]);
 
-      // Use sendMessage with onStream callback
-      await service.sendMessage(prompt, (event: ClaudeStreamEvent) => {
-        if (event.type === 'text' && event.text) {
-          responseContent += event.text;
-          updateLastMessage(chatMode, responseContent);
-        }
-      });
-
-      // Track AI response
-      getActivityService().trackAIResponse(responseContent.slice(0, 100));
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to get response';
-      updateLastMessage(chatMode, `Error: ${errorMessage}`);
-      getActivityService().trackError('AI Error', errorMessage);
-    } finally {
-      setIsStreaming(false);
-      setIsTyping(false);
-    }
-  }, [
-    input,
-    isStreaming,
-    hasApiKey,
-    chatMode,
-    addMessage,
-    updateLastMessage,
-    setIsTyping,
-    buildPromptWithTooling,
-  ]);
-
-  // Clear messages
+  // Clear messages for current session
   const handleClear = useCallback(() => {
-    if (confirm(`Clear all ${chatMode} messages?`)) {
-      clearMessages(chatMode);
+    if (confirm(`Clear all messages in this chat session?`)) {
+      hookClearMessages();
+      clearSessionMessages(sessionId);
     }
-  }, [chatMode, clearMessages]);
+  }, [sessionId, hookClearMessages, clearSessionMessages]);
+
+  // Retry connection check
+  const handleRetryConnection = useCallback(async () => {
+    setConnectionChecked(false);
+    await checkConnection();
+    setConnectionChecked(true);
+  }, [checkConnection]);
 
   // Get selected code for context
   const selectedCode = activeFile && fileContents[activeFile]
     ? fileContents[activeFile].content.slice(0, 500)
     : undefined;
 
-  // Not configured state
-  if (!claude.connected || !hasApiKey) {
+  // Connection error state
+  if (connectionChecked && !isConnected) {
     return (
       <div className="h-full flex flex-col items-center justify-center p-6 text-center bg-neutral-900">
-        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-500/20 to-purple-500/20 flex items-center justify-center mb-6">
-          <Sparkles className="w-10 h-10 text-primary-400" />
+        <div className="w-20 h-20 rounded-2xl bg-red-500/10 flex items-center justify-center mb-6">
+          <AlertCircle className="w-10 h-10 text-red-400" />
         </div>
-        <h3 className="text-xl font-semibold text-neutral-200 mb-2">AI Assistant</h3>
-        <p className="text-sm text-neutral-500 mb-6 max-w-sm">
-          Configure your Claude API key to enable AI-powered code assistance, debugging, and more.
+        <h3 className="text-xl font-semibold text-neutral-200 mb-2">Connection Error</h3>
+        <p className="text-sm text-neutral-500 mb-4 max-w-sm">
+          Could not connect to Claude CLI. Make sure it&apos;s installed and you&apos;re logged in.
         </p>
-        <a
-          href="/ide/onboarding"
-          className="px-5 py-2.5 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600 transition-colors flex items-center gap-2"
-        >
-          <Settings className="w-4 h-4" />
-          Configure Claude
-        </a>
+        {error && (
+          <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 max-w-sm">
+            <p className="text-xs text-red-400 font-mono">{error}</p>
+          </div>
+        )}
+        <div className="flex gap-3">
+          <button
+            onClick={handleRetryConnection}
+            className="px-4 py-2 bg-neutral-800 text-white rounded-lg text-sm font-medium hover:bg-neutral-700 transition-colors flex items-center gap-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Retry
+          </button>
+          <a
+            href="/ide/onboarding"
+            className="px-4 py-2 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600 transition-colors flex items-center gap-2"
+          >
+            <Settings className="w-4 h-4" />
+            Reconfigure
+          </a>
+        </div>
         <p className="mt-4 text-xs text-neutral-600">
-          Or continue using the IDE without AI features
+          Run <code className="px-1.5 py-0.5 bg-neutral-800 rounded">claude login</code> in your terminal
         </p>
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col bg-neutral-900">
+    <>
       {/* Header */}
       <div className="flex-shrink-0 flex items-center justify-between px-3 py-2 border-b border-neutral-800">
-        {/* Mode toggle */}
-        <div className="flex items-center gap-1 bg-neutral-800 rounded-lg p-0.5">
-          <button
-            onClick={() => setChatMode('terminal')}
-            className={cn(
-              'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors',
-              chatMode === 'terminal'
-                ? 'bg-neutral-700 text-white shadow-sm'
-                : 'text-neutral-400 hover:text-white'
-            )}
-          >
-            <Terminal className="w-3.5 h-3.5" />
-            {!isMobile && 'Terminal'}
-          </button>
-          <button
-            onClick={() => setChatMode('workspace')}
-            className={cn(
-              'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors',
-              chatMode === 'workspace'
-                ? 'bg-neutral-700 text-white shadow-sm'
-                : 'text-neutral-400 hover:text-white'
-            )}
-          >
-            <Code className="w-3.5 h-3.5" />
-            {!isMobile && 'Workspace'}
-          </button>
+        {/* Title */}
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-primary-400" />
+          <span className="text-sm font-medium text-neutral-200">AI Assistant</span>
         </div>
 
         {/* Actions */}
         <div className="flex items-center gap-1">
+          {/* Connection status indicator */}
+          <div className="flex items-center gap-1.5 px-2 py-1 mr-1">
+            <span
+              className={cn(
+                'w-2 h-2 rounded-full',
+                isConnected ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'
+              )}
+            />
+            <span className="text-[10px] text-neutral-500">
+              {isConnected ? 'CLI' : 'Checking...'}
+            </span>
+          </div>
+
+          {/* Command Dictionary button */}
+          <button
+            onClick={() => openCommandDictionary()}
+            className="p-1.5 rounded-lg text-neutral-400 hover:text-violet-400 hover:bg-violet-500/10 transition-colors"
+            title="Command Dictionary (Cmd+/)"
+          >
+            <BookOpen className="w-4 h-4" />
+          </button>
+
           {!isMobile && (
             <button
               onClick={() => setShowContext(!showContext)}
@@ -273,6 +304,17 @@ export function ChatPane() {
               <Zap className="w-4 h-4" />
             </button>
           )}
+
+          {isLoading && (
+            <button
+              onClick={handleStop}
+              className="p-1.5 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
+              title="Stop generation"
+            >
+              <StopCircle className="w-4 h-4" />
+            </button>
+          )}
+
           <button
             onClick={handleClear}
             className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
@@ -322,10 +364,57 @@ export function ChatPane() {
       >
         <MessageList
           messages={messages}
-          isTyping={isTyping}
-          chatMode={chatMode}
+          isTyping={isLoading}
+          onToggleThinking={toggleThinking}
         />
       </div>
+
+      {/* Error banner */}
+      {error && !isLoading && (
+        <div className="flex-shrink-0 px-3 py-2 bg-red-500/10 border-t border-red-500/20">
+          <div className="flex items-center gap-2 text-xs text-red-400">
+            <AlertCircle className="w-3.5 h-3.5" />
+            <span className="flex-1">{error}</span>
+            <button
+              onClick={() => handleRetryConnection()}
+              className="px-2 py-1 rounded bg-red-500/20 hover:bg-red-500/30 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Quick actions bar */}
+      {!isLoading && messages.length === 0 && (
+        <div className="flex-shrink-0 px-3 py-2 border-t border-neutral-800/50 bg-neutral-900/50">
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
+            <span className="text-[10px] text-neutral-500 flex-shrink-0">Quick:</span>
+            {[
+              { label: '/autotask', desc: 'Auto-complete task' },
+              { label: '@analyst', desc: 'Research & ideation' },
+              { label: '/troubleshoot', desc: 'Debug issues' },
+              { label: '@debugger', desc: 'Find root cause' },
+            ].map((item) => (
+              <button
+                key={item.label}
+                onClick={() => setInput(item.label + ' ')}
+                className="flex-shrink-0 px-2 py-1 rounded-md text-[11px] font-mono bg-neutral-800 text-neutral-300 hover:bg-violet-500/20 hover:text-violet-300 transition-colors"
+                title={item.desc}
+              >
+                {item.label}
+              </button>
+            ))}
+            <button
+              onClick={() => openCommandDictionary()}
+              className="flex-shrink-0 px-2 py-1 rounded-md text-[10px] bg-violet-500/10 text-violet-400 hover:bg-violet-500/20 transition-colors flex items-center gap-1"
+            >
+              <BookOpen className="w-3 h-3" />
+              More...
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Input area */}
       <div className="flex-shrink-0 p-3 border-t border-neutral-800 safe-area-bottom">
@@ -333,17 +422,97 @@ export function ChatPane() {
           value={input}
           onChange={setInput}
           onSubmit={handleSubmit}
-          placeholder={
-            chatMode === 'terminal'
-              ? inProduction
-                ? 'Ask for command suggestions (commands shown, not executed)...'
-                : 'Ask about commands, scripts, CLI tools...'
-              : 'Ask about your code, get help debugging...'
-          }
-          disabled={isStreaming}
-          isLoading={isStreaming}
+          placeholder="Ask anything or use / and @ ..."
+          disabled={isLoading || !isConnected}
+          isLoading={isLoading}
         />
+        {/* Usage hints */}
+        <div className="mt-2 text-[10px] text-neutral-500 text-center">
+          Type <kbd className="px-1 py-0.5 rounded bg-neutral-800 text-blue-400 font-mono">/</kbd> for commands, <kbd className="px-1 py-0.5 rounded bg-neutral-800 text-purple-400 font-mono">@</kbd> for agents
+        </div>
       </div>
+    </>
+  );
+}
+
+// ============================================================================
+// CHAT PANE - Main wrapper component
+// ============================================================================
+
+export function ChatPane() {
+  const isMobile = useMobileDetect();
+  const hydrated = useStoreHydrated();
+
+  // Store state
+  const claude = useIDEStore((state) => state.integrations.claude);
+
+  // Chat sessions
+  const { sessions, activeSessionId, addSession } = useChatSessions();
+
+  // Auto-create first session if none exist (only after hydration!)
+  useEffect(() => {
+    if (hydrated && sessions.length === 0 && claude.connected) {
+      addSession('Chat 1');
+    }
+  }, [hydrated, sessions.length, claude.connected, addSession]);
+
+  // Loading state while hydrating from localStorage
+  if (!hydrated) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center bg-neutral-900">
+        <Sparkles className="w-8 h-8 text-primary-400 animate-pulse" />
+        <p className="mt-2 text-sm text-neutral-500">Loading sessions...</p>
+      </div>
+    );
+  }
+
+  // Not configured state
+  if (!claude.connected) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center p-6 text-center bg-neutral-900">
+        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-500/20 to-purple-500/20 flex items-center justify-center mb-6">
+          <Sparkles className="w-10 h-10 text-primary-400" />
+        </div>
+        <h3 className="text-xl font-semibold text-neutral-200 mb-2">AI Assistant</h3>
+        <p className="text-sm text-neutral-500 mb-6 max-w-sm">
+          Configure Claude CLI to enable AI-powered code assistance with full tool access.
+        </p>
+        <a
+          href="/ide/onboarding"
+          className="px-5 py-2.5 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600 transition-colors flex items-center gap-2"
+        >
+          <Settings className="w-4 h-4" />
+          Configure Claude
+        </a>
+        <p className="mt-4 text-xs text-neutral-600">
+          Requires Claude CLI with active subscription
+        </p>
+      </div>
+    );
+  }
+
+  // No active session yet
+  if (!activeSessionId) {
+    return (
+      <div className="h-full flex flex-col bg-neutral-900">
+        <ChatSessionTabs />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <Sparkles className="w-12 h-12 text-neutral-600 mb-4 mx-auto" />
+            <p className="text-neutral-400">Loading chat session...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full flex flex-col bg-neutral-900">
+      {/* Session Tabs */}
+      <ChatSessionTabs />
+
+      {/* Session Content - keyed to reset when session changes */}
+      <ChatSessionContent key={activeSessionId} sessionId={activeSessionId} />
     </div>
   );
 }

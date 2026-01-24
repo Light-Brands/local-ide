@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 import { useState, useEffect } from 'react';
+import type { Message as ChatMessage, ContentBlock } from '@/types/chat';
 
 // =============================================================================
 // TYPES
@@ -15,6 +16,15 @@ export interface TerminalTab {
   worktreePath?: string;
   branchName?: string;
   baseBranch?: string;
+}
+
+// Chat session uses the rich Message type with ContentBlock[]
+export interface ChatSession {
+  id: string;
+  name: string;
+  createdAt: Date;
+  lastActiveAt: Date;
+  messages: ChatMessage[];
 }
 
 export interface PortInfo {
@@ -107,6 +117,9 @@ interface IDEStore {
   setPaneWidth: (pane: number, width: number) => void;
   reorderPanes: (order: number[]) => void;
   setMaxPanesReached: (reached: boolean) => void;
+  activityPanelOpen: boolean;
+  setActivityPanelOpen: (open: boolean) => void;
+  toggleActivityPanel: () => void;
 
   // === MOBILE STATE (Two-Zone) ===
   mobile: {
@@ -162,6 +175,17 @@ interface IDEStore {
   updateLastMessage: (modeOrContent: 'terminal' | 'workspace' | string, content?: string) => void;
   setIsTyping: (typing: boolean) => void;
   clearMessages: (mode: 'terminal' | 'workspace') => void;
+
+  // === CHAT SESSIONS ===
+  chatSessions: ChatSession[];
+  activeChatSessionId: string | null;
+  addChatSession: (name?: string) => string;
+  removeChatSession: (sessionId: string) => void;
+  setActiveChatSession: (sessionId: string) => void;
+  renameChatSession: (sessionId: string, name: string) => void;
+  updateChatSessionMessages: (sessionId: string, messages: ChatMessage[]) => void;
+  clearSessionMessages: (sessionId: string) => void;
+  getActiveSession: () => ChatSession | null;
 
   // === PREVIEW STATE ===
   previewMode: 'local' | 'deployed';
@@ -229,6 +253,13 @@ interface IDEStore {
   // === COMMAND PALETTE ===
   commandPaletteOpen: boolean;
   setCommandPaletteOpen: (open: boolean) => void;
+
+  // === COMMAND DICTIONARY ===
+  commandDictionaryOpen: boolean;
+  commandDictionaryPillar: 'planning' | 'development';
+  setCommandDictionaryOpen: (open: boolean) => void;
+  setCommandDictionaryPillar: (pillar: 'planning' | 'development') => void;
+  openCommandDictionary: (pillar?: 'planning' | 'development') => void;
 
   // === BACKWARD COMPATIBILITY (Legacy Components) ===
   // These map to the new state structure for old components during migration
@@ -358,11 +389,14 @@ interface IDEStore {
 // =============================================================================
 
 const initialState = {
-  // Desktop pane state - default: Chat + Editor + Terminal visible
-  paneOrder: [1, 2, 7, 3, 4, 5, 6],
-  paneVisibility: { 1: true, 2: true, 3: false, 4: false, 5: false, 6: false, 7: true } as Record<number, boolean>,
-  paneWidths: { 1: 350, 2: 500, 3: 400, 4: 350, 5: 350, 6: 300, 7: 400 } as Record<number, number>,
+  // Desktop pane state - default: Developer + Preview visible (Activity is slide-out, not a pane)
+  // Order: Editor(2) -> Database(5) -> Developer(1) -> Preview(4) -> Deployments(6)
+  // Pane 3 (Terminal) is hidden - it's now part of the Developer pane
+  paneOrder: [2, 5, 1, 4, 6],
+  paneVisibility: { 1: true, 2: false, 3: false, 4: true, 5: false, 6: false } as Record<number, boolean>,
+  paneWidths: { 1: 350, 2: 500, 3: 400, 4: 400, 5: 350, 6: 350 } as Record<number, number>,
   maxPanesReached: false,
+  activityPanelOpen: false,
 
   // Mobile state
   mobile: {
@@ -389,6 +423,10 @@ const initialState = {
   terminalMessages: [] as Message[],
   workspaceMessages: [] as Message[],
   isTyping: false,
+
+  // Chat sessions
+  chatSessions: [] as ChatSession[],
+  activeChatSessionId: null as string | null,
 
   // Preview state
   // Default to port 4000 (the IDE/App port) for self-evolving architecture
@@ -428,6 +466,10 @@ const initialState = {
 
   // Command palette
   commandPaletteOpen: false,
+
+  // Command dictionary
+  commandDictionaryOpen: false,
+  commandDictionaryPillar: 'planning' as 'planning' | 'development',
 
   // Backward compatibility state (legacy components)
   unsavedChanges: {} as Record<string, string>,
@@ -519,6 +561,9 @@ export const useIDEStore = create<IDEStore>()(
         // Chat messages
         terminalMessages: [],
         workspaceMessages: [],
+        // Chat sessions
+        chatSessions: [],
+        activeChatSessionId: null,
         // Activities
         activities: [],
         // Deployments
@@ -556,6 +601,9 @@ export const useIDEStore = create<IDEStore>()(
       reorderPanes: (order) => set({ paneOrder: order }),
 
       setMaxPanesReached: (reached) => set({ maxPanesReached: reached }),
+
+      setActivityPanelOpen: (open) => set({ activityPanelOpen: open }),
+      toggleActivityPanel: () => set((state) => ({ activityPanelOpen: !state.activityPanelOpen })),
 
       // === MOBILE ACTIONS ===
       setMobileMainPane: (pane) => set((state) => ({
@@ -703,6 +751,76 @@ export const useIDEStore = create<IDEStore>()(
         mode === 'terminal' ? { terminalMessages: [] } : { workspaceMessages: [] }
       ),
 
+      // === CHAT SESSION ACTIONS ===
+      addChatSession: (name?) => {
+        const currentSessions = get().chatSessions;
+        const sessionId = `chat_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        const sessionNumber = currentSessions.length + 1;
+        const sessionName = name || `Chat ${sessionNumber}`;
+
+        const newSession: ChatSession = {
+          id: sessionId,
+          name: sessionName,
+          createdAt: new Date(),
+          lastActiveAt: new Date(),
+          messages: [],
+        };
+
+        set((state) => ({
+          chatSessions: [...state.chatSessions, newSession],
+          activeChatSessionId: sessionId,
+        }));
+
+        return sessionId;
+      },
+
+      removeChatSession: (sessionId) => set((state) => {
+        const newSessions = state.chatSessions.filter((s) => s.id !== sessionId);
+        const newActiveId = state.activeChatSessionId === sessionId
+          ? (newSessions[0]?.id ?? null)
+          : state.activeChatSessionId;
+        return {
+          chatSessions: newSessions,
+          activeChatSessionId: newActiveId,
+        };
+      }),
+
+      setActiveChatSession: (sessionId) => set((state) => {
+        // Update lastActiveAt for the session
+        const sessions = state.chatSessions.map((s) =>
+          s.id === sessionId ? { ...s, lastActiveAt: new Date() } : s
+        );
+        return {
+          chatSessions: sessions,
+          activeChatSessionId: sessionId,
+        };
+      }),
+
+      renameChatSession: (sessionId, name) => set((state) => ({
+        chatSessions: state.chatSessions.map((s) =>
+          s.id === sessionId ? { ...s, name } : s
+        ),
+      })),
+
+      updateChatSessionMessages: (sessionId, messages) => set((state) => ({
+        chatSessions: state.chatSessions.map((s) =>
+          s.id === sessionId
+            ? { ...s, messages, lastActiveAt: new Date() }
+            : s
+        ),
+      })),
+
+      clearSessionMessages: (sessionId) => set((state) => ({
+        chatSessions: state.chatSessions.map((s) =>
+          s.id === sessionId ? { ...s, messages: [] } : s
+        ),
+      })),
+
+      getActiveSession: () => {
+        const state = get();
+        return state.chatSessions.find((s) => s.id === state.activeChatSessionId) ?? null;
+      },
+
       // === PREVIEW ACTIONS ===
       setPreviewMode: (mode) => set({ previewMode: mode }),
 
@@ -846,10 +964,21 @@ export const useIDEStore = create<IDEStore>()(
       // === COMMAND PALETTE ===
       setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
 
+      // === COMMAND DICTIONARY ===
+      setCommandDictionaryOpen: (open) => set({ commandDictionaryOpen: open }),
+      setCommandDictionaryPillar: (pillar) => set({ commandDictionaryPillar: pillar }),
+      openCommandDictionary: (pillar) => set({
+        commandDictionaryOpen: true,
+        ...(pillar && { commandDictionaryPillar: pillar }),
+      }),
+
       // === BACKWARD COMPATIBILITY (Legacy Components) ===
       // Computed activePane - maps mobile mainPane to legacy PaneId
       get activePane(): PaneId {
-        const mainPane = get().mobile.mainPane;
+        const state = get();
+        // Defensive check for hydration
+        if (!state?.mobile) return 'preview';
+        const mainPane = state.mobile.mainPane;
         // Map 'deployments' to 'deploy' for backward compat
         if (mainPane === 'deployments') return 'deploy';
         if (mainPane === 'settings') return 'preview'; // Settings maps to preview
@@ -867,6 +996,10 @@ export const useIDEStore = create<IDEStore>()(
       // Computed drawer - maps mobile bottom zone state
       get drawer() {
         const state = get();
+        // Defensive check for hydration
+        if (!state?.mobile) {
+          return { height: 'half' as BottomZoneHeight, tab: 'terminal' as BottomZoneTab, activeTab: 'terminal' as BottomZoneTab };
+        }
         return {
           height: state.mobile.bottomZoneHeight,
           tab: state.mobile.bottomZoneTab,
@@ -910,6 +1043,7 @@ export const useIDEStore = create<IDEStore>()(
       // Computed terminal object for backward compat
       get terminal() {
         const state = get();
+        if (!state) return { isRunning: false };
         return {
           isRunning: state.serverStatus === 'running' || state.serverStatus === 'starting',
         };
@@ -918,10 +1052,13 @@ export const useIDEStore = create<IDEStore>()(
       // Computed chat object for backward compat
       get chat() {
         const state = get();
+        if (!state?.mobile) {
+          return { unreadCount: 0, messages: [], isTyping: false };
+        }
         return {
           unreadCount: state.mobile.chatUnreadCount,
-          messages: state.workspaceMessages,
-          isTyping: state.isTyping,
+          messages: state.workspaceMessages ?? [],
+          isTyping: state.isTyping ?? false,
         };
       },
 
@@ -941,34 +1078,49 @@ export const useIDEStore = create<IDEStore>()(
       // Computed UI object for backward compat
       get ui() {
         const state = get();
+        if (!state) return { showSettings: false };
         return {
-          showSettings: state.showSettings,
+          showSettings: state.showSettings ?? false,
         };
       },
 
       // Computed preview object for backward compat
       get preview() {
         const state = get();
+        if (!state) return { mode: 'local' as const, localPort: null, deployedUrl: null };
         return {
-          mode: state.previewMode,
-          localPort: state.serverPort,
-          deployedUrl: state.deployedUrl,
+          mode: state.previewMode ?? 'local',
+          localPort: state.serverPort ?? null,
+          deployedUrl: state.deployedUrl ?? null,
         };
       },
 
       // Computed editor object for backward compat
       get editor() {
         const state = get();
+        if (!state) {
+          return {
+            openFiles: [],
+            activeFile: null,
+            unsavedChanges: {},
+            fileTree: [],
+            expandedFolders: [],
+            fileContents: {},
+            isLoadingTree: false,
+            isLoadingFile: false,
+            error: null,
+          };
+        }
         return {
-          openFiles: state.openFiles,
-          activeFile: state.activeFile,
-          unsavedChanges: state.unsavedChanges,
-          fileTree: state.fileTree,
-          expandedFolders: state.expandedFolders,
-          fileContents: state.fileContents,
-          isLoadingTree: state.isLoadingTree,
-          isLoadingFile: state.isLoadingFile,
-          error: state.editorError,
+          openFiles: state.openFiles ?? [],
+          activeFile: state.activeFile ?? null,
+          unsavedChanges: state.unsavedChanges ?? {},
+          fileTree: state.fileTree ?? [],
+          expandedFolders: state.expandedFolders ?? [],
+          fileContents: state.fileContents ?? {},
+          isLoadingTree: state.isLoadingTree ?? false,
+          isLoadingFile: state.isLoadingFile ?? false,
+          error: state.editorError ?? null,
         };
       },
 
@@ -988,10 +1140,13 @@ export const useIDEStore = create<IDEStore>()(
       // Computed database object for backward compat
       get database() {
         const state = get();
+        if (!state) {
+          return { activeTable: null, queryHistory: [], currentQuery: '' };
+        }
         return {
-          activeTable: state.activeTable,
-          queryHistory: state.queryHistory,
-          currentQuery: state.currentQuery,
+          activeTable: state.activeTable ?? null,
+          queryHistory: state.queryHistory ?? [],
+          currentQuery: state.currentQuery ?? '',
         };
       },
 
@@ -1050,7 +1205,7 @@ export const useIDEStore = create<IDEStore>()(
       })),
     }),
     {
-      name: 'local-ide-store-v2',
+      name: 'local-ide-store-v4',
       partialize: (state) => ({
         // Desktop pane state
         paneOrder: state.paneOrder,
@@ -1067,6 +1222,12 @@ export const useIDEStore = create<IDEStore>()(
         // Chat
         chatMode: state.chatMode,
         workspaceMessages: state.workspaceMessages.slice(-50),
+        // Chat sessions (CRITICAL for session persistence)
+        chatSessions: state.chatSessions.map((s) => ({
+          ...s,
+          messages: s.messages.slice(-100), // Keep last 100 messages per session
+        })),
+        activeChatSessionId: state.activeChatSessionId,
         // Preview
         previewMode: state.previewMode,
         // Terminal tabs (CRITICAL for session persistence)
@@ -1202,6 +1363,22 @@ export function useChat() {
     updateLastMessage: state.updateLastMessage,
     setIsTyping: state.setIsTyping,
     clearMessages: state.clearMessages,
+  })));
+}
+
+export function useChatSessions() {
+  return useIDEStore(useShallow((state) => ({
+    sessions: state.chatSessions,
+    activeSessionId: state.activeChatSessionId,
+    activeSession: state.chatSessions.find((s) => s.id === state.activeChatSessionId) ?? null,
+    isTyping: state.isTyping,
+    addSession: state.addChatSession,
+    removeSession: state.removeChatSession,
+    setActiveSession: state.setActiveChatSession,
+    renameSession: state.renameChatSession,
+    updateMessages: state.updateChatSessionMessages,
+    clearMessages: state.clearSessionMessages,
+    setIsTyping: state.setIsTyping,
   })));
 }
 
