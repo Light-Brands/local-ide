@@ -773,7 +773,16 @@ export const useIDEStore = create<IDEStore>()(
       addChatSession: (name?) => {
         const currentSessions = get().chatSessions;
         const sessionId = `chat_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-        const sessionNumber = currentSessions.length + 1;
+
+        // Find the highest existing chat number to avoid duplicates
+        let maxNumber = 0;
+        for (const session of currentSessions) {
+          const match = session.name.match(/^Chat (\d+)$/);
+          if (match) {
+            maxNumber = Math.max(maxNumber, parseInt(match[1], 10));
+          }
+        }
+        const sessionNumber = maxNumber + 1;
         const sessionName = name || `Chat ${sessionNumber}`;
 
         const newSession: ChatSession = {

@@ -254,6 +254,9 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
     [maxHistory]
   );
 
+  // Track the current session URL to detect changes
+  const currentWsUrlRef = useRef<string | null>(null);
+
   // WebSocket connection effect
   useEffect(() => {
     if (!useWebSocket || !IDE_FEATURES.persistentChat) {
@@ -261,7 +264,12 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
     }
 
     const wsUrl = getChatWebSocketUrl(backendSessionId);
-    const service = getChatService({ url: wsUrl }, true);
+
+    // Only create a new service if the URL/session changed
+    const shouldCreateNew = currentWsUrlRef.current !== wsUrl;
+    currentWsUrlRef.current = wsUrl;
+
+    const service = getChatService({ url: wsUrl }, shouldCreateNew);
     chatServiceRef.current = service;
 
     // Helper to update assistant message in WebSocket mode

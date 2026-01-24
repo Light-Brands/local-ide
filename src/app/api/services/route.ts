@@ -197,9 +197,17 @@ async function getSessionCounts(): Promise<{ chat: number; terminal: number; tmu
   } catch {}
 
   try {
-    // Get tmux session count
-    const { stdout } = await execAsync('tmux ls 2>/dev/null | wc -l || echo 0');
-    tmux = parseInt(stdout.trim()) || 0;
+    // Get tmux session count - try common paths
+    const tmuxPaths = ['/opt/homebrew/bin/tmux', '/usr/local/bin/tmux', '/usr/bin/tmux', 'tmux'];
+    for (const tmuxPath of tmuxPaths) {
+      try {
+        const { stdout } = await execAsync(`${tmuxPath} ls 2>/dev/null | wc -l`);
+        tmux = parseInt(stdout.trim()) || 0;
+        break;
+      } catch {
+        // Try next path
+      }
+    }
   } catch {}
 
   return { chat, terminal, tmux };
@@ -249,13 +257,25 @@ export async function GET() {
 
 async function clearAllSessions(): Promise<{ success: boolean; message: string }> {
   try {
-    // Kill all tmux sessions
-    await execAsync('tmux kill-server 2>/dev/null || true');
+    // Kill all tmux sessions - use full path since Next.js might not have it in PATH
+    // Try common paths for tmux
+    const tmuxPaths = ['/opt/homebrew/bin/tmux', '/usr/local/bin/tmux', '/usr/bin/tmux', 'tmux'];
+    let tmuxKilled = false;
+
+    for (const tmuxPath of tmuxPaths) {
+      try {
+        await execAsync(`${tmuxPath} kill-server 2>/dev/null`);
+        tmuxKilled = true;
+        break;
+      } catch {
+        // Try next path
+      }
+    }
 
     // Kill Claude processes spawned for chat
     await execAsync('pkill -f "claude.*stream-json" 2>/dev/null || true');
 
-    return { success: true, message: 'All sessions cleared' };
+    return { success: true, message: tmuxKilled ? 'All sessions cleared' : 'Sessions cleared (tmux not found)' };
   } catch (error) {
     return {
       success: false,
