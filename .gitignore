@@ -38,6 +38,10 @@ yarn-error.log*
 
 # local IDE data (feedback, screenshots, etc.)
 .local-ide/
+.local-ide-data/
+
+# Cloudflare Tunnel config (local only)
+.cloudflared/
 
 # Terminal Server (local only)
 *.db
@@ -47,3 +51,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Separate build directories for App/IDE
+.next-app
+.next-ide

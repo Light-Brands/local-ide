@@ -21,3 +21,10 @@ export {
   type Message,
   type ContentBlock,
 } from './useChat';
+
+// File Sync
+export {
+  useFileSync,
+  type UseFileSyncOptions,
+  type UseFileSyncReturn,
+} from './useFileSync';

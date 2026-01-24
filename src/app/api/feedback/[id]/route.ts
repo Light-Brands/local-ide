@@ -1,9 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import {
+  readCollection,
+  writeCollection,
+  deleteFile,
+} from '@/lib/storage/fileStorage';
 import type {
   FeedbackStatus,
   FeedbackPriority,
 } from '@/lib/feedback/types';
+
+interface FeedbackRecord {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  page_id: string;
+  page_url: string;
+  section_path: string;
+  component_name?: string;
+  position: unknown;
+  text_context: unknown;
+  category: string;
+  priority: FeedbackPriority;
+  status: FeedbackStatus;
+  title: string;
+  notes: string;
+  screenshot_url?: string;
+  user_id?: string;
+  resolution?: string;
+  resolved_at?: string;
+}
 
 interface UpdateFeedbackRequest {
   status?: FeedbackStatus;
@@ -14,6 +39,8 @@ interface UpdateFeedbackRequest {
   notes?: string;
 }
 
+const COLLECTION = 'feedback';
+
 // GET - Get single feedback by ID
 export async function GET(
   request: NextRequest,
@@ -21,29 +48,17 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const supabase = await createServerSupabaseClient();
+    const items = await readCollection<FeedbackRecord>(COLLECTION);
+    const item = items.find(i => i.id === id);
 
-    const { data, error } = await supabase
-      .from('feedback')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return NextResponse.json(
-          { error: 'Feedback not found' },
-          { status: 404 }
-        );
-      }
-      console.error('Feedback fetch error:', error);
+    if (!item) {
       return NextResponse.json(
-        { error: 'Failed to fetch feedback' },
-        { status: 500 }
+        { error: 'Feedback not found' },
+        { status: 404 }
       );
     }
 
-    return NextResponse.json({ data });
+    return NextResponse.json({ data: item });
   } catch (error) {
     console.error('Feedback GET error:', error);
     return NextResponse.json(
@@ -61,36 +76,33 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body: UpdateFeedbackRequest = await request.json();
-    const supabase = await createServerSupabaseClient();
+    const items = await readCollection<FeedbackRecord>(COLLECTION);
+    const index = items.findIndex(item => item.id === id);
 
-    // Build update object
-    const updates: Record<string, unknown> = {
-      updated_at: new Date().toISOString(),
-    };
-
-    if (body.status !== undefined) updates.status = body.status;
-    if (body.resolution !== undefined) updates.resolution = body.resolution;
-    if (body.resolved_at !== undefined) updates.resolved_at = body.resolved_at;
-    if (body.priority !== undefined) updates.priority = body.priority;
-    if (body.title !== undefined) updates.title = body.title;
-    if (body.notes !== undefined) updates.notes = body.notes;
-
-    const { data, error } = await supabase
-      .from('feedback')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Feedback update error:', error);
+    if (index === -1) {
       return NextResponse.json(
-        { error: 'Failed to update feedback' },
-        { status: 500 }
+        { error: 'Feedback not found' },
+        { status: 404 }
       );
     }
 
-    return NextResponse.json({ success: true, data });
+    // Update fields
+    const updated: FeedbackRecord = {
+      ...items[index],
+      updated_at: new Date().toISOString(),
+    };
+
+    if (body.status !== undefined) updated.status = body.status;
+    if (body.resolution !== undefined) updated.resolution = body.resolution;
+    if (body.resolved_at !== undefined) updated.resolved_at = body.resolved_at;
+    if (body.priority !== undefined) updated.priority = body.priority;
+    if (body.title !== undefined) updated.title = body.title;
+    if (body.notes !== undefined) updated.notes = body.notes;
+
+    items[index] = updated;
+    await writeCollection(COLLECTION, items);
+
+    return NextResponse.json({ success: true, data: updated });
   } catch (error) {
     console.error('Feedback PATCH error:', error);
     return NextResponse.json(
@@ -107,37 +119,27 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const supabase = await createServerSupabaseClient();
+    const items = await readCollection<FeedbackRecord>(COLLECTION);
+    const item = items.find(i => i.id === id);
 
-    // First get the feedback to check for screenshot
-    const { data: existing } = await supabase
-      .from('feedback')
-      .select('screenshot_url')
-      .eq('id', id)
-      .single();
+    if (!item) {
+      return NextResponse.json(
+        { error: 'Feedback not found' },
+        { status: 404 }
+      );
+    }
 
-    // Delete screenshot from storage if exists
-    if (existing?.screenshot_url) {
-      const urlParts = existing.screenshot_url.split('/');
-      const fileName = urlParts[urlParts.length - 1];
-      if (fileName) {
-        await supabase.storage.from('media').remove([`feedback/${fileName}`]);
+    // Delete screenshot if exists
+    if (item.screenshot_url) {
+      const filename = item.screenshot_url.split('/').pop();
+      if (filename) {
+        await deleteFile('screenshots', filename);
       }
     }
 
-    // Delete the feedback
-    const { error } = await supabase
-      .from('feedback')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error('Feedback delete error:', error);
-      return NextResponse.json(
-        { error: 'Failed to delete feedback' },
-        { status: 500 }
-      );
-    }
+    // Remove from collection
+    const filtered = items.filter(i => i.id !== id);
+    await writeCollection(COLLECTION, filtered);
 
     return NextResponse.json({ success: true });
   } catch (error) {

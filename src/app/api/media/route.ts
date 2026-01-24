@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient, getServerUser } from '@/lib/supabase/server';
-import sharp from 'sharp';
+import {
+  getAllMedia,
+  createMedia,
+  deleteMedia,
+} from '@/lib/storage/collections';
 
-// Standard API response helper
-function apiResponse<T>(
-  data: T | null,
-  error: string | null = null,
-  status = 200
-) {
-  return NextResponse.json({ data, error }, { status });
-}
+/**
+ * Media API - File-based Storage
+ *
+ * Stores media metadata in .local-ide/data/media.json
+ * Files stored in .local-ide/data/uploads/
+ */
 
 // Allowed file types
 const ALLOWED_TYPES = [
@@ -23,272 +24,158 @@ const ALLOWED_TYPES = [
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-// Image optimization settings
-const IMAGE_OPTIMIZATION = {
-  maxWidth: 2048,
-  maxHeight: 2048,
-  quality: 85,
-};
-
 /**
  * GET /api/media
- * List media files for authenticated user
+ * List media files
  */
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createServerSupabaseClient();
-    const user = await getServerUser();
-
-    if (!user) {
-      return apiResponse(null, 'Unauthorized', 401);
-    }
-
     const { searchParams } = new URL(request.url);
-    const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 100);
-    const offset = parseInt(searchParams.get('offset') || '0');
     const type = searchParams.get('type'); // 'image', 'pdf', etc.
 
-    let query = supabase
-      .from('media')
-      .select('*')
-      .order('created_at', { ascending: false });
+    let items = await getAllMedia();
 
     // Filter by file type if specified
     if (type === 'image') {
-      query = query.like('file_type', 'image/%');
+      items = items.filter(item => item.file_type.startsWith('image/'));
     } else if (type) {
-      query = query.eq('file_type', type);
+      items = items.filter(item => item.file_type === type);
     }
 
-    const { data, error, count } = await query
-      .range(offset, offset + limit - 1);
+    // Sort by created_at descending
+    items.sort((a, b) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
 
-    if (error) {
-      return apiResponse(null, error.message, 500);
-    }
-
-    return apiResponse({
-      items: data,
-      pagination: {
-        total: count || 0,
-        limit,
-        offset,
-        hasMore: (count || 0) > offset + limit,
+    return NextResponse.json({
+      data: {
+        items,
+        pagination: {
+          total: items.length,
+          limit: items.length,
+          offset: 0,
+          hasMore: false,
+        },
       },
+      error: null,
     });
   } catch (error) {
-    console.error('GET /api/media error:', error);
-    return apiResponse(null, 'Internal server error', 500);
+    console.error('Media GET error:', error);
+    return NextResponse.json(
+      { data: null, error: 'Failed to fetch media' },
+      { status: 500 }
+    );
   }
 }
 
 /**
  * POST /api/media
- * Upload a new media file (requires authentication)
+ * Upload a new media file
  *
  * Accepts FormData with 'file' field
  * Optional 'alt_text' field
  */
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createServerSupabaseClient();
-    const user = await getServerUser();
-
-    if (!user) {
-      return apiResponse(null, 'Unauthorized', 401);
-    }
-
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
     const altText = formData.get('alt_text') as string | null;
 
     if (!file) {
-      return apiResponse(null, 'No file provided', 400);
+      return NextResponse.json(
+        { data: null, error: 'No file provided' },
+        { status: 400 }
+      );
     }
 
     // Validate file type
     if (!ALLOWED_TYPES.includes(file.type)) {
-      return apiResponse(null, 'File type not allowed', 400);
+      return NextResponse.json(
+        { data: null, error: 'File type not allowed' },
+        { status: 400 }
+      );
     }
 
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
-      return apiResponse(null, 'File too large (max 10MB)', 400);
+      return NextResponse.json(
+        { data: null, error: 'File too large (max 10MB)' },
+        { status: 400 }
+      );
     }
 
     // Get file buffer
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    // Process and optimize images
-    let processedBuffer: Buffer = buffer;
+    // Get image dimensions if it's an image
     let width: number | null = null;
     let height: number | null = null;
 
     if (file.type.startsWith('image/') && file.type !== 'image/svg+xml') {
       try {
-        const image = sharp(buffer);
-        const metadata = await image.metadata();
-
-        width = metadata.width || null;
-        height = metadata.height || null;
-
-        // Resize if too large
-        if (
-          (width && width > IMAGE_OPTIMIZATION.maxWidth) ||
-          (height && height > IMAGE_OPTIMIZATION.maxHeight)
-        ) {
-          const resizedBuffer = await image
-            .resize(IMAGE_OPTIMIZATION.maxWidth, IMAGE_OPTIMIZATION.maxHeight, {
-              fit: 'inside',
-              withoutEnlargement: true,
-            })
-            .webp({ quality: IMAGE_OPTIMIZATION.quality })
-            .toBuffer();
-          processedBuffer = Buffer.from(resizedBuffer);
-
-          // Update dimensions
-          const resizedMetadata = await sharp(processedBuffer).metadata();
-          width = resizedMetadata.width || width;
-          height = resizedMetadata.height || height;
-        } else {
-          // Just optimize without resizing
-          const optimizedBuffer = await image
-            .webp({ quality: IMAGE_OPTIMIZATION.quality })
-            .toBuffer();
-          processedBuffer = Buffer.from(optimizedBuffer);
-        }
-      } catch (imageError) {
-        console.error('Image processing error:', imageError);
-        // Continue with original buffer if processing fails
-        processedBuffer = buffer;
+        // Try to get dimensions without sharp (basic approach)
+        // For production, you'd want to use sharp for proper image handling
+        // but we're keeping it simple to avoid dependencies
+      } catch {
+        // Ignore dimension extraction errors
       }
     }
 
-    // Generate unique filename
-    const timestamp = Date.now();
-    const randomId = Math.random().toString(36).substring(2, 8);
-    const extension = file.type.startsWith('image/')
-      ? 'webp'
-      : file.name.split('.').pop() || 'bin';
-    const fileName = `${timestamp}-${randomId}.${extension}`;
-    const filePath = `uploads/${user.id}/${fileName}`;
+    // Create media record and save file
+    const mediaItem = await createMedia(buffer, {
+      name: file.name,
+      file_type: file.type,
+      file_size: buffer.length,
+      width,
+      height,
+      alt_text: altText,
+      uploaded_by: null, // No auth in local mode
+    });
 
-    // Upload to Supabase Storage
-    const { error: uploadError } = await supabase.storage
-      .from('media')
-      .upload(filePath, processedBuffer, {
-        contentType: file.type.startsWith('image/') ? 'image/webp' : file.type,
-        cacheControl: '31536000', // 1 year
-      });
-
-    if (uploadError) {
-      return apiResponse(null, uploadError.message, 500);
-    }
-
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from('media')
-      .getPublicUrl(filePath);
-
-    // Save to database
-    const { data, error: dbError } = await supabase
-      .from('media')
-      .insert({
-        name: file.name,
-        file_path: filePath,
-        file_type: file.type.startsWith('image/') ? 'image/webp' : file.type,
-        file_size: processedBuffer.length,
-        width,
-        height,
-        alt_text: altText,
-        uploaded_by: user.id,
-      })
-      .select()
-      .single();
-
-    if (dbError) {
-      // Clean up uploaded file on DB error
-      await supabase.storage.from('media').remove([filePath]);
-      return apiResponse(null, dbError.message, 500);
-    }
-
-    return apiResponse({
-      ...data,
-      url: publicUrl,
-    }, null, 201);
+    return NextResponse.json(
+      { data: mediaItem, error: null },
+      { status: 201 }
+    );
   } catch (error) {
-    console.error('POST /api/media error:', error);
-    return apiResponse(null, 'Internal server error', 500);
+    console.error('Media POST error:', error);
+    return NextResponse.json(
+      { data: null, error: 'Failed to upload media' },
+      { status: 500 }
+    );
   }
 }
 
 /**
  * DELETE /api/media
- * Delete a media file (requires authentication and ownership)
+ * Delete a media file
  */
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = await createServerSupabaseClient();
-    const user = await getServerUser();
-
-    if (!user) {
-      return apiResponse(null, 'Unauthorized', 401);
-    }
-
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
     if (!id) {
-      return apiResponse(null, 'Media ID is required', 400);
+      return NextResponse.json(
+        { data: null, error: 'Media ID is required' },
+        { status: 400 }
+      );
     }
 
-    // Get media record
-    const { data: media, error: fetchError } = await supabase
-      .from('media')
-      .select('*')
-      .eq('id', id)
-      .single();
+    const deleted = await deleteMedia(id);
 
-    if (fetchError || !media) {
-      return apiResponse(null, 'Media not found', 404);
+    if (!deleted) {
+      return NextResponse.json(
+        { data: null, error: 'Media not found' },
+        { status: 404 }
+      );
     }
 
-    // Check ownership
-    if (media.uploaded_by !== user.id) {
-      // Check if admin
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-
-      if (profile?.role !== 'admin') {
-        return apiResponse(null, 'Forbidden', 403);
-      }
-    }
-
-    // Delete from storage
-    const { error: storageError } = await supabase.storage
-      .from('media')
-      .remove([media.file_path]);
-
-    if (storageError) {
-      console.error('Storage delete error:', storageError);
-    }
-
-    // Delete from database
-    const { error: dbError } = await supabase
-      .from('media')
-      .delete()
-      .eq('id', id);
-
-    if (dbError) {
-      return apiResponse(null, dbError.message, 500);
-    }
-
-    return apiResponse({ success: true });
+    return NextResponse.json({ data: { success: true }, error: null });
   } catch (error) {
-    console.error('DELETE /api/media error:', error);
-    return apiResponse(null, 'Internal server error', 500);
+    console.error('Media DELETE error:', error);
+    return NextResponse.json(
+      { data: null, error: 'Failed to delete media' },
+      { status: 500 }
+    );
   }
 }

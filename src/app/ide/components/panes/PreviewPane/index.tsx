@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useIDEStore } from '../../../stores/ideStore';
 import { useMobileDetect } from '../../../hooks';
 import { getProductionUrl, getStoredVercelToken } from '@/lib/ide/services/vercel';
+import { getWorkspaceService } from '@/lib/ide/services/workspace';
 import { Monitor, Globe, RefreshCw } from 'lucide-react';
 import { DeviceFrame, DeviceInfo, type DeviceType, type Orientation } from './DeviceFrame';
 import { PreviewToolbar } from './PreviewToolbar';
@@ -23,6 +24,18 @@ export function PreviewPane() {
 
   // Track when we're navigating history to prevent re-adding to history
   const isNavigatingRef = useRef(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Register iframe with workspace service for file sync refreshes
+  useEffect(() => {
+    const workspace = getWorkspaceService();
+    if (iframeRef.current) {
+      workspace.setPreviewIframe(iframeRef.current);
+    }
+    return () => {
+      workspace.setPreviewIframe(null);
+    };
+  }, []);
 
   const mode = useIDEStore((state) => state.previewMode);
   const localPort = useIDEStore((state) => state.serverPort);
@@ -66,14 +79,34 @@ export function PreviewPane() {
     fetchProductionUrl();
   }, [vercel.connected, vercel.projectName, setDeployedUrl]);
 
-  // In self-evolving mode, the app runs on the same port as the IDE (4000)
-  // The user's public pages are at the root URL
-  const IDE_PORT = 4000;
-  const previewUrl =
-    customUrl ||
-    (mode === 'local'
-      ? `http://localhost:${IDE_PORT}`
-      : (deployedUrl || TUNNEL_URL));
+  // App runs on port 3000, IDE runs on port 4000
+  // Preview shows the App (what you're developing)
+  const APP_PORT = 3000;
+
+  // Determine the best URL for the app preview
+  const getAppPreviewUrl = () => {
+    if (customUrl) return customUrl;
+
+    if (mode === 'deployed') {
+      return deployedUrl || TUNNEL_URL;
+    }
+
+    // Local mode - need to determine the right URL
+    if (typeof window !== 'undefined') {
+      const { protocol, hostname, port } = window.location;
+
+      // If accessing via tunnel (not localhost), use the proxy route
+      // The IDE proxies /app-preview/* to localhost:3000
+      if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
+        return `${protocol}//${hostname}${port ? ':' + port : ''}/app-preview/`;
+      }
+    }
+
+    // Default to localhost for local development
+    return `http://localhost:${APP_PORT}`;
+  };
+
+  const previewUrl = getAppPreviewUrl();
 
   // Update history when URL changes (but not when navigating history)
   useEffect(() => {
@@ -169,10 +202,12 @@ export function PreviewPane() {
         {previewUrl ? (
           <DeviceFrame device={deviceFrame} orientation={orientation}>
             <iframe
+              ref={iframeRef}
               key={refreshKey}
               src={previewUrl}
               className="w-full h-full border-0 bg-white"
               title="Preview"
+              data-preview="true"
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
               onLoad={() => setIsLoading(false)}
             />

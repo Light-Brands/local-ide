@@ -389,6 +389,11 @@ export function TerminalView() {
         <div
           ref={scrollRef}
           className="h-full overflow-y-auto p-3 font-mono text-sm"
+          style={{
+            touchAction: 'pan-y',
+            overscrollBehavior: 'contain',
+            WebkitOverflowScrolling: 'touch',
+          }}
         >
           <div className="whitespace-pre-wrap break-all">
             {parseAnsi(processOutput(output))}

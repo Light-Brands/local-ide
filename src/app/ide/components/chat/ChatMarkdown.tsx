@@ -1,8 +1,37 @@
 'use client';
 
-import { memo, useState, useCallback, useMemo } from 'react';
+import { memo, useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { Copy, Check, FileCode, Slash, Bot, ExternalLink } from 'lucide-react';
+import { Copy, Check, FileCode, Slash, Bot, ExternalLink, GitBranch, ZoomIn, ZoomOut, Maximize2, X, RotateCcw, Move } from 'lucide-react';
+
+// Mermaid config for dark theme
+const mermaidConfig = {
+  startOnLoad: false,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#3b82f6',
+    primaryTextColor: '#f5f5f5',
+    primaryBorderColor: '#525252',
+    lineColor: '#737373',
+    secondaryColor: '#1e3a5f',
+    tertiaryColor: '#262626',
+    background: '#171717',
+    mainBkg: '#262626',
+    nodeBorder: '#525252',
+    clusterBkg: '#1f1f1f',
+    clusterBorder: '#404040',
+    titleColor: '#f5f5f5',
+    edgeLabelBackground: '#262626',
+  },
+  flowchart: {
+    htmlLabels: true,
+    curve: 'basis',
+  },
+  securityLevel: 'loose',
+};
+
+// Track if mermaid has been initialized
+let mermaidInitialized = false;
 
 interface ChatMarkdownProps {
   content: string;
@@ -53,6 +82,279 @@ const CodeBlock = memo(function CodeBlock({
         <code className="text-sm font-mono text-neutral-200">{code}</code>
       </pre>
     </div>
+  );
+});
+
+// Interactive diagram viewer modal
+const DiagramViewer = memo(function DiagramViewer({
+  svgContent,
+  onClose,
+}: {
+  svgContent: string;
+  onClose: () => void;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [zoom, setZoom] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+  const handleZoomIn = useCallback(() => {
+    setZoom(z => Math.min(z + 0.25, 4));
+  }, []);
+
+  const handleZoomOut = useCallback(() => {
+    setZoom(z => Math.max(z - 0.25, 0.25));
+  }, []);
+
+  const handleReset = useCallback(() => {
+    setZoom(1);
+    setPosition({ x: 0, y: 0 });
+  }, []);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.button === 0) {
+      setIsDragging(true);
+      setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
+    }
+  }, [position]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (isDragging) {
+      setPosition({
+        x: e.clientX - dragStart.x,
+        y: e.clientY - dragStart.y,
+      });
+    }
+  }, [isDragging, dragStart]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    setZoom(z => Math.min(Math.max(z + delta, 0.25), 4));
+  }, []);
+
+  // Close on escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+      {/* Controls */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-1 bg-neutral-800/90 rounded-lg px-2 py-1.5 border border-neutral-700 shadow-lg">
+        <button
+          onClick={handleZoomOut}
+          className="p-1.5 rounded hover:bg-neutral-700 text-neutral-400 hover:text-white transition-colors"
+          title="Zoom out"
+        >
+          <ZoomOut className="w-4 h-4" />
+        </button>
+        <span className="px-2 text-xs text-neutral-400 font-mono min-w-[3rem] text-center">
+          {Math.round(zoom * 100)}%
+        </span>
+        <button
+          onClick={handleZoomIn}
+          className="p-1.5 rounded hover:bg-neutral-700 text-neutral-400 hover:text-white transition-colors"
+          title="Zoom in"
+        >
+          <ZoomIn className="w-4 h-4" />
+        </button>
+        <div className="w-px h-4 bg-neutral-600 mx-1" />
+        <button
+          onClick={handleReset}
+          className="p-1.5 rounded hover:bg-neutral-700 text-neutral-400 hover:text-white transition-colors"
+          title="Reset view"
+        >
+          <RotateCcw className="w-4 h-4" />
+        </button>
+        <div className="w-px h-4 bg-neutral-600 mx-1" />
+        <div className="flex items-center gap-1 px-1.5 text-neutral-500">
+          <Move className="w-3 h-3" />
+          <span className="text-xs">Drag to pan</span>
+        </div>
+      </div>
+
+      {/* Close button */}
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 z-[100] p-2 rounded-lg bg-neutral-800/90 hover:bg-neutral-700 text-neutral-400 hover:text-white border border-neutral-700 transition-colors"
+        title="Close (Esc)"
+      >
+        <X className="w-5 h-5" />
+      </button>
+
+      {/* Diagram container */}
+      <div
+        ref={containerRef}
+        className={cn(
+          "w-full h-full overflow-hidden",
+          isDragging ? "cursor-grabbing" : "cursor-grab"
+        )}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onWheel={handleWheel}
+      >
+        <div
+          className="w-full h-full flex items-center justify-center"
+          style={{
+            transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
+            transition: isDragging ? 'none' : 'transform 0.1s ease-out',
+          }}
+        >
+          <div
+            className="[&>svg]:max-w-none [&>svg]:max-h-none"
+            dangerouslySetInnerHTML={{ __html: svgContent }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+});
+
+// Mermaid diagram component
+const MermaidBlock = memo(function MermaidBlock({
+  code,
+}: {
+  code: string;
+}) {
+  const [copied, setCopied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [svgContent, setSvgContent] = useState<string | null>(null);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
+
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [code]);
+
+  const openViewer = useCallback(() => {
+    setIsViewerOpen(true);
+  }, []);
+
+  const closeViewer = useCallback(() => {
+    setIsViewerOpen(false);
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const renderDiagram = async () => {
+      try {
+        // Dynamically import mermaid only on client
+        const mermaid = (await import('mermaid')).default;
+
+        // Initialize mermaid only once
+        if (!mermaidInitialized) {
+          mermaid.initialize(mermaidConfig);
+          mermaidInitialized = true;
+        }
+
+        // Generate unique ID for this diagram
+        const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
+
+        // Render the diagram - mermaid.render returns SVG string
+        const { svg } = await mermaid.render(id, code);
+
+        if (isMounted) {
+          setSvgContent(svg);
+          setError(null);
+        }
+      } catch (err) {
+        console.error('Mermaid rendering error:', err);
+        if (isMounted) {
+          setError(err instanceof Error ? err.message : 'Failed to render diagram');
+          setSvgContent(null);
+        }
+      }
+    };
+
+    renderDiagram();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [code]);
+
+  return (
+    <>
+      <div className="my-2 rounded-lg overflow-hidden bg-neutral-800 border border-neutral-700">
+        <div className="flex items-center justify-between px-3 py-1.5 bg-neutral-750 border-b border-neutral-700">
+          <div className="flex items-center gap-2">
+            <GitBranch className="w-3.5 h-3.5 text-neutral-400" />
+            <span className="text-xs text-neutral-400 font-mono">mermaid</span>
+          </div>
+          <div className="flex items-center gap-1">
+            {svgContent && (
+              <button
+                onClick={openViewer}
+                className="flex items-center gap-1 px-2 py-0.5 rounded text-xs text-neutral-400 hover:text-white hover:bg-neutral-700 transition-colors"
+                title="Open interactive viewer"
+              >
+                <Maximize2 className="w-3 h-3" />
+                <span>Expand</span>
+              </button>
+            )}
+            <button
+              onClick={handleCopy}
+              className="flex items-center gap-1 px-2 py-0.5 rounded text-xs text-neutral-400 hover:text-white hover:bg-neutral-700 transition-colors"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-3 h-3 text-green-400" />
+                  <span className="text-green-400">Copied</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3 h-3" />
+                  <span>Copy</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+        <div className="p-4 overflow-x-auto bg-neutral-900/50">
+          {error ? (
+            <div className="text-red-400 text-sm">
+              <p className="font-medium mb-1">Diagram error:</p>
+              <pre className="text-xs text-red-300 bg-red-900/20 p-2 rounded overflow-x-auto">
+                {error}
+              </pre>
+              <pre className="mt-2 text-xs text-neutral-400 bg-neutral-800 p-2 rounded overflow-x-auto">
+                {code}
+              </pre>
+            </div>
+          ) : svgContent ? (
+            <div
+              className="flex justify-center [&>svg]:max-w-full cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={openViewer}
+              title="Click to expand"
+              dangerouslySetInnerHTML={{ __html: svgContent }}
+            />
+          ) : (
+            <div className="flex justify-center animate-pulse">
+              <div className="text-neutral-500 text-sm py-4">Rendering diagram...</div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Fullscreen viewer modal */}
+      {isViewerOpen && svgContent && (
+        <DiagramViewer svgContent={svgContent} onClose={closeViewer} />
+      )}
+    </>
   );
 });
 
@@ -315,9 +617,16 @@ function parseMarkdown(content: string): React.ReactNode[] {
     const language = match[1] || 'text';
     const code = match[2].trim();
 
-    parts.push(
-      <CodeBlock key={`code-${key++}`} language={language} code={code} />
-    );
+    // Use MermaidBlock for mermaid diagrams, CodeBlock for everything else
+    if (language.toLowerCase() === 'mermaid') {
+      parts.push(
+        <MermaidBlock key={`mermaid-${key++}`} code={code} />
+      );
+    } else {
+      parts.push(
+        <CodeBlock key={`code-${key++}`} language={language} code={code} />
+      );
+    }
 
     lastIndex = match.index + match[0].length;
   }

@@ -1,7 +1,7 @@
 // Local IDE Service Worker
-const CACHE_NAME = 'local-ide-v3';
-const STATIC_CACHE_NAME = 'local-ide-static-v3';
-const DYNAMIC_CACHE_NAME = 'local-ide-dynamic-v3';
+const CACHE_NAME = 'local-ide-v4';
+const STATIC_CACHE_NAME = 'local-ide-static-v4';
+const DYNAMIC_CACHE_NAME = 'local-ide-dynamic-v4';
 
 // Static assets to cache on install (only essential ones)
 const STATIC_ASSETS = [
@@ -132,12 +132,24 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static assets - cache first
+  // Static assets - use network first in development to avoid stale code
+  // In production, Next.js uses content-hashed filenames so caching is safe
   if (
     url.pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2)$/) ||
     url.pathname.startsWith('/_next/static/')
   ) {
-    event.respondWith(CACHE_STRATEGIES.cacheFirst(request));
+    // During development, always fetch fresh to avoid hydration mismatches
+    // The URL will contain 'localhost' or the dev server address
+    const isDev = url.hostname === 'localhost' ||
+                  url.hostname === '127.0.0.1' ||
+                  url.port === '3000' ||
+                  url.port === '4000';
+
+    if (isDev) {
+      event.respondWith(CACHE_STRATEGIES.networkFirst(request));
+    } else {
+      event.respondWith(CACHE_STRATEGIES.cacheFirst(request));
+    }
     return;
   }
 

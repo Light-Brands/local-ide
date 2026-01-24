@@ -1,285 +1,195 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient, getServerUser } from '@/lib/supabase/server';
-import type { InsertTables, UpdateTables } from '@/lib/supabase/types';
-
-// Standard API response helper
-function apiResponse<T>(
-  data: T | null,
-  error: string | null = null,
-  status = 200
-) {
-  return NextResponse.json({ data, error }, { status });
-}
+import {
+  getAllContent,
+  getContentBySlug,
+  createContent,
+  updateContent,
+  deleteContent,
+} from '@/lib/storage/collections';
 
 /**
- * GET /api/content
- * List all published content or all content for authenticated users
+ * Content API - File-based Storage
  *
- * Query params:
- * - status: 'draft' | 'published' | 'archived' (default: 'published')
- * - limit: number (default: 10, max: 100)
- * - offset: number (default: 0)
- * - slug: string (for single item lookup)
+ * Stores content in .local-ide/data/content.json
  */
+
+// GET - Retrieve content
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createServerSupabaseClient();
-    const user = await getServerUser();
     const { searchParams } = new URL(request.url);
-
-    // Parse query params
-    const statusParam = searchParams.get('status') || 'published';
-    const status = statusParam as 'draft' | 'published' | 'archived' | 'all';
-    const limit = Math.min(parseInt(searchParams.get('limit') || '10'), 100);
-    const offset = parseInt(searchParams.get('offset') || '0');
     const slug = searchParams.get('slug');
+    const status = searchParams.get('status');
 
-    // Build query
-    let query = supabase
-      .from('content')
-      .select('*, author:profiles(id, full_name, avatar_url)');
-
-    // Single item by slug
+    // Get by slug
     if (slug) {
-      const { data, error } = await query.eq('slug', slug).single();
-
-      if (error) {
-        return apiResponse(null, 'Content not found', 404);
+      const item = await getContentBySlug(slug);
+      if (!item) {
+        return NextResponse.json(
+          { data: null, error: 'Content not found' },
+          { status: 404 }
+        );
       }
-
-      // Only published content for non-authenticated users
-      if (!user && data.status !== 'published') {
-        return apiResponse(null, 'Content not found', 404);
-      }
-
-      return apiResponse(data);
+      return NextResponse.json({ data: item, error: null });
     }
 
-    // List items
-    // Non-authenticated users can only see published content
-    if (!user) {
-      query = query.eq('status', 'published');
-    } else if (status !== 'all') {
-      query = query.eq('status', status);
+    // Get all
+    let items = await getAllContent();
+
+    // Filter by status
+    if (status && ['draft', 'published', 'archived'].includes(status)) {
+      items = items.filter(item => item.status === status);
     }
 
-    const { data, error, count } = await query
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
+    // Sort by updated_at descending
+    items.sort((a, b) =>
+      new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+    );
 
-    if (error) {
-      return apiResponse(null, error.message, 500);
-    }
-
-    return apiResponse({
-      items: data,
-      pagination: {
-        total: count || 0,
-        limit,
-        offset,
-        hasMore: (count || 0) > offset + limit,
+    return NextResponse.json({
+      data: {
+        items,
+        pagination: {
+          total: items.length,
+          limit: items.length,
+          offset: 0,
+          hasMore: false,
+        },
       },
+      error: null,
     });
   } catch (error) {
-    console.error('GET /api/content error:', error);
-    return apiResponse(null, 'Internal server error', 500);
+    console.error('Content GET error:', error);
+    return NextResponse.json(
+      { data: null, error: 'Failed to fetch content' },
+      { status: 500 }
+    );
   }
 }
 
-/**
- * POST /api/content
- * Create new content (requires authentication)
- */
+// POST - Create content
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createServerSupabaseClient();
-    const user = await getServerUser();
-
-    if (!user) {
-      return apiResponse(null, 'Unauthorized', 401);
-    }
-
     const body = await request.json();
 
     // Validate required fields
-    if (!body.title || !body.slug) {
-      return apiResponse(null, 'Title and slug are required', 400);
+    if (!body.slug || !body.title) {
+      return NextResponse.json(
+        { data: null, error: 'slug and title are required' },
+        { status: 400 }
+      );
     }
 
     // Check for duplicate slug
-    const { data: existing } = await supabase
-      .from('content')
-      .select('id')
-      .eq('slug', body.slug)
-      .single();
-
+    const existing = await getContentBySlug(body.slug);
     if (existing) {
-      return apiResponse(null, 'Slug already exists', 409);
+      return NextResponse.json(
+        { data: null, error: 'Content with this slug already exists' },
+        { status: 409 }
+      );
     }
 
-    // Create content
-    const contentData: InsertTables<'content'> = {
-      title: body.title,
+    const newContent = await createContent({
       slug: body.slug,
+      title: body.title,
       description: body.description || null,
       body: body.body || null,
       featured_image: body.featured_image || null,
       status: body.status || 'draft',
-      author_id: user.id,
+      author_id: body.author_id || null,
       metadata: body.metadata || null,
       published_at: body.status === 'published' ? new Date().toISOString() : null,
-    };
+    });
 
-    const { data, error } = await supabase
-      .from('content')
-      .insert(contentData)
-      .select()
-      .single();
-
-    if (error) {
-      return apiResponse(null, error.message, 500);
-    }
-
-    return apiResponse(data, null, 201);
+    return NextResponse.json({ data: newContent, error: null }, { status: 201 });
   } catch (error) {
-    console.error('POST /api/content error:', error);
-    return apiResponse(null, 'Internal server error', 500);
+    console.error('Content POST error:', error);
+    return NextResponse.json(
+      { data: null, error: 'Failed to create content' },
+      { status: 500 }
+    );
   }
 }
 
-/**
- * PATCH /api/content
- * Update content (requires authentication and ownership/admin)
- * Body must include 'id' field
- */
+// PATCH - Update content
 export async function PATCH(request: NextRequest) {
   try {
-    const supabase = await createServerSupabaseClient();
-    const user = await getServerUser();
-
-    if (!user) {
-      return apiResponse(null, 'Unauthorized', 401);
-    }
-
+    const { searchParams } = new URL(request.url);
     const body = await request.json();
+    const id = searchParams.get('id') || body.id;
 
-    if (!body.id) {
-      return apiResponse(null, 'Content ID is required', 400);
+    if (!id) {
+      return NextResponse.json(
+        { data: null, error: 'Content ID is required' },
+        { status: 400 }
+      );
     }
 
-    // Check ownership or admin status
-    const { data: existing, error: fetchError } = await supabase
-      .from('content')
-      .select('author_id')
-      .eq('id', body.id)
-      .single();
-
-    if (fetchError || !existing) {
-      return apiResponse(null, 'Content not found', 404);
-    }
-
-    // Get user profile to check role
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    if (existing.author_id !== user.id && profile?.role !== 'admin') {
-      return apiResponse(null, 'Forbidden', 403);
-    }
-
-    // Prepare update data
-    const updateData: UpdateTables<'content'> = {
-      updated_at: new Date().toISOString(),
-    };
-
-    // Only update provided fields
-    const allowedFields = ['title', 'slug', 'description', 'body', 'featured_image', 'status', 'metadata'];
-    for (const field of allowedFields) {
-      if (body[field] !== undefined) {
-        (updateData as Record<string, unknown>)[field] = body[field];
+    // If changing slug, check for duplicates
+    if (body.slug) {
+      const existing = await getContentBySlug(body.slug);
+      if (existing && existing.id !== id) {
+        return NextResponse.json(
+          { data: null, error: 'Content with this slug already exists' },
+          { status: 409 }
+        );
       }
     }
 
-    // Set published_at if status changed to published
-    if (body.status === 'published') {
-      updateData.published_at = new Date().toISOString();
+    // Handle publish date
+    const updates = { ...body };
+    delete updates.id; // Don't include id in updates
+
+    if (body.status === 'published' && !body.published_at) {
+      updates.published_at = new Date().toISOString();
     }
 
-    const { data, error } = await supabase
-      .from('content')
-      .update(updateData)
-      .eq('id', body.id)
-      .select()
-      .single();
+    const updated = await updateContent(id, updates);
 
-    if (error) {
-      return apiResponse(null, error.message, 500);
+    if (!updated) {
+      return NextResponse.json(
+        { data: null, error: 'Content not found' },
+        { status: 404 }
+      );
     }
 
-    return apiResponse(data);
+    return NextResponse.json({ data: updated, error: null });
   } catch (error) {
-    console.error('PATCH /api/content error:', error);
-    return apiResponse(null, 'Internal server error', 500);
+    console.error('Content PATCH error:', error);
+    return NextResponse.json(
+      { data: null, error: 'Failed to update content' },
+      { status: 500 }
+    );
   }
 }
 
-/**
- * DELETE /api/content
- * Delete content (requires authentication and ownership/admin)
- * Query param: id
- */
+// DELETE - Delete content
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = await createServerSupabaseClient();
-    const user = await getServerUser();
-
-    if (!user) {
-      return apiResponse(null, 'Unauthorized', 401);
-    }
-
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
     if (!id) {
-      return apiResponse(null, 'Content ID is required', 400);
+      return NextResponse.json(
+        { data: null, error: 'Content ID is required' },
+        { status: 400 }
+      );
     }
 
-    // Check ownership or admin status
-    const { data: existing, error: fetchError } = await supabase
-      .from('content')
-      .select('author_id')
-      .eq('id', id)
-      .single();
+    const deleted = await deleteContent(id);
 
-    if (fetchError || !existing) {
-      return apiResponse(null, 'Content not found', 404);
+    if (!deleted) {
+      return NextResponse.json(
+        { data: null, error: 'Content not found' },
+        { status: 404 }
+      );
     }
 
-    // Get user profile to check role
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    if (existing.author_id !== user.id && profile?.role !== 'admin') {
-      return apiResponse(null, 'Forbidden', 403);
-    }
-
-    const { error } = await supabase
-      .from('content')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      return apiResponse(null, error.message, 500);
-    }
-
-    return apiResponse({ success: true });
+    return NextResponse.json({ data: { success: true }, error: null });
   } catch (error) {
-    console.error('DELETE /api/content error:', error);
-    return apiResponse(null, 'Internal server error', 500);
+    console.error('Content DELETE error:', error);
+    return NextResponse.json(
+      { data: null, error: 'Failed to delete content' },
+      { status: 500 }
+    );
   }
 }

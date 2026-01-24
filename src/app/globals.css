@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "xterm/css/xterm.css";
 
 /* Configure dark mode variant for Tailwind v4 */
 /* This enables the dark: variant to work with the .dark class on html element */
@@ -625,4 +626,144 @@ body {
 
 .scrollbar-thin::-webkit-scrollbar-track {
   background: transparent;
+}
+
+/* IDE Pane scrollbar - minimal, appears on hover */
+.pane-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.pane-scroll:hover {
+  scrollbar-color: var(--color-neutral-600) transparent;
+}
+
+.pane-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.pane-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.pane-scroll:hover::-webkit-scrollbar-thumb {
+  background: var(--color-neutral-600);
+}
+
+.pane-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--color-neutral-500);
+}
+
+.pane-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* =============================================================================
+   MOBILE SAFE AREA UTILITIES - iOS notch and home indicator support
+   ============================================================================= */
+
+/* Safe area padding utilities for iOS devices */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.safe-area-left {
+  padding-left: env(safe-area-inset-left, 0);
+}
+
+.safe-area-right {
+  padding-right: env(safe-area-inset-right, 0);
+}
+
+.safe-area-x {
+  padding-left: env(safe-area-inset-left, 0);
+  padding-right: env(safe-area-inset-right, 0);
+}
+
+.safe-area-y {
+  padding-top: env(safe-area-inset-top, 0);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.safe-area-all {
+  padding-top: env(safe-area-inset-top, 0);
+  padding-right: env(safe-area-inset-right, 0);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  padding-left: env(safe-area-inset-left, 0);
+}
+
+/* Margin variants for safe areas */
+.safe-area-margin-top {
+  margin-top: env(safe-area-inset-top, 0);
+}
+
+.safe-area-margin-bottom {
+  margin-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* Height adjustments for full-height elements */
+.h-screen-safe {
+  height: calc(100vh - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0));
+}
+
+.min-h-screen-safe {
+  min-height: calc(100vh - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0));
+}
+
+/* Touch action utilities for mobile gestures */
+.touch-pan-x {
+  touch-action: pan-x;
+}
+
+.touch-pan-y {
+  touch-action: pan-y;
+}
+
+.touch-none {
+  touch-action: none;
+}
+
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+/* Prevent pull-to-refresh on mobile */
+.overscroll-none {
+  overscroll-behavior: none;
+}
+
+.overscroll-contain {
+  overscroll-behavior: contain;
+}
+
+/* Mobile keyboard visibility helper - hides element when virtual keyboard is visible */
+@media (max-height: 500px) and (max-width: 768px) {
+  .hide-on-keyboard {
+    display: none !important;
+  }
+}
+
+/* Tap highlight removal for iOS */
+.tap-highlight-none {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Hardware acceleration for smooth scrolling on mobile */
+.gpu-accelerate {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Mobile-optimized scrolling */
+.scroll-smooth-mobile {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
 }

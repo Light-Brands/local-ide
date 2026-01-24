@@ -1,18 +1,20 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import {
   User,
   Bell,
   Lock,
   Palette,
   Globe,
-  Database,
   Mail,
   Shield,
   Save,
   Camera,
+  Code2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAdminAuth } from '@/lib/admin/auth';
@@ -23,10 +25,11 @@ const tabs = [
   { id: 'security', label: 'Security', icon: Lock },
   { id: 'appearance', label: 'Appearance', icon: Palette },
   { id: 'site', label: 'Site Settings', icon: Globe },
-  { id: 'integrations', label: 'Integrations', icon: Database },
+  { id: 'integrations', label: 'Integrations', icon: Code2, href: '/admin/settings/development' },
 ];
 
 export default function SettingsPage() {
+  const router = useRouter();
   const { user, isDemo } = useAdminAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [isSaving, setIsSaving] = useState(false);
@@ -80,6 +83,19 @@ export default function SettingsPage() {
           <nav className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-2 space-y-1">
             {tabs.map((tab) => {
               const Icon = tab.icon;
+              // If tab has href, use Link for navigation
+              if ('href' in tab && tab.href) {
+                return (
+                  <Link
+                    key={tab.id}
+                    href={tab.href}
+                    className="relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all duration-200 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                  >
+                    <Icon className="w-[18px] h-[18px]" strokeWidth={2} />
+                    <span className="text-sm font-medium">{tab.label}</span>
+                  </Link>
+                );
+              }
               return (
                 <button
                   key={tab.id}
@@ -577,92 +593,6 @@ export default function SettingsPage() {
               </div>
             )}
 
-            {/* Integrations Tab */}
-            {activeTab === 'integrations' && (
-              <div className="p-6 space-y-6">
-                <div>
-                  <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
-                    Integrations
-                  </h2>
-                  <p className="text-sm text-neutral-500 mt-1">
-                    Connect external services
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  {/* Supabase */}
-                  <div className="p-4 bg-neutral-50 dark:bg-neutral-800/50 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-lg bg-green-500 flex items-center justify-center">
-                          <Database className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-neutral-900 dark:text-white">
-                            Supabase
-                          </p>
-                          <p className="text-sm text-neutral-500">
-                            {isDemo ? 'Not connected' : 'Connected'}
-                          </p>
-                        </div>
-                      </div>
-                      <button className={cn(
-                        'px-4 py-2 text-sm font-medium rounded-lg transition-colors',
-                        isDemo
-                          ? 'text-white bg-green-500 hover:bg-green-600'
-                          : 'text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800'
-                      )}>
-                        {isDemo ? 'Connect' : 'Configure'}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Analytics */}
-                  <div className="p-4 bg-neutral-50 dark:bg-neutral-800/50 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-lg bg-orange-500 flex items-center justify-center">
-                          <Globe className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-neutral-900 dark:text-white">
-                            Google Analytics
-                          </p>
-                          <p className="text-sm text-neutral-500">
-                            Not connected
-                          </p>
-                        </div>
-                      </div>
-                      <button className="px-4 py-2 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition-colors">
-                        Connect
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Email */}
-                  <div className="p-4 bg-neutral-50 dark:bg-neutral-800/50 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-lg bg-blue-500 flex items-center justify-center">
-                          <Mail className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-neutral-900 dark:text-white">
-                            Email Provider
-                          </p>
-                          <p className="text-sm text-neutral-500">
-                            Not connected
-                          </p>
-                        </div>
-                      </div>
-                      <button className="px-4 py-2 text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors">
-                        Connect
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* Save Button */}
             <div className="px-6 py-4 border-t border-neutral-200 dark:border-neutral-800 flex justify-end">

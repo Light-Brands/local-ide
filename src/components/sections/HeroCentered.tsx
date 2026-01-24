@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { gsap } from 'gsap';
@@ -29,6 +29,12 @@ export function HeroCentered({
   const containerRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const [isHoveredPrimary, setIsHoveredPrimary] = useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
+
+  // Prevent hydration mismatch by deferring animated title rendering
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   // Parallax scroll effect
   const { scrollYProgress } = useScroll({
@@ -51,47 +57,50 @@ export function HeroCentered({
   const orbOpacity = useTransform(smoothProgress, [0, 0.4], [1, 0.3]);
 
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      // Refined: Staggered word animation with blur reveal
-      if (titleRef.current) {
-        const words = titleRef.current.querySelectorAll('.word');
-        gsap.set(words, { opacity: 0, y: 80, filter: 'blur(8px)' });
+    // Simple fade-in animation for the title (no word splitting to avoid hydration issues)
+    if (!hasMounted) return;
 
-        gsap.to(words, {
-          y: 0,
-          opacity: 1,
-          filter: 'blur(0px)',
-          duration: 1,
-          stagger: 0.08, // Refined: tighter stagger
-          ease: 'power3.out',
-          delay: 0.3,
-        });
+    const ctx = gsap.context(() => {
+      if (titleRef.current) {
+        gsap.fromTo(
+          titleRef.current,
+          { opacity: 0, y: 40, filter: 'blur(4px)' },
+          {
+            opacity: 1,
+            y: 0,
+            filter: 'blur(0px)',
+            duration: 0.8,
+            ease: 'power3.out',
+            delay: 0.2,
+          }
+        );
       }
     }, containerRef);
 
     return () => ctx.revert();
-  }, []);
+  }, [hasMounted]);
 
-  // Split title into words for animation
+  // Render title with optional highlight
+  // Always returns plain text/fragments to avoid hydration mismatch
   const renderTitle = () => {
-    const parts = titleHighlight
-      ? title.split(titleHighlight)
-      : [title];
+    if (!titleHighlight) {
+      return title;
+    }
 
-    return parts.map((part, i) => (
-      <span key={i}>
-        {part.split(' ').filter(Boolean).map((word, j) => (
-          <span key={j} className="word inline-block overflow-hidden">
-            <span className="inline-block">{word}&nbsp;</span>
-          </span>
+    // Use fragments instead of spans to avoid element mismatch
+    const parts = title.split(titleHighlight);
+    return (
+      <>
+        {parts.map((part, i) => (
+          <React.Fragment key={i}>
+            {part}
+            {i < parts.length - 1 && (
+              <span className="gradient-text">{titleHighlight}</span>
+            )}
+          </React.Fragment>
         ))}
-        {i < parts.length - 1 && titleHighlight && (
-          <span className="word inline-block overflow-hidden">
-            <span className="inline-block gradient-text">{titleHighlight}&nbsp;</span>
-          </span>
-        )}
-      </span>
-    ));
+      </>
+    );
   };
 
   return (

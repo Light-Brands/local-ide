@@ -1,7 +1,25 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Allow the app to be embedded in iframes (for the preview pane)
+  // Use separate build directories for App and IDE
+  // Set via NEXT_DIST_DIR env var (e.g., .next-app or .next-ide)
+  distDir: process.env.NEXT_DIST_DIR || '.next',
+
+  // Allow cross-origin requests from tunnel domain in development
+  allowedDevOrigins: ['https://ide.lightbrands.ai', 'https://*.lightbrands.ai'],
+
+  // Proxy /app-preview/* to the App server (port 3000)
+  // This allows the IDE (port 4000) to serve app content through the tunnel
+  async rewrites() {
+    return [
+      {
+        source: '/app-preview/:path*',
+        destination: 'http://localhost:3000/:path*',
+      },
+    ];
+  },
+
+  // Allow the app to be embedded in iframes and handle CORS for IDE-App communication
   async headers() {
     return [
       {
@@ -15,6 +33,23 @@ const nextConfig: NextConfig = {
           {
             key: 'Content-Security-Policy',
             value: "frame-ancestors 'self' http://localhost:* https://localhost:* https://ide.lightbrands.ai https://*.lightbrands.ai",
+          },
+          // Allow CORS for IDE (port 4000) to call App (port 3000) APIs
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: 'http://localhost:4000',
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, POST, PUT, DELETE, OPTIONS',
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'Content-Type, Authorization',
+          },
+          {
+            key: 'Access-Control-Allow-Credentials',
+            value: 'true',
           },
         ],
       },

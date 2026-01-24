@@ -7,8 +7,10 @@
  * Whether the feedback system should be enabled.
  * In production: completely hidden - no DOM footprint, no event listeners
  * In development: fully active on ALL pages
+ *
+ * Set to false to hide the feedback button entirely
  */
-export const FEEDBACK_ENABLED = process.env.NODE_ENV !== 'production';
+export const FEEDBACK_ENABLED = false;
 
 /**
  * Check if we're in a browser environment

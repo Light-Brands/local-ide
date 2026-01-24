@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import {
+  readCollection,
+  createItem,
+  writeCollection,
+  saveFile,
+  generateId,
+} from '@/lib/storage/fileStorage';
 import type {
   FeedbackCategory,
   FeedbackPriority,
@@ -9,15 +15,33 @@ import type {
 } from '@/lib/feedback/types';
 
 /**
- * Enhanced Feedback API
+ * Feedback API - File-based Storage
  *
- * Handles CRUD operations for the feedback system with:
- * - Supabase storage for feedback items
- * - Screenshot upload to Supabase Storage
- * - Filtering by page ID
+ * Stores feedback items locally in .local-ide/data/feedback.json
+ * Screenshots saved to .local-ide/data/screenshots/
  */
 
-// Types for request payloads
+interface FeedbackRecord {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  page_id: string;
+  page_url: string;
+  section_path: string;
+  component_name?: string;
+  position: FeedbackPosition;
+  text_context: TextContext;
+  category: FeedbackCategory;
+  priority: FeedbackPriority;
+  status: FeedbackStatus;
+  title: string;
+  notes: string;
+  screenshot_url?: string;
+  user_id?: string;
+  resolution?: string;
+  resolved_at?: string;
+}
+
 interface CreateFeedbackRequest {
   page_id: string;
   page_url: string;
@@ -32,56 +56,26 @@ interface CreateFeedbackRequest {
   screenshot?: string; // base64 data URL
 }
 
-interface UpdateFeedbackRequest {
-  status?: FeedbackStatus;
-  resolution?: string;
-  resolved_at?: string;
-  priority?: FeedbackPriority;
-  title?: string;
-  notes?: string;
-}
+const COLLECTION = 'feedback';
 
-// Helper to upload screenshot to Supabase Storage
-async function uploadScreenshot(
-  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
-  base64Data: string,
-  feedbackId: string
-): Promise<string | null> {
+// Helper to save screenshot from base64
+async function saveScreenshot(base64Data: string, feedbackId: string): Promise<string | null> {
   try {
-    // Extract the base64 content and mime type
     const matches = base64Data.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
     if (!matches || matches.length !== 3) {
-      console.error('Invalid base64 data');
       return null;
     }
 
     const mimeType = matches[1];
     const base64Content = matches[2];
     const buffer = Buffer.from(base64Content, 'base64');
-
-    // Determine file extension
     const extension = mimeType.includes('png') ? 'png' : 'jpg';
-    const fileName = `feedback/${feedbackId}.${extension}`;
+    const filename = `${feedbackId}.${extension}`;
 
-    // Upload to storage
-    const { error: uploadError } = await supabase.storage
-      .from('media')
-      .upload(fileName, buffer, {
-        contentType: mimeType,
-        upsert: true,
-      });
-
-    if (uploadError) {
-      console.error('Screenshot upload error:', uploadError);
-      return null;
-    }
-
-    // Get public URL
-    const { data: urlData } = supabase.storage.from('media').getPublicUrl(fileName);
-
-    return urlData?.publicUrl || null;
+    await saveFile('screenshots', filename, buffer);
+    return `/api/feedback/screenshots/${filename}`;
   } catch (error) {
-    console.error('Screenshot upload failed:', error);
+    console.error('Screenshot save error:', error);
     return null;
   }
 }
@@ -99,50 +93,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = await createServerSupabaseClient();
+    const id = generateId();
+    const now = new Date().toISOString();
 
-    // Get current user (optional)
-    const { data: { user } } = await supabase.auth.getUser();
-
-    // Generate a temporary ID for screenshot upload
-    const tempId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-    // Upload screenshot if provided
-    let screenshotUrl: string | null = null;
+    // Save screenshot if provided
+    let screenshotUrl: string | undefined;
     if (body.screenshot) {
-      screenshotUrl = await uploadScreenshot(supabase, body.screenshot, tempId);
+      const url = await saveScreenshot(body.screenshot, id);
+      if (url) screenshotUrl = url;
     }
 
-    // Insert feedback
-    const { data, error } = await supabase
-      .from('feedback')
-      .insert({
-        page_id: body.page_id,
-        page_url: body.page_url,
-        section_path: body.section_path,
-        component_name: body.component_name,
-        position: body.position as unknown as null, // JSONB
-        text_context: body.text_context as unknown as null, // JSONB
-        category: body.category,
-        priority: body.priority || 'medium',
-        status: 'new' as const,
-        title: body.title,
-        notes: body.notes || '',
-        screenshot_url: screenshotUrl,
-        user_id: user?.id,
-      })
-      .select()
-      .single();
+    const newFeedback: FeedbackRecord = {
+      id,
+      created_at: now,
+      updated_at: now,
+      page_id: body.page_id,
+      page_url: body.page_url,
+      section_path: body.section_path,
+      component_name: body.component_name,
+      position: body.position,
+      text_context: body.text_context,
+      category: body.category,
+      priority: body.priority || 'medium',
+      status: 'new',
+      title: body.title,
+      notes: body.notes || '',
+      screenshot_url: screenshotUrl,
+    };
 
-    if (error) {
-      console.error('Feedback insert error:', error);
-      return NextResponse.json(
-        { error: 'Failed to create feedback' },
-        { status: 500 }
-      );
-    }
+    await createItem(COLLECTION, newFeedback);
 
-    return NextResponse.json({ success: true, data });
+    return NextResponse.json({ success: true, data: newFeedback });
   } catch (error) {
     console.error('Feedback POST error:', error);
     return NextResponse.json(
@@ -152,45 +133,27 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET - Retrieve feedback (optionally filtered by pageId)
+// GET - Retrieve feedback
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createServerSupabaseClient();
     const { searchParams } = new URL(request.url);
-
     const pageId = searchParams.get('pageId');
     const status = searchParams.get('status');
-    const limit = Math.min(parseInt(searchParams.get('limit') || '100'), 500);
-    const offset = parseInt(searchParams.get('offset') || '0');
 
-    // Build query
-    let query = supabase
-      .from('feedback')
-      .select('*')
-      .order('created_at', { ascending: false });
+    let items = await readCollection<FeedbackRecord>(COLLECTION);
 
     // Apply filters
     if (pageId) {
-      query = query.eq('page_id', pageId);
+      items = items.filter(item => item.page_id === pageId);
     }
     if (status && ['new', 'in-progress', 'resolved', 'blocked'].includes(status)) {
-      query = query.eq('status', status as FeedbackStatus);
+      items = items.filter(item => item.status === status);
     }
 
-    // Apply pagination
-    query = query.range(offset, offset + limit - 1);
+    // Sort by created_at descending
+    items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-    const { data, error } = await query;
-
-    if (error) {
-      console.error('Feedback fetch error:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch feedback' },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({ data });
+    return NextResponse.json({ data: items });
   } catch (error) {
     console.error('Feedback GET error:', error);
     return NextResponse.json(
@@ -213,37 +176,34 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const body: UpdateFeedbackRequest = await request.json();
-    const supabase = await createServerSupabaseClient();
+    const body = await request.json();
+    const items = await readCollection<FeedbackRecord>(COLLECTION);
+    const index = items.findIndex(item => item.id === id);
 
-    // Build update object
-    const updates: Record<string, unknown> = {
-      updated_at: new Date().toISOString(),
-    };
-
-    if (body.status !== undefined) updates.status = body.status;
-    if (body.resolution !== undefined) updates.resolution = body.resolution;
-    if (body.resolved_at !== undefined) updates.resolved_at = body.resolved_at;
-    if (body.priority !== undefined) updates.priority = body.priority;
-    if (body.title !== undefined) updates.title = body.title;
-    if (body.notes !== undefined) updates.notes = body.notes;
-
-    const { data, error } = await supabase
-      .from('feedback')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Feedback update error:', error);
+    if (index === -1) {
       return NextResponse.json(
-        { error: 'Failed to update feedback' },
-        { status: 500 }
+        { error: 'Feedback not found' },
+        { status: 404 }
       );
     }
 
-    return NextResponse.json({ success: true, data });
+    // Update fields
+    const updated: FeedbackRecord = {
+      ...items[index],
+      updated_at: new Date().toISOString(),
+    };
+
+    if (body.status !== undefined) updated.status = body.status;
+    if (body.resolution !== undefined) updated.resolution = body.resolution;
+    if (body.resolved_at !== undefined) updated.resolved_at = body.resolved_at;
+    if (body.priority !== undefined) updated.priority = body.priority;
+    if (body.title !== undefined) updated.title = body.title;
+    if (body.notes !== undefined) updated.notes = body.notes;
+
+    items[index] = updated;
+    await writeCollection(COLLECTION, items);
+
+    return NextResponse.json({ success: true, data: updated });
   } catch (error) {
     console.error('Feedback PATCH error:', error);
     return NextResponse.json(
@@ -266,36 +226,17 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const supabase = await createServerSupabaseClient();
+    const items = await readCollection<FeedbackRecord>(COLLECTION);
+    const filtered = items.filter(item => item.id !== id);
 
-    // First get the feedback to check for screenshot
-    const { data: existing } = await supabase
-      .from('feedback')
-      .select('screenshot_url')
-      .eq('id', id)
-      .single();
-
-    // Delete screenshot from storage if exists
-    if (existing?.screenshot_url) {
-      const path = existing.screenshot_url.split('/').pop();
-      if (path) {
-        await supabase.storage.from('media').remove([`feedback/${path}`]);
-      }
-    }
-
-    // Delete the feedback
-    const { error } = await supabase
-      .from('feedback')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error('Feedback delete error:', error);
+    if (filtered.length === items.length) {
       return NextResponse.json(
-        { error: 'Failed to delete feedback' },
-        { status: 500 }
+        { error: 'Feedback not found' },
+        { status: 404 }
       );
     }
+
+    await writeCollection(COLLECTION, filtered);
 
     return NextResponse.json({ success: true });
   } catch (error) {

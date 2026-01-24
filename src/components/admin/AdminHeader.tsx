@@ -17,6 +17,7 @@ import {
   ExternalLink,
   X,
   Command,
+  Code2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAdminAuth } from '@/lib/admin/auth';
@@ -138,6 +139,15 @@ export function AdminHeader({
 
         {/* Right side */}
         <div className="flex items-center gap-1">
+          {/* Open IDE link */}
+          <a
+            href="/ide"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 rounded-xl hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+          >
+            <Code2 className="w-4 h-4" />
+            <span className="hidden lg:inline">Open IDE</span>
+          </a>
+
           {/* View site link - Desktop only */}
           <a
             href="/"
