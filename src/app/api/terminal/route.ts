@@ -9,6 +9,21 @@ const execAsync = promisify(exec);
 const TERMINAL_PORT = 4001;
 const TERMINAL_HEALTH_URL = `http://localhost:${TERMINAL_PORT}/health`;
 
+// Build WebSocket URL based on request origin
+function getWebSocketUrl(request: Request): string {
+  const host = request.headers.get('host') || 'localhost:4000';
+  const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1');
+
+  if (isLocalhost) {
+    // Local development - connect directly to terminal server
+    return `ws://localhost:${TERMINAL_PORT}/ws/terminal`;
+  } else {
+    // Tunnel/remote - use same host with wss://
+    // The /ws/* path is routed to the terminal server by Cloudflare tunnel
+    return `wss://${host}/ws/terminal`;
+  }
+}
+
 // Track the spawned process
 let terminalProcess: ReturnType<typeof spawn> | null = null;
 
@@ -84,12 +99,13 @@ export async function GET(request: Request) {
   const autoStart = url.searchParams.get('autoStart') !== 'false';
 
   const isRunning = await isTerminalServerRunning();
+  const wsUrl = getWebSocketUrl(request);
 
   if (isRunning) {
     return NextResponse.json({
       status: 'running',
       port: TERMINAL_PORT,
-      wsUrl: `ws://localhost:${TERMINAL_PORT}/ws/terminal`,
+      wsUrl,
     });
   }
 
@@ -100,7 +116,7 @@ export async function GET(request: Request) {
       return NextResponse.json({
         status: 'started',
         port: TERMINAL_PORT,
-        wsUrl: `ws://localhost:${TERMINAL_PORT}/ws/terminal`,
+        wsUrl,
         message: result.message,
       });
     } else {
@@ -121,7 +137,7 @@ export async function GET(request: Request) {
 }
 
 // POST - Explicitly start the terminal server
-export async function POST() {
+export async function POST(request: Request) {
   // Return graceful response in production (Vercel)
   if (isVercel) {
     return NextResponse.json({
@@ -131,12 +147,13 @@ export async function POST() {
   }
 
   const result = await startTerminalServer();
+  const wsUrl = getWebSocketUrl(request);
 
   if (result.success) {
     return NextResponse.json({
       status: 'started',
       port: TERMINAL_PORT,
-      wsUrl: `ws://localhost:${TERMINAL_PORT}/ws/terminal`,
+      wsUrl,
       message: result.message,
     });
   } else {

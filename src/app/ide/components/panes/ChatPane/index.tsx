@@ -13,12 +13,9 @@ import { MessageList } from './MessageList';
 import { ContextPanel, ContextPanelCompact } from './ContextPanel';
 import {
   Sparkles,
-  Trash2,
   Settings,
-  Zap,
   AlertCircle,
   RefreshCw,
-  StopCircle,
   BookOpen,
 } from 'lucide-react';
 
@@ -45,7 +42,6 @@ function ChatSessionContent({ sessionId }: ChatSessionContentProps) {
   const activeFile = useIDEStore((state) => state.editor.activeFile);
   const fileContents = useIDEStore((state) => state.editor.fileContents);
   const clearMobileChatUnread = useIDEStore((state) => state.clearMobileChatUnread);
-  const clearSessionMessages = useIDEStore((state) => state.clearSessionMessages);
 
   // Get workspace path from GitHub integration or default to temp workspace
   const github = useIDEStore((state) => state.integrations.github);
@@ -71,10 +67,8 @@ function ChatSessionContent({ sessionId }: ChatSessionContentProps) {
     isConnected,
     error,
     sendMessage,
-    clearMessages: hookClearMessages,
     toggleThinking,
     checkConnection,
-    abortStream,
   } = useClaudeChat({
     workspacePath,
     externalMessages: sessionMessages,
@@ -192,19 +186,6 @@ function ChatSessionContent({ sessionId }: ChatSessionContentProps) {
     await sendMessage(prompt);
   }, [input, isLoading, buildPromptWithTooling, sendMessage]);
 
-  // Handle stop/abort
-  const handleStop = useCallback(() => {
-    abortStream();
-  }, [abortStream]);
-
-  // Clear messages for current session
-  const handleClear = useCallback(() => {
-    if (confirm(`Clear all messages in this chat session?`)) {
-      hookClearMessages();
-      clearSessionMessages(sessionId);
-    }
-  }, [sessionId, hookClearMessages, clearSessionMessages]);
-
   // Retry connection check
   const handleRetryConnection = useCallback(async () => {
     setConnectionChecked(false);
@@ -258,73 +239,6 @@ function ChatSessionContent({ sessionId }: ChatSessionContentProps) {
 
   return (
     <>
-      {/* Header */}
-      <div className="flex-shrink-0 flex items-center justify-between px-3 py-2 border-b border-neutral-800">
-        {/* Title */}
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-primary-400" />
-          <span className="text-sm font-medium text-neutral-200">AI Assistant</span>
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-1">
-          {/* Connection status indicator */}
-          <div className="flex items-center gap-1.5 px-2 py-1 mr-1">
-            <span
-              className={cn(
-                'w-2 h-2 rounded-full',
-                isConnected ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'
-              )}
-            />
-            <span className="text-[10px] text-neutral-500">
-              {isConnected ? 'CLI' : 'Checking...'}
-            </span>
-          </div>
-
-          {/* Command Dictionary button */}
-          <button
-            onClick={() => openCommandDictionary()}
-            className="p-1.5 rounded-lg text-neutral-400 hover:text-violet-400 hover:bg-violet-500/10 transition-colors"
-            title="Command Dictionary (Cmd+/)"
-          >
-            <BookOpen className="w-4 h-4" />
-          </button>
-
-          {!isMobile && (
-            <button
-              onClick={() => setShowContext(!showContext)}
-              className={cn(
-                'p-1.5 rounded-lg transition-colors',
-                showContext
-                  ? 'bg-amber-500/20 text-amber-400'
-                  : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
-              )}
-              title="Toggle context panel"
-            >
-              <Zap className="w-4 h-4" />
-            </button>
-          )}
-
-          {isLoading && (
-            <button
-              onClick={handleStop}
-              className="p-1.5 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
-              title="Stop generation"
-            >
-              <StopCircle className="w-4 h-4" />
-            </button>
-          )}
-
-          <button
-            onClick={handleClear}
-            className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
-            title="Clear messages"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
       {/* Context panel (desktop) */}
       {!isMobile && showContext && (
         <ContextPanel
@@ -339,22 +253,6 @@ function ChatSessionContent({ sessionId }: ChatSessionContentProps) {
           activeFile={activeFile}
           selectedCode={selectedCode}
         />
-      )}
-
-      {/* Tooling indicator */}
-      {tooling && (
-        <div className="flex-shrink-0 px-3 py-1.5 border-b border-neutral-800/50 flex items-center gap-2 text-[10px] text-neutral-500 bg-neutral-900/50">
-          <span className="flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-            AI Tooling
-          </span>
-          <span className="text-neutral-600">|</span>
-          <span className="text-blue-400">{tooling.config.commands.length}</span>
-          <span>commands</span>
-          <span className="text-neutral-600">|</span>
-          <span className="text-purple-400">{tooling.config.agents.length}</span>
-          <span>agents</span>
-        </div>
       )}
 
       {/* Messages */}

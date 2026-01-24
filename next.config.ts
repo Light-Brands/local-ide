@@ -14,15 +14,15 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Content-Security-Policy',
-            value: "frame-ancestors 'self' http://localhost:* https://localhost:*",
+            value: "frame-ancestors 'self' http://localhost:* https://localhost:* https://ide.lightbrands.ai https://*.lightbrands.ai",
           },
         ],
       },
     ];
   },
 
-  // Turbopack config (Next.js 16+ default bundler)
-  turbopack: {},
+  // Disable Turbopack for stable HMR (lucide-react has issues)
+  // turbopack: {},
 
   // Handle native module imports that might leak into the build (for webpack fallback)
   webpack: (config, { isServer }) => {
