@@ -266,3 +266,77 @@ className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white"
 5. **Use cn() for classes** - `className={cn('base', conditional && 'extra')}`
 6. **TypeScript types** - Define interfaces for all props
 7. **Accessibility** - ARIA labels, keyboard navigation, focus states
+
+---
+
+## Agent Orchestration System
+
+This project uses an advanced multi-agent orchestration system for AI-assisted development.
+
+### Quick Start
+
+**Read `.claude/START.md`** - The universal entry point for any development task.
+
+### System Overview
+
+```
+START.md (Entry Point)
+    ↓
+ORCHESTRATOR.md (Routing Logic)
+    ↓
+AGENT-REGISTRY.md (All Agents) + WORKFLOW-ROUTES.md (Patterns) + HANDOFF-PROTOCOLS.md (Transitions)
+    ↓
+Execution (Agents working with automatic handoffs)
+```
+
+### Agent Tiers
+
+| Tier | Agents | Purpose |
+|------|--------|---------|
+| **Planning** | Analyst, PM, Architect, UX, Scrum Master | Discovery, specs, design |
+| **Execution** | Developer, Testing, Security, Performance, Auditor | Implementation, validation |
+| **Specialist** | UI Refinement, Simplifier, Debugger | Domain expertise |
+| **Utility** | Git Writer, Library Advisor | Support functions |
+
+### Key Commands
+
+```
+/autotask [description]        # Full autonomous execution
+/plan-feature [name]           # Start feature planning
+/dev [component] [phase]       # Execute development phase
+@testing [file]                # Generate tests
+@ui-refinement [path] [focus]  # Visual polish
+/session save|resume|list      # Context management
+```
+
+### Complexity Scaling
+
+| Level | Duration | Pipeline |
+|-------|----------|----------|
+| QUICK | 10-30 min | Developer → Test → Commit |
+| BALANCED | 30 min - 2 hrs | PM → Architect → Dev → Test → Review → Polish |
+| DEEP | 2+ hours | Full planning with all agents |
+
+### Orchestration Files
+
+```
+.claude/
+├── START.md                           # Universal entry point
+└── project-context.md                 # This file
+
+docs/orchestration/
+├── ORCHESTRATOR.md                    # Master directive
+├── AGENT-REGISTRY.md                  # Complete agent catalog
+├── WORKFLOW-ROUTES.md                 # All workflow patterns
+└── HANDOFF-PROTOCOLS.md               # Agent transitions
+
+ai-workflows/
+├── skills/                            # Custom commands
+│   ├── plan-feature.md                # /plan-feature
+│   └── dev.md                         # /dev
+└── subagents/                         # Specialist agents
+    ├── testing-agent.md               # @testing
+    └── ui-refinement-agent.md         # @ui-refinement
+```
+
+**For any development task, start with `.claude/START.md`**
