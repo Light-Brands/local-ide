@@ -89,8 +89,33 @@ export interface ToolingConfig {
   error?: string;
 }
 
+// Workflow complexity levels
+export type WorkflowComplexity = 'quick' | 'sprint' | 'project' | 'platform';
+
+// Workflow definition - orchestrates multiple agents, commands, and skills
+export interface WorkflowDefinition {
+  id: string;
+  name: string;
+  displayName: string;
+  description: string;
+  complexity: WorkflowComplexity;
+  estimatedTime: string; // e.g., "10-30 min", "2-4 hrs"
+  color: AgentColor;
+  icon: string; // Lucide icon name
+  // Agents to load (in order of engagement)
+  agents: string[]; // Agent IDs
+  // Commands to make available
+  commands: string[]; // Command names
+  // Skills to load
+  skills: string[]; // Skill names
+  // Strategy prompt that orchestrates the workflow
+  strategyPrompt: string;
+  // Example use cases
+  examples: string[];
+}
+
 // Autocomplete item types
-export type AutocompleteItemType = 'command' | 'agent' | 'skill' | 'personality' | 'rule';
+export type AutocompleteItemType = 'command' | 'agent' | 'skill' | 'personality' | 'rule' | 'workflow';
 
 export interface AutocompleteItem {
   type: AutocompleteItemType;
@@ -102,6 +127,13 @@ export interface AutocompleteItem {
   category?: string;
   color?: string;
   icon?: string;
+  // Workflow-specific fields
+  complexity?: WorkflowComplexity;
+  estimatedTime?: string;
+  agents?: string[];
+  commands?: string[];
+  skills?: string[];
+  strategyPrompt?: string;
 }
 
 // Agent color mapping for UI (Tailwind classes)
