@@ -85,6 +85,23 @@ async function getTunnelInfo(tunnelName: string): Promise<{ id: string; name: st
   }
 }
 
+async function isCloudflaredRunning(tunnelId?: string): Promise<boolean> {
+  try {
+    // Check if cloudflared tunnel process is running
+    // First try to find by tunnel ID in the config path
+    if (tunnelId) {
+      const { stdout } = await execAsync(`pgrep -f "cloudflared.*${tunnelId}" 2>/dev/null || true`);
+      if (stdout.trim().length > 0) return true;
+    }
+
+    // Fallback: check for any cloudflared tunnel run process
+    const { stdout } = await execAsync(`pgrep -f "cloudflared tunnel.*run" 2>/dev/null || true`);
+    return stdout.trim().length > 0;
+  } catch {
+    return false;
+  }
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const action = searchParams.get('action');
@@ -106,14 +123,20 @@ export async function GET(request: NextRequest) {
     const tunnels = authenticated ? await listTunnels() : [];
     const config = await loadConfig();
 
-    // Check if our configured tunnel is running
-    const isRunning = config.tunnelName ? activeTunnels.has(config.tunnelName) : false;
-
     // Get tunnel info if we have one configured
     let tunnelInfo = null;
     if (config.tunnelName && authenticated) {
       tunnelInfo = await getTunnelInfo(config.tunnelName);
     }
+
+    // Check if tunnel is actually running - check multiple sources:
+    // 1. In-memory tracking (if started via API)
+    // 2. Active connections from tunnel info
+    // 3. Running cloudflared process (check by tunnel ID)
+    const inMemoryRunning = config.tunnelName ? activeTunnels.has(config.tunnelName) : false;
+    const hasConnections = tunnelInfo && tunnelInfo.connections > 0;
+    const processRunning = await isCloudflaredRunning(config.tunnelId);
+    const isRunning = inMemoryRunning || hasConnections || processRunning;
 
     return NextResponse.json({
       installed,
@@ -121,6 +144,7 @@ export async function GET(request: NextRequest) {
       tunnels,
       config: { ...config, isRunning },
       tunnelInfo,
+      processRunning,
       loginCommand: 'cloudflared login',
     });
   } catch (error) {

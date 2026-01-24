@@ -52,6 +52,8 @@ interface ChatAutocompleteProps {
   setIsOpen: (open: boolean) => void;
   anchorRef: React.RefObject<HTMLElement | null>;
   isFocused?: boolean;
+  /** When true, show the browse panel regardless of focus/input state */
+  showBrowsePanel?: boolean;
 }
 
 // Parse the current autocomplete context from input
@@ -251,6 +253,7 @@ export function ChatAutocomplete({
   setIsOpen,
   anchorRef,
   isFocused = false,
+  showBrowsePanel = false,
 }: ChatAutocompleteProps) {
   const { config } = useTooling();
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -264,14 +267,13 @@ export function ChatAutocomplete({
   );
 
   // Determine effective mode
-  // Only show browse mode when input is empty/whitespace only
-  // Close immediately when user starts typing regular text
+  // Only show browse mode when showBrowsePanel is true OR when triggered by / @ ~
   const effectiveMode = useMemo(() => {
     if (mode !== 'none') return mode;
-    // Only show browse panel if focused AND input is empty or whitespace
-    if (isFocused && input.trim() === '') return 'browse';
+    // Show browse panel when explicitly requested via Rocket Fuel button
+    if (showBrowsePanel) return 'browse';
     return 'none';
-  }, [mode, isFocused, input]);
+  }, [mode, showBrowsePanel]);
 
   // Auto-switch tab based on trigger
   useEffect(() => {
@@ -422,10 +424,17 @@ export function ChatAutocomplete({
         case 'Enter':
           if (items[selectedIndex]) {
             e.preventDefault();
-            const item = items[selectedIndex];
-            const itemMode = getModeForType(item.type);
             const insertIndex = mode !== 'none' ? startIndex : cursorPosition;
-            onSelect(toAutocompleteItem(item), itemMode, insertIndex);
+            if (activeTab === 'workflow') {
+              // Workflow items are WorkflowDefinition type
+              const workflow = items[selectedIndex] as WorkflowDefinition;
+              onSelect(workflowToAutocompleteItem(workflow), 'workflow', insertIndex);
+            } else {
+              // Other items are DictionaryItem type
+              const item = items[selectedIndex] as DictionaryItem;
+              const itemMode = getModeForType(item.type);
+              onSelect(toAutocompleteItem(item), itemMode, insertIndex);
+            }
             setIsOpen(false);
           }
           break;
@@ -435,7 +444,7 @@ export function ChatAutocomplete({
           break;
       }
     },
-    [isOpen, items, selectedIndex, mode, startIndex, cursorPosition, onSelect, onClose, setIsOpen]
+    [isOpen, items, selectedIndex, mode, startIndex, cursorPosition, onSelect, onClose, setIsOpen, activeTab]
   );
 
   // Attach keyboard listener
@@ -613,11 +622,11 @@ export function ChatAutocomplete({
 
   return (
     <div
-      className="absolute bottom-full left-0 right-0 mb-2 bg-neutral-900 border border-neutral-700 rounded-lg shadow-xl overflow-hidden z-50"
-      style={{ maxHeight: '400px' }}
+      className="absolute bottom-full left-0 right-0 mb-2 bg-neutral-900 border border-neutral-700 rounded-lg shadow-xl z-50 flex flex-col"
+      style={{ maxHeight: 'min(70vh, 500px)' }}
     >
-      {/* Tabs */}
-      <div className="flex border-b border-neutral-800">
+      {/* Tabs - sticky at top */}
+      <div className="flex border-b border-neutral-800 flex-shrink-0">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -641,8 +650,8 @@ export function ChatAutocomplete({
         ))}
       </div>
 
-      {/* Navigation hints */}
-      <div className="px-3 py-1.5 border-b border-neutral-800/50 flex items-center justify-end gap-3 text-[10px] text-neutral-500 bg-neutral-900/50">
+      {/* Navigation hints - sticky */}
+      <div className="px-3 py-1.5 border-b border-neutral-800/50 flex items-center justify-end gap-3 text-[10px] text-neutral-500 bg-neutral-900/50 flex-shrink-0">
         <span className="flex items-center gap-0.5">
           <ArrowUp className="w-3 h-3" />
           <ArrowDown className="w-3 h-3" />
@@ -654,8 +663,8 @@ export function ChatAutocomplete({
         </span>
       </div>
 
-      {/* Item list with pillar or complexity grouping */}
-      <div ref={listRef} className="overflow-y-auto max-h-[280px]">
+      {/* Item list with pillar or complexity grouping - scrollable */}
+      <div ref={listRef} className="overflow-y-auto flex-1 min-h-0">
         {items.length === 0 ? (
           <div className="px-4 py-8 text-center text-neutral-500 text-sm">
             No {activeTab === 'workflow' ? 'workflows' : `${activeTab}s`} found

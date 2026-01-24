@@ -15,19 +15,50 @@ import {
   Database,
   Triangle,
   ExternalLink,
+  Check,
+  X,
+  Cloud,
+  Bot,
 } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 import { OperationStatusBar } from '../operations';
+import { ServiceHealthIndicator } from './ServiceHealthIndicator';
+import { useServiceHealth } from '../../hooks/useServiceHealth';
+
+// Status indicator component
+function StatusBadge({ connected }: { connected: boolean }) {
+  return (
+    <div
+      className={cn(
+        'absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full flex items-center justify-center',
+        'border border-white dark:border-neutral-900',
+        connected ? 'bg-emerald-500' : 'bg-red-500'
+      )}
+    >
+      {connected ? (
+        <Check className="w-1.5 h-1.5 text-white" strokeWidth={4} />
+      ) : (
+        <X className="w-1.5 h-1.5 text-white" strokeWidth={4} />
+      )}
+    </div>
+  );
+}
 
 export function DesktopHeader() {
   // Use service context for live integration status
   const services = useServiceContext();
   const setShowSettings = useIDEStore((state) => state.setShowSettings);
+  const { getService } = useServiceHealth();
 
   // Get values from service context (real-time from API)
   const github = services.github;
   const vercel = services.vercel;
   const supabase = services.supabase;
+  const claude = services.claude;
+
+  // Get tunnel status from service health
+  const tunnelService = getService('tunnel');
+  const tunnelConnected = tunnelService?.status === 'healthy';
 
   const isConnected = github.connected;
 
@@ -90,29 +121,27 @@ export function DesktopHeader() {
         )}
 
         {/* Service Links - Always visible, styled based on connection */}
-        <div className="flex items-center gap-1 ml-2">
+        <div className="flex items-center gap-0.5 ml-2">
           {/* GitHub */}
           <a
             href={githubUrl || 'https://github.com'}
             target="_blank"
             rel="noopener noreferrer"
             className={cn(
-              "flex items-center gap-1.5 px-2 py-1 rounded-lg transition-colors group",
-              github.connected
-                ? "hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                : "opacity-30"
+              "flex items-center px-1.5 py-1.5 rounded-lg transition-colors group",
+              "hover:bg-neutral-100 dark:hover:bg-neutral-800"
             )}
-            title={githubUrl ? `Open ${github.owner}/${github.repo} in GitHub` : "GitHub not connected"}
+            title={githubUrl ? `Open ${github.owner}/${github.repo} in GitHub` : "GitHub - Click to open"}
           >
-            <Github className={cn(
-              "w-4 h-4 transition-colors",
-              github.connected
-                ? "text-neutral-600 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white"
-                : "text-neutral-400"
-            )} />
-            {githubUrl && (
-              <ExternalLink className="w-3 h-3 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-            )}
+            <div className="relative">
+              <Github className={cn(
+                "w-5 h-5 transition-colors",
+                github.connected
+                  ? "text-neutral-600 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white"
+                  : "text-neutral-400"
+              )} />
+              <StatusBadge connected={github.connected} />
+            </div>
           </a>
 
           {/* Vercel */}
@@ -121,22 +150,20 @@ export function DesktopHeader() {
             target="_blank"
             rel="noopener noreferrer"
             className={cn(
-              "flex items-center gap-1.5 px-2 py-1 rounded-lg transition-colors group",
-              vercel.connected
-                ? "hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                : "opacity-30"
+              "flex items-center px-1.5 py-1.5 rounded-lg transition-colors group",
+              "hover:bg-neutral-100 dark:hover:bg-neutral-800"
             )}
-            title={vercelUrl ? `Open ${vercel.projectName || 'project'} in Vercel` : "Vercel not connected"}
+            title={vercelUrl ? `Open ${vercel.projectName || 'project'} in Vercel` : "Vercel - Click to open"}
           >
-            <Triangle className={cn(
-              "w-4 h-4 transition-colors",
-              vercel.connected
-                ? "text-neutral-600 dark:text-neutral-400 group-hover:text-black dark:group-hover:text-white"
-                : "text-neutral-400"
-            )} />
-            {vercelUrl && (
-              <ExternalLink className="w-3 h-3 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-            )}
+            <div className="relative">
+              <Triangle className={cn(
+                "w-5 h-5 transition-colors",
+                vercel.connected
+                  ? "text-neutral-600 dark:text-neutral-400 group-hover:text-black dark:group-hover:text-white"
+                  : "text-neutral-400"
+              )} />
+              <StatusBadge connected={vercel.connected} />
+            </div>
           </a>
 
           {/* Supabase */}
@@ -145,22 +172,64 @@ export function DesktopHeader() {
             target="_blank"
             rel="noopener noreferrer"
             className={cn(
-              "flex items-center gap-1.5 px-2 py-1 rounded-lg transition-colors group",
-              supabase.connected
-                ? "hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                : "opacity-30"
+              "flex items-center px-1.5 py-1.5 rounded-lg transition-colors group",
+              "hover:bg-neutral-100 dark:hover:bg-neutral-800"
             )}
-            title={supabaseUrl ? `Open ${supabase.projectName || 'project'} in Supabase` : "Supabase not connected"}
+            title={supabaseUrl ? `Open ${supabase.projectName || 'project'} in Supabase` : "Supabase - Click to open"}
           >
-            <Database className={cn(
-              "w-4 h-4 transition-colors",
-              supabase.connected
-                ? "text-neutral-600 dark:text-neutral-400 group-hover:text-emerald-500"
-                : "text-neutral-400"
-            )} />
-            {supabaseUrl && (
-              <ExternalLink className="w-3 h-3 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="relative">
+              <Database className={cn(
+                "w-5 h-5 transition-colors",
+                supabase.connected
+                  ? "text-neutral-600 dark:text-neutral-400 group-hover:text-emerald-500"
+                  : "text-neutral-400"
+              )} />
+              <StatusBadge connected={supabase.connected} />
+            </div>
+          </a>
+
+          {/* Claude */}
+          <a
+            href="https://console.anthropic.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(
+              "flex items-center px-1.5 py-1.5 rounded-lg transition-colors group",
+              "hover:bg-neutral-100 dark:hover:bg-neutral-800"
             )}
+            title={claude.connected ? `Claude: ${claude.model} - Click to open console` : "Claude - Click to open console"}
+          >
+            <div className="relative">
+              <Bot className={cn(
+                "w-5 h-5 transition-colors",
+                claude.connected
+                  ? "text-neutral-600 dark:text-neutral-400 group-hover:text-amber-500"
+                  : "text-neutral-400"
+              )} />
+              <StatusBadge connected={claude.connected} />
+            </div>
+          </a>
+
+          {/* Cloudflare Tunnel */}
+          <a
+            href={tunnelService?.url || 'https://dash.cloudflare.com'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(
+              "flex items-center px-1.5 py-1.5 rounded-lg transition-colors group",
+              "hover:bg-neutral-100 dark:hover:bg-neutral-800"
+            )}
+            title={tunnelConnected ? `Tunnel: ${tunnelService?.url || 'Connected'} - Click to open` : "Cloudflare - Click to open dashboard"}
+          >
+            <div className="relative">
+              <Cloud className={cn(
+                "w-5 h-5 transition-colors",
+                tunnelConnected
+                  ? "text-neutral-600 dark:text-neutral-400 group-hover:text-orange-500"
+                  : "text-neutral-400"
+              )} />
+              <StatusBadge connected={tunnelConnected} />
+            </div>
           </a>
         </div>
       </div>
@@ -178,6 +247,12 @@ export function DesktopHeader() {
       <div className="flex items-center gap-2">
         {/* Operations Status */}
         <OperationStatusBar />
+
+        {/* Divider */}
+        <div className="w-px h-5 bg-neutral-200 dark:bg-neutral-800" />
+
+        {/* Service Health Indicator */}
+        <ServiceHealthIndicator />
 
         {/* Divider */}
         <div className="w-px h-5 bg-neutral-200 dark:bg-neutral-800" />

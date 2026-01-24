@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
-import { Send, Loader2 } from 'lucide-react';
+import { Send, Loader2, Rocket } from 'lucide-react';
 import { ChatAutocomplete, useAutocomplete, type AutocompleteMode } from './ChatAutocomplete';
 import { useToolingOptional } from '../../contexts/ToolingContext';
 import type { AutocompleteItem } from '@/lib/ide/tooling';
@@ -31,6 +31,7 @@ export function ChatInput({
   const tooling = useToolingOptional();
   const hasTooling = !!tooling;
   const [isFocused, setIsFocused] = useState(false);
+  const [showBrowsePanel, setShowBrowsePanel] = useState(false);
 
   const { isOpen, setIsOpen, cursorPosition, setCursorPosition, handleSelect } = useAutocomplete();
 
@@ -110,20 +111,50 @@ export function ChatInput({
 
   return (
     <div ref={containerRef} className={cn('relative', className)}>
+      {/* Rocket Fuel button - positioned above input on the right */}
+      {hasTooling && (
+        <div className="flex justify-end mb-1.5">
+          <button
+            type="button"
+            onClick={() => {
+              const newState = !showBrowsePanel && !isOpen;
+              setShowBrowsePanel(newState);
+              if (!newState) {
+                setIsOpen(false);
+              }
+            }}
+            className={cn(
+              'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all',
+              (showBrowsePanel || isOpen)
+                ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/25'
+                : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700 hover:text-neutral-200'
+            )}
+          >
+            <Rocket className="w-3.5 h-3.5" />
+            <span>Rocket Fuel</span>
+          </button>
+        </div>
+      )}
+
       {/* Autocomplete popup */}
       {hasTooling && (
         <ChatAutocomplete
           input={value}
           cursorPosition={cursorPosition}
-          onSelect={handleAutocompleteSelect}
+          onSelect={(item, mode, startIndex) => {
+            handleAutocompleteSelect(item, mode, startIndex);
+            setShowBrowsePanel(false); // Close panel after selection
+          }}
           onClose={() => {
             setIsOpen(false);
             setIsFocused(false);
+            setShowBrowsePanel(false);
           }}
           isOpen={isOpen}
           setIsOpen={setIsOpen}
           anchorRef={containerRef}
           isFocused={isFocused}
+          showBrowsePanel={showBrowsePanel}
         />
       )}
 

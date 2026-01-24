@@ -8,3 +8,5 @@ export { usePortScanner } from './usePortScanner';
 export { useTerminalAvailability } from './useTerminalAvailability';
 export { useClaudeChat } from './useClaudeChat';
 export type { UseClaudeChatOptions, UseClaudeChatReturn } from './useClaudeChat';
+export { useServiceHealth } from './useServiceHealth';
+export type { ServiceId, ServiceStatus, ServiceState } from './useServiceHealth';

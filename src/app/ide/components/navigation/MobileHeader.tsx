@@ -11,6 +11,7 @@ import {
   Wifi,
   WifiOff,
 } from 'lucide-react';
+import { ServiceHealthIndicator } from './ServiceHealthIndicator';
 
 export function MobileHeader() {
   const [showMenu, setShowMenu] = useState(false);
@@ -57,6 +58,9 @@ export function MobileHeader() {
 
       {/* Right: Actions */}
       <div className="flex items-center gap-1">
+        {/* Service Health */}
+        <ServiceHealthIndicator compact />
+
         {/* Connection status */}
         <button
           className="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"

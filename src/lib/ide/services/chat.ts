@@ -81,12 +81,38 @@ export class ChatService {
   // CONNECTION MANAGEMENT
   // ===========================================================================
 
-  connect(): void {
+  async connect(): Promise<void> {
     if (this.ws?.readyState === WebSocket.OPEN) {
       return;
     }
 
     this.isIntentionallyClosed = false;
+
+    // Check if chat server is available before attempting WebSocket connection
+    try {
+      const healthCheck = await fetch('http://localhost:4002/health', {
+        method: 'GET',
+        signal: AbortSignal.timeout(3000)
+      });
+      if (!healthCheck.ok) {
+        console.warn('[ChatService] Chat server health check failed');
+        this.emit('error', { type: 'error', error: 'Chat server not ready' });
+        if (this.shouldReconnect()) {
+          this.scheduleReconnect();
+        }
+        return;
+      }
+      // Small delay after health check to ensure WebSocket endpoint is ready
+      await new Promise(resolve => setTimeout(resolve, 100));
+    } catch {
+      console.warn('[ChatService] Chat server not available on port 4002');
+      this.emit('error', { type: 'error', error: 'Chat server unavailable' });
+      if (this.shouldReconnect()) {
+        this.scheduleReconnect();
+      }
+      return;
+    }
+
     console.log('[ChatService] Connecting to:', this.config.url);
 
     try {
@@ -128,8 +154,14 @@ export class ChatService {
       };
 
       this.ws.onerror = () => {
-        console.error('[ChatService] WebSocket error');
-        this.emit('error', { type: 'error', error: 'WebSocket error' });
+        // Only log as error if we're not in the initial connection phase
+        // Initial connection failures are expected if chat server isn't running
+        if (this.reconnectAttempt > 0) {
+          console.error('[ChatService] WebSocket error during reconnect');
+        } else {
+          console.warn('[ChatService] WebSocket connection failed - is chat server running on port 4002?');
+        }
+        this.emit('error', { type: 'error', error: 'Chat server unavailable' });
       };
     } catch (error) {
       console.error('[ChatService] Connection failed:', error);
@@ -170,7 +202,7 @@ export class ChatService {
     this.emit('reconnecting', { type: 'reconnecting', attempt: this.reconnectAttempt });
 
     this.reconnectTimer = setTimeout(() => {
-      this.connect();
+      void this.connect();
     }, delay);
   }
 
