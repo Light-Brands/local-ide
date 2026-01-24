@@ -17,6 +17,7 @@ import {
   Settings,
   AlertCircle,
   RefreshCw,
+  MessageSquarePlus,
 } from 'lucide-react';
 
 // ============================================================================
@@ -366,12 +367,10 @@ export function ChatPane() {
   // Chat sessions
   const { sessions, activeSessionId, addSession } = useChatSessions();
 
-  // Auto-create first session if none exist (only after hydration!)
-  useEffect(() => {
-    if (hydrated && sessions.length === 0 && claude.connected) {
-      addSession('Chat 1');
-    }
-  }, [hydrated, sessions.length, claude.connected, addSession]);
+  // Handler to start a new chat
+  const handleStartChat = useCallback(() => {
+    addSession();
+  }, [addSession]);
 
   // Loading state while hydrating from localStorage
   if (!hydrated) {
@@ -408,15 +407,30 @@ export function ChatPane() {
     );
   }
 
-  // No active session yet
-  if (!activeSessionId) {
+  // No active session - show start chat screen
+  if (!activeSessionId || sessions.length === 0) {
     return (
       <div className="h-full flex flex-col bg-neutral-900">
-        <ChatSessionTabs />
-        <div className="flex-1 flex items-center justify-center">
+        {sessions.length > 0 && <ChatSessionTabs />}
+        <div className="flex-1 flex items-center justify-center p-6">
           <div className="text-center">
-            <Sparkles className="w-12 h-12 text-neutral-600 mb-4 mx-auto" />
-            <p className="text-neutral-400">Loading chat session...</p>
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-500/20 to-purple-500/20 flex items-center justify-center mb-6 mx-auto">
+              <Sparkles className="w-10 h-10 text-primary-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-neutral-200 mb-2">AI Assistant</h3>
+            <p className="text-sm text-neutral-500 mb-6 max-w-sm">
+              Ask questions about your code, get suggestions, and debug issues
+            </p>
+            <button
+              onClick={handleStartChat}
+              className="px-5 py-2.5 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600 transition-colors flex items-center gap-2 mx-auto"
+            >
+              <MessageSquarePlus className="w-4 h-4" />
+              Start Chat
+            </button>
+            <p className="mt-4 text-xs text-neutral-600">
+              Type <kbd className="px-1.5 py-0.5 rounded bg-neutral-800 text-blue-400 font-mono">/</kbd> for commands, <kbd className="px-1.5 py-0.5 rounded bg-neutral-800 text-purple-400 font-mono">@</kbd> for agents
+            </p>
           </div>
         </div>
       </div>

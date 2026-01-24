@@ -35,10 +35,8 @@ export function ChatSessionTabs({ className }: ChatSessionTabsProps) {
 
   const handleCloseSession = useCallback((e: React.MouseEvent, sessionId: string) => {
     e.stopPropagation();
-    if (sessions.length > 1) {
-      removeSession(sessionId);
-    }
-  }, [sessions.length, removeSession]);
+    removeSession(sessionId);
+  }, [removeSession]);
 
   const handleStartRename = useCallback((e: React.MouseEvent, session: ChatSession) => {
     e.stopPropagation();
@@ -135,15 +133,13 @@ export function ChatSessionTabs({ className }: ChatSessionTabsProps) {
                 >
                   <Pencil className="w-3 h-3" />
                 </button>
-                {sessions.length > 1 && (
-                  <button
-                    onClick={(e) => handleCloseSession(e, session.id)}
-                    className="p-0.5 rounded hover:bg-red-500/20 text-neutral-500 hover:text-red-400 transition-colors"
-                    title="Close"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                )}
+                <button
+                  onClick={(e) => handleCloseSession(e, session.id)}
+                  className="p-0.5 rounded hover:bg-red-500/20 text-neutral-500 hover:text-red-400 transition-colors"
+                  title="Close"
+                >
+                  <X className="w-3 h-3" />
+                </button>
               </div>
             )}
           </div>
