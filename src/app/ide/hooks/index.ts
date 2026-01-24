@@ -10,3 +10,4 @@ export { useClaudeChat } from './useClaudeChat';
 export type { UseClaudeChatOptions, UseClaudeChatReturn } from './useClaudeChat';
 export { useServiceHealth } from './useServiceHealth';
 export type { ServiceId, ServiceStatus, ServiceState } from './useServiceHealth';
+export { useSessionCleanup } from './useSessionCleanup';

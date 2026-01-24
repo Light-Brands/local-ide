@@ -5,6 +5,13 @@ import { ServiceProvider } from './contexts/ServiceContext';
 import { PWAProvider } from './components/PWAProvider';
 import { SyncMonitor } from './components/SyncMonitor';
 import { IDEAuthProvider } from '@/lib/ide/auth';
+import { useSessionCleanup } from './hooks';
+
+// Component that runs the session cleanup hook
+function SessionCleanupMonitor() {
+  useSessionCleanup();
+  return null;
+}
 
 interface IDEProvidersProps {
   children: React.ReactNode;
@@ -19,6 +26,8 @@ export function IDEProviders({ children }: IDEProvidersProps) {
             {children}
             {/* File sync monitor - notifies when files change */}
             <SyncMonitor />
+            {/* Session cleanup - clears orphaned tmux sessions when no tabs are open */}
+            <SessionCleanupMonitor />
           </PWAProvider>
         </ServiceProvider>
       </ToolingProvider>
