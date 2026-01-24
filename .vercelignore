@@ -1,0 +1,8 @@
+# IDE - Local development only
+server/
+src/app/ide/
+src/app/api/terminal/
+src/app/api/files/
+src/app/api/ports/
+src/app/api/ide/
+src/lib/ide/

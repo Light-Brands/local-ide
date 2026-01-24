@@ -30,5 +30,14 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "server",
+    "src/app/ide",
+    "src/app/api/terminal",
+    "src/app/api/files",
+    "src/app/api/ports",
+    "src/app/api/ide",
+    "src/lib/ide"
+  ]
 }
