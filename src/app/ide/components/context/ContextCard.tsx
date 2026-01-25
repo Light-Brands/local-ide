@@ -20,6 +20,7 @@ import {
   RotateCcw,
   Pencil,
   Check,
+  Pin,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ContextItem } from './ContextProvider';
@@ -49,6 +50,7 @@ interface ContextCardProps {
   onRemove: (id: string) => void;
   onUpdateContent: (id: string, content: string) => void;
   onResetContent: (id: string) => void;
+  onTogglePersist: (id: string) => void;
   compact?: boolean;
 }
 
@@ -57,6 +59,7 @@ export const ContextCard = memo(function ContextCard({
   onRemove,
   onUpdateContent,
   onResetContent,
+  onTogglePersist,
   compact = false,
 }: ContextCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -237,6 +240,27 @@ export const ContextCard = memo(function ContextCard({
             {getTypeBadge()}
           </span>
         )}
+
+        {/* Persist toggle button */}
+        <button
+          className={cn(
+            'flex-shrink-0 flex items-center justify-center rounded transition-colors',
+            compact ? 'w-4 h-4' : 'w-5 h-5',
+            item.persisted
+              ? 'text-amber-400 hover:text-amber-300'
+              : 'text-neutral-600 hover:text-neutral-400 hover:bg-neutral-700'
+          )}
+          onClick={(e) => {
+            e.stopPropagation();
+            onTogglePersist(item.id);
+          }}
+          title={item.persisted ? 'Unpin (remove from persistent context)' : 'Pin (keep in context across sessions)'}
+        >
+          <Pin className={cn(
+            compact ? 'w-2.5 h-2.5' : 'w-3 h-3',
+            item.persisted && 'fill-current'
+          )} />
+        </button>
 
         {/* Remove button */}
         <button

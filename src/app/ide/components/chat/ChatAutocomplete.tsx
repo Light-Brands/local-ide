@@ -441,7 +441,10 @@ export function ChatAutocomplete({
               const itemMode = getModeForType(item.type);
               onSelect(toAutocompleteItem(item), itemMode, insertIndex);
             }
-            setIsOpen(false);
+            // Don't close in browse mode - allow multiple selections
+            if (!showBrowsePanel) {
+              setIsOpen(false);
+            }
           }
           break;
         case 'Escape':
@@ -450,7 +453,7 @@ export function ChatAutocomplete({
           break;
       }
     },
-    [isOpen, items, selectedIndex, mode, startIndex, cursorPosition, onSelect, onClose, setIsOpen, activeTab]
+    [isOpen, items, selectedIndex, mode, startIndex, cursorPosition, onSelect, onClose, setIsOpen, activeTab, showBrowsePanel]
   );
 
   // Attach keyboard listener
@@ -476,7 +479,10 @@ export function ChatAutocomplete({
           const itemMode = getModeForType(item.type);
           const insertIndex = mode !== 'none' ? startIndex : cursorPosition;
           onSelect(toAutocompleteItem(item), itemMode, insertIndex);
-          setIsOpen(false);
+          // Don't close in browse mode - allow multiple selections
+          if (!showBrowsePanel) {
+            setIsOpen(false);
+          }
         }}
         onMouseEnter={() => setSelectedIndex(flatIndex)}
         className={cn(
@@ -552,7 +558,10 @@ export function ChatAutocomplete({
         data-selected={isSelected}
         onClick={() => {
           onSelect(workflowToAutocompleteItem(workflow), 'workflow', mode !== 'none' ? startIndex : cursorPosition);
-          setIsOpen(false);
+          // Don't close in browse mode - allow multiple selections
+          if (!showBrowsePanel) {
+            setIsOpen(false);
+          }
         }}
         onMouseEnter={() => setSelectedIndex(flatIndex)}
         className={cn(

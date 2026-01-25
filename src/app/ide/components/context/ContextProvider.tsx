@@ -22,6 +22,7 @@ export interface ContextItem {
   color?: string;
   icon?: string;
   metadata?: Record<string, unknown>;
+  persisted?: boolean;
 }
 
 export type ContextFilterType = 'file' | 'agent' | 'command' | 'skill' | 'workflow' | 'element' | null;
@@ -34,6 +35,7 @@ export interface ContextState {
   removeContext: (id: string) => void;
   updateContent: (id: string, content: string) => void;
   resetContent: (id: string) => void;
+  togglePersist: (id: string) => void;
   clearAll: () => void;
   toggleDrawer: () => void;
   setDrawerOpen: (open: boolean) => void;
@@ -46,16 +48,69 @@ export interface ContextState {
 
 const ContextStateContext = createContext<ContextState | null>(null);
 
+const PERSISTED_CONTEXT_KEY = 'ide-persisted-context';
+
 let contextIdCounter = 0;
 
 function generateContextId(): string {
   return `ctx-${Date.now()}-${++contextIdCounter}`;
 }
 
+// Load persisted items from localStorage
+function loadPersistedItems(): ContextItem[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const stored = localStorage.getItem(PERSISTED_CONTEXT_KEY);
+    if (stored) {
+      const items = JSON.parse(stored) as ContextItem[];
+      // Regenerate IDs to avoid conflicts
+      return items.map(item => ({
+        ...item,
+        id: generateContextId(),
+        persisted: true,
+      }));
+    }
+  } catch (error) {
+    console.warn('Failed to load persisted context:', error);
+  }
+  return [];
+}
+
+// Save persisted items to localStorage
+function savePersistedItems(items: ContextItem[]) {
+  if (typeof window === 'undefined') return;
+  try {
+    const toSave = items.filter(item => item.persisted);
+    localStorage.setItem(PERSISTED_CONTEXT_KEY, JSON.stringify(toSave));
+  } catch (error) {
+    console.warn('Failed to save persisted context:', error);
+  }
+}
+
 export function ContextProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ContextItem[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [activeFilter, setActiveFilterState] = useState<ContextFilterType>(null);
+  const [hasLoadedPersisted, setHasLoadedPersisted] = useState(false);
+
+  // Load persisted items on mount
+  useEffect(() => {
+    if (!hasLoadedPersisted) {
+      const persistedItems = loadPersistedItems();
+      if (persistedItems.length > 0) {
+        console.log(`⛽ [ContextProvider] Loaded ${persistedItems.length} persisted items`);
+        setItems(persistedItems);
+      }
+      setHasLoadedPersisted(true);
+    }
+  }, [hasLoadedPersisted]);
+
+  // Save persisted items whenever items change
+  useEffect(() => {
+    if (hasLoadedPersisted) {
+      savePersistedItems(items);
+    }
+  }, [items, hasLoadedPersisted]);
 
   // Listen for element-selected events from PreviewPane
   useEffect(() => {
@@ -158,6 +213,16 @@ export function ContextProvider({ children }: { children: ReactNode }) {
       prev.map((item) =>
         item.id === id
           ? { ...item, content: item.originalContent, isEdited: false }
+          : item
+      )
+    );
+  }, []);
+
+  const togglePersist = useCallback((id: string) => {
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? { ...item, persisted: !item.persisted }
           : item
       )
     );
@@ -291,6 +356,7 @@ export function ContextProvider({ children }: { children: ReactNode }) {
       removeContext,
       updateContent,
       resetContent,
+      togglePersist,
       clearAll,
       toggleDrawer,
       setDrawerOpen,
@@ -308,6 +374,7 @@ export function ContextProvider({ children }: { children: ReactNode }) {
       removeContext,
       updateContent,
       resetContent,
+      togglePersist,
       clearAll,
       toggleDrawer,
       setDrawerOpen,

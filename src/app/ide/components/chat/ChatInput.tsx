@@ -167,41 +167,35 @@ export function ChatInput({
   ];
 
   const getButtonStyles = (color: string, count: number, isActive: boolean) => {
-    const colors: Record<string, { active: string; inactive: string; hover: string }> = {
-      cyan: {
-        active: 'bg-gradient-to-r from-cyan-500 to-teal-400 text-white shadow-lg shadow-cyan-500/30',
-        inactive: 'bg-neutral-800/80 text-cyan-400/70 border border-cyan-500/30',
-        hover: 'hover:bg-neutral-700 hover:text-cyan-400',
-      },
-      purple: {
-        active: 'bg-gradient-to-r from-violet-500 to-purple-400 text-white shadow-lg shadow-violet-500/30',
-        inactive: 'bg-neutral-800/80 text-violet-400/70 border border-violet-500/30',
-        hover: 'hover:bg-neutral-700 hover:text-violet-400',
-      },
-      slate: {
-        active: 'bg-gradient-to-r from-slate-600 to-slate-500 text-white shadow-lg shadow-slate-500/30',
-        inactive: 'bg-neutral-800/80 text-slate-400/70 border border-slate-500/30',
-        hover: 'hover:bg-neutral-700 hover:text-slate-300',
-      },
-      amber: {
-        active: 'bg-gradient-to-r from-amber-500 to-yellow-400 text-white shadow-lg shadow-amber-500/30',
-        inactive: 'bg-neutral-800/80 text-amber-400/70 border border-amber-500/30',
-        hover: 'hover:bg-neutral-700 hover:text-amber-400',
-      },
-      orange: {
-        active: 'bg-gradient-to-r from-orange-500 to-amber-400 text-white shadow-lg shadow-orange-500/30',
-        inactive: 'bg-neutral-800/80 text-orange-400/70 border border-orange-500/30',
-        hover: 'hover:bg-neutral-700 hover:text-orange-400',
-      },
-      red: {
-        active: 'bg-gradient-to-r from-red-500 to-orange-400 text-white shadow-lg shadow-red-500/30',
-        inactive: 'bg-neutral-800/80 text-red-400/70 border border-red-500/30',
-        hover: 'hover:bg-neutral-700 hover:text-red-400',
-      },
+    // Subdued, consistent inactive state for all buttons
+    const inactiveBase = 'bg-transparent text-neutral-500 border border-neutral-700 hover:border-neutral-600 hover:text-neutral-400';
+
+    // Active/has-items state with subtle color accent
+    const activeColors: Record<string, string> = {
+      cyan: 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/40',
+      purple: 'bg-violet-500/10 text-violet-400 border border-violet-500/40',
+      slate: 'bg-neutral-600/20 text-neutral-300 border border-neutral-500/40',
+      amber: 'bg-amber-500/10 text-amber-400 border border-amber-500/40',
+      orange: 'bg-orange-500/10 text-orange-400 border border-orange-500/40',
+      red: 'bg-red-500/10 text-red-400 border border-red-500/40',
     };
-    const c = colors[color] || colors.orange;
-    if (count > 0 || isActive) return c.active;
-    return `${c.inactive} ${c.hover}`;
+
+    if (count > 0 || isActive) {
+      return activeColors[color] || activeColors.orange;
+    }
+    return inactiveBase;
+  };
+
+  const getBadgeStyles = (color: string) => {
+    const badgeColors: Record<string, string> = {
+      cyan: 'bg-cyan-500/30',
+      purple: 'bg-violet-500/30',
+      slate: 'bg-neutral-500/30',
+      amber: 'bg-amber-500/30',
+      orange: 'bg-orange-500/30',
+      red: 'bg-red-500/30',
+    };
+    return badgeColors[color] || badgeColors.orange;
   };
 
   return (
@@ -219,13 +213,13 @@ export function ChatInput({
                 getButtonStyles(color, count, isDrawerOpen && activeFilter === key)
               )}
             >
-              <Icon className={cn(
-                'w-3 h-3 transition-transform duration-200',
-                count > 0 && 'animate-pulse'
-              )} />
+              <Icon className="w-3 h-3" />
               <span>{label}</span>
               {count > 0 && (
-                <span className="flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-white/20 text-[9px] font-bold">
+                <span className={cn(
+                  'flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full text-[9px] font-bold',
+                  getBadgeStyles(color)
+                )}>
                   {count}
                 </span>
               )}
@@ -235,15 +229,13 @@ export function ChatInput({
           {/* Divider */}
           <div className="w-px h-5 bg-neutral-600 mx-0.5" />
 
-          {/* Rocket Fuel button - add more context */}
+          {/* Rocket Fuel button - add more context (always orange to stand out) */}
           <button
             type="button"
             onClick={handleRocketFuelClick}
             className={cn(
               'flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium transition-all duration-200 whitespace-nowrap',
-              (showBrowsePanel || isOpen || totalCount > 0)
-                ? 'bg-gradient-to-r from-red-500 to-rose-400 text-white shadow-lg shadow-red-500/30'
-                : 'bg-neutral-800/80 text-red-400/70 hover:bg-neutral-700 hover:text-red-400 border border-red-500/30'
+              'bg-orange-500/15 text-orange-400 border border-orange-500/50 hover:bg-orange-500/25 hover:border-orange-500/60'
             )}
           >
             <Rocket className={cn(
@@ -252,7 +244,7 @@ export function ChatInput({
             )} />
             <span>Rocket Fuel</span>
             {totalCount > 0 && (
-              <span className="flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-white/20 text-[9px] font-bold">
+              <span className="flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-orange-500/30 text-[9px] font-bold">
                 {totalCount}
               </span>
             )}

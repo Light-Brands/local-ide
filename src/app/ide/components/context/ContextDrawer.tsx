@@ -43,6 +43,7 @@ export const ContextDrawer = memo(function ContextDrawer({
     removeContext,
     updateContent,
     resetContent,
+    togglePersist,
     clearAll,
     getFilteredItems,
   } = useContextState();
@@ -129,6 +130,7 @@ export const ContextDrawer = memo(function ContextDrawer({
                 onRemove={removeContext}
                 onUpdateContent={updateContent}
                 onResetContent={resetContent}
+                onTogglePersist={togglePersist}
               />
             ))}
           </div>
@@ -165,6 +167,7 @@ export const ContextDrawer = memo(function ContextDrawer({
                         onRemove={removeContext}
                         onUpdateContent={updateContent}
                         onResetContent={resetContent}
+                        onTogglePersist={togglePersist}
                         compact
                       />
                     ))}
