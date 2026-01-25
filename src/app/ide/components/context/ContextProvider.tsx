@@ -52,10 +52,15 @@ export function ContextProvider({ children }: { children: ReactNode }) {
 
   const addContext = useCallback(
     (item: Omit<ContextItem, 'id' | 'isEdited' | 'originalContent'>) => {
+      console.log(`⛽ [ContextProvider] Adding ${item.type}: ${item.name}`);
+      console.log(`   Content length: ${item.content?.length || 0} chars`);
+      console.log(`   Content preview: ${item.content?.slice(0, 100)}...`);
+
       setItems((prev) => {
         // Workflows are exclusive - adding a new one replaces existing
         if (item.type === 'workflow') {
           const filtered = prev.filter((i) => i.type !== 'workflow');
+          console.log(`   📦 Workflow added (replaced ${prev.length - filtered.length} existing)`);
           return [
             ...filtered,
             {
@@ -72,10 +77,12 @@ export function ContextProvider({ children }: { children: ReactNode }) {
           (i) => i.type === item.type && i.name === item.name
         );
         if (exists) {
+          console.log(`   ⚠️ Duplicate ${item.type} "${item.name}" - skipping`);
           return prev;
         }
 
         // Agents/commands/skills/files can stack
+        console.log(`   📦 Added to context (now ${prev.length + 1} items)`);
         return [
           ...prev,
           {

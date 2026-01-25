@@ -253,6 +253,18 @@ function ChatSessionContent({ sessionId }: ChatSessionContentProps) {
     // Build enhanced prompt with tooling context
     const prompt = buildPromptWithTooling(userMessage);
 
+    // Debug: Log the full prompt being sent
+    console.log('🚀 [ChatPane] Sending prompt with context:');
+    console.log('📝 User message:', userMessage);
+    console.log('📦 Context items:', contextState.items.length);
+    if (contextState.items.length > 0) {
+      console.log('📋 Context breakdown:');
+      contextState.items.forEach((item, i) => {
+        console.log(`   ${i + 1}. [${item.type}] ${item.name} - ${item.content.slice(0, 100)}...`);
+      });
+    }
+    console.log('📤 Full prompt being sent:\n', prompt.slice(0, 500) + (prompt.length > 500 ? '...' : ''));
+
     // Clear context after building prompt (fuel is consumed)
     if (contextState.hasContext) {
       contextState.clearAll();
