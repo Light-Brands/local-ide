@@ -6,6 +6,7 @@ import { PWAProvider } from './components/PWAProvider';
 import { SyncMonitor } from './components/SyncMonitor';
 import { IDEAuthProvider } from '@/lib/ide/auth';
 import { useSessionCleanup } from './hooks';
+import { ToastProvider } from '@/components/ui/Toast';
 
 // Component that runs the session cleanup hook
 function SessionCleanupMonitor() {
@@ -20,17 +21,19 @@ interface IDEProvidersProps {
 export function IDEProviders({ children }: IDEProvidersProps) {
   return (
     <IDEAuthProvider>
-      <ToolingProvider>
-        <ServiceProvider>
-          <PWAProvider>
-            {children}
-            {/* File sync monitor - notifies when files change */}
-            <SyncMonitor />
-            {/* Session cleanup - clears orphaned tmux sessions when no tabs are open */}
-            <SessionCleanupMonitor />
-          </PWAProvider>
-        </ServiceProvider>
-      </ToolingProvider>
+      <ToastProvider>
+        <ToolingProvider>
+          <ServiceProvider>
+            <PWAProvider>
+              {children}
+              {/* File sync monitor - notifies when files change */}
+              <SyncMonitor />
+              {/* Session cleanup - clears orphaned tmux sessions when no tabs are open */}
+              <SessionCleanupMonitor />
+            </PWAProvider>
+          </ServiceProvider>
+        </ToolingProvider>
+      </ToastProvider>
     </IDEAuthProvider>
   );
 }

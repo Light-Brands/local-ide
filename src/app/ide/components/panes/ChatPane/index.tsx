@@ -8,6 +8,7 @@ import { useOperationSync } from '@/lib/ide/hooks/useOperationSync';
 import { getActivityService } from '@/lib/ide/services/activity';
 import { IDE_FEATURES } from '@/lib/ide/features';
 import { useToolingOptional } from '../../../contexts/ToolingContext';
+import { ContextProvider, useContextState } from '../../context';
 import { ChatInput } from '../../chat/ChatInput';
 import { ChatSessionTabs } from '../../chat/ChatSessionTabs';
 import { MessageList } from './MessageList';
@@ -37,6 +38,17 @@ function ChatSessionContent({ sessionId }: ChatSessionContentProps) {
   const [showContext, setShowContext] = useState(!isMobile);
   const [connectionChecked, setConnectionChecked] = useState(false);
   const tooling = useToolingOptional();
+  const contextState = useContextState();
+
+  // Expose tooling context globally for the autocomplete hook to access
+  useEffect(() => {
+    if (tooling) {
+      (window as any).__toolingContext = tooling;
+    }
+    return () => {
+      delete (window as any).__toolingContext;
+    };
+  }, [tooling]);
 
   // Operation tracking
   const {
@@ -155,9 +167,15 @@ function ChatSessionContent({ sessionId }: ChatSessionContentProps) {
     }
   }, [messages, isLoading]);
 
-  // Build enhanced prompt with tooling context
+  // Build enhanced prompt with context system OR legacy tooling context
   const buildPromptWithTooling = useCallback(
     (userMessage: string) => {
+      // Use the context system if it has items
+      if (contextState.hasContext) {
+        return contextState.buildPrompt(userMessage);
+      }
+
+      // Legacy fallback: parse @ and / mentions from message directly
       const commands: string[] = [];
       const agents: string[] = [];
 
@@ -219,7 +237,7 @@ function ChatSessionContent({ sessionId }: ChatSessionContentProps) {
 
       return userMessage;
     },
-    [activeFile, fileContents, tooling]
+    [activeFile, fileContents, tooling, contextState]
   );
 
   // Handle message submission
@@ -235,9 +253,14 @@ function ChatSessionContent({ sessionId }: ChatSessionContentProps) {
     // Build enhanced prompt with tooling context
     const prompt = buildPromptWithTooling(userMessage);
 
+    // Clear context after building prompt (fuel is consumed)
+    if (contextState.hasContext) {
+      contextState.clearAll();
+    }
+
     // Send message through CLI
     await sendMessage(prompt);
-  }, [input, isLoading, buildPromptWithTooling, sendMessage]);
+  }, [input, isLoading, buildPromptWithTooling, sendMessage, contextState]);
 
   // Retry connection check
   const handleRetryConnection = useCallback(async () => {
@@ -465,8 +488,10 @@ export function ChatPane() {
       {/* Session Tabs */}
       <ChatSessionTabs />
 
-      {/* Session Content - keyed to reset when session changes */}
-      <ChatSessionContent key={activeSessionId} sessionId={activeSessionId} />
+      {/* Session Content - keyed to reset when session changes, wrapped with ContextProvider */}
+      <ContextProvider>
+        <ChatSessionContent key={activeSessionId} sessionId={activeSessionId} />
+      </ContextProvider>
     </div>
   );
 }

@@ -24,8 +24,11 @@ import {
   Plus,
   List,
   Play,
+  Rocket,
 } from 'lucide-react';
 import { ToolingIndicator } from '@/app/ide/components/common/ToolingIndicator';
+import { useToolingOptional } from '../../../contexts/ToolingContext';
+import { ContextProvider, useContextStateOptional, ContextBadge, ContextDrawer } from '../../context';
 
 // =============================================================================
 // TYPES
@@ -87,6 +90,180 @@ function getInitialTabsFromStorage(): { tabs: StoreTerminalTab[], activeId: stri
     console.error('[TerminalPane] Failed to read localStorage:', e);
   }
   return { tabs: [], activeId: null };
+}
+
+// =============================================================================
+// TERMINAL HEADER COMPONENT
+// =============================================================================
+
+interface TerminalHeaderProps {
+  isReconnecting: boolean;
+  reconnectAttempt: number;
+  isConnected: boolean;
+  isMobile: boolean;
+  isFullscreen: boolean;
+  onShowSessionManager: () => void;
+  onNewSession: () => void;
+  onCopy: () => void;
+  onPaste: () => void;
+  onReconnect: () => void;
+  onClear: () => void;
+  onToggleFullscreen: () => void;
+}
+
+function TerminalHeader({
+  isReconnecting,
+  reconnectAttempt,
+  isConnected,
+  isMobile,
+  isFullscreen,
+  onShowSessionManager,
+  onNewSession,
+  onCopy,
+  onPaste,
+  onReconnect,
+  onClear,
+  onToggleFullscreen,
+}: TerminalHeaderProps) {
+  const tooling = useToolingOptional();
+  const contextState = useContextStateOptional();
+  const hasTooling = !!tooling;
+  const [showBrowsePanel, setShowBrowsePanel] = useState(false);
+
+  const hasContext = contextState?.hasContext ?? false;
+  const contextItems = contextState?.items ?? [];
+  const isDrawerOpen = contextState?.isDrawerOpen ?? false;
+  const toggleDrawer = contextState?.toggleDrawer ?? (() => {});
+
+  return (
+    <>
+      <div className="flex items-center justify-between px-3 py-1.5 bg-neutral-900 border-b border-neutral-800">
+        <div className="flex items-center gap-2">
+          <Terminal className="w-4 h-4 text-neutral-400" />
+          <span className="text-xs text-neutral-400 font-medium">Terminal</span>
+
+          {/* Connection status */}
+          {isReconnecting ? (
+            <span className="flex items-center gap-1 text-xs text-yellow-400">
+              <RotateCcw className="w-3 h-3 animate-spin" />
+              Reconnecting ({reconnectAttempt})
+            </span>
+          ) : isConnected ? (
+            <Wifi className="w-3 h-3 text-green-400" />
+          ) : (
+            <WifiOff className="w-3 h-3 text-red-400" />
+          )}
+
+          {/* Divider */}
+          <div className="w-px h-3 bg-neutral-700" />
+
+          {/* Tooling indicator */}
+          <ToolingIndicator showLabel={false} compact />
+
+          {/* Divider before Rocket Fuel */}
+          {hasTooling && <div className="w-px h-3 bg-neutral-700" />}
+
+          {/* Rocket Fuel button */}
+          {hasTooling && (
+            <button
+              type="button"
+              onClick={() => setShowBrowsePanel(!showBrowsePanel)}
+              className={cn(
+                'flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-all',
+                showBrowsePanel
+                  ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/25'
+                  : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700 hover:text-neutral-200'
+              )}
+            >
+              <Rocket className="w-3 h-3" />
+              <span>Fuel</span>
+            </button>
+          )}
+
+          {/* Context badge */}
+          {hasContext && contextState && (
+            <ContextBadge
+              items={contextItems}
+              isOpen={isDrawerOpen}
+              onClick={toggleDrawer}
+              compact
+            />
+          )}
+        </div>
+
+        <div className="flex items-center gap-1">
+          <button
+            onClick={onShowSessionManager}
+            className="p-1.5 rounded hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 transition-colors"
+            title="Manage sessions"
+          >
+            <List className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            onClick={onNewSession}
+            className="p-1.5 rounded hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 transition-colors"
+            title="New session"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            onClick={onCopy}
+            className="p-1.5 rounded hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 transition-colors"
+            title="Copy selection"
+          >
+            <Copy className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            onClick={onPaste}
+            className="p-1.5 rounded hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 transition-colors"
+            title="Paste from clipboard"
+          >
+            <ClipboardPaste className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            onClick={onReconnect}
+            className="p-1.5 rounded hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 transition-colors"
+            title="Reconnect"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            onClick={onClear}
+            className="p-1.5 rounded hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 transition-colors"
+            title="Clear"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+
+          {isMobile && (
+            <button
+              onClick={onToggleFullscreen}
+              className="p-1.5 rounded hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 transition-colors"
+              title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+            >
+              {isFullscreen ? (
+                <Minimize2 className="w-3.5 h-3.5" />
+              ) : (
+                <Maximize2 className="w-3.5 h-3.5" />
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Context drawer (shown below header when expanded) */}
+      {contextState && isDrawerOpen && (
+        <div className="px-2 py-2 bg-neutral-900 border-b border-neutral-800">
+          <ContextDrawer />
+        </div>
+      )}
+    </>
+  );
 }
 
 // =============================================================================
@@ -889,155 +1066,83 @@ export function TerminalPane() {
   }
 
   return (
-    <div
-      ref={containerRef}
-      className={cn(
-        'h-full flex flex-col bg-neutral-950',
-        isFullscreen && 'fixed inset-0 z-50'
-      )}
-      onClick={handleContainerClick}
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-neutral-900 border-b border-neutral-800">
-        <div className="flex items-center gap-2">
-          <Terminal className="w-4 h-4 text-neutral-400" />
-          <span className="text-xs text-neutral-400 font-medium">Terminal</span>
-
-          {/* Connection status */}
-          {isReconnecting ? (
-            <span className="flex items-center gap-1 text-xs text-yellow-400">
-              <RotateCcw className="w-3 h-3 animate-spin" />
-              Reconnecting ({reconnectAttempt})
-            </span>
-          ) : isConnected ? (
-            <Wifi className="w-3 h-3 text-green-400" />
-          ) : (
-            <WifiOff className="w-3 h-3 text-red-400" />
-          )}
-
-          {/* Divider */}
-          <div className="w-px h-3 bg-neutral-700" />
-
-          {/* Tooling indicator */}
-          <ToolingIndicator showLabel={false} compact />
-        </div>
-
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setShowSessionManager(true)}
-            className="p-1.5 rounded hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 transition-colors"
-            title="Manage sessions"
-          >
-            <List className="w-3.5 h-3.5" />
-          </button>
-
-          <button
-            onClick={handleNewSession}
-            className="p-1.5 rounded hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 transition-colors"
-            title="New session"
-          >
-            <Plus className="w-3.5 h-3.5" />
-          </button>
-
-          <button
-            onClick={handleCopy}
-            className="p-1.5 rounded hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 transition-colors"
-            title="Copy selection"
-          >
-            <Copy className="w-3.5 h-3.5" />
-          </button>
-
-          <button
-            onClick={handlePaste}
-            className="p-1.5 rounded hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 transition-colors"
-            title="Paste from clipboard"
-          >
-            <ClipboardPaste className="w-3.5 h-3.5" />
-          </button>
-
-          <button
-            onClick={handleReconnect}
-            className="p-1.5 rounded hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 transition-colors"
-            title="Reconnect"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-          </button>
-
-          <button
-            onClick={handleClear}
-            className="p-1.5 rounded hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 transition-colors"
-            title="Clear"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-
-          {isMobile && (
-            <button
-              onClick={toggleFullscreen}
-              className="p-1.5 rounded hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 transition-colors"
-              title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-            >
-              {isFullscreen ? (
-                <Minimize2 className="w-3.5 h-3.5" />
-              ) : (
-                <Maximize2 className="w-3.5 h-3.5" />
-              )}
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Tabs */}
-      {tabs.length > 0 && (
-        <TerminalTabs
-          tabs={tabs}
-          activeTabId={activeTabId || ''}
-          onTabSelect={handleTabSelect}
-          onTabClose={handleTabClose}
-          onNewTab={handleNewSession}
+    <ContextProvider>
+      <div
+        ref={containerRef}
+        className={cn(
+          'h-full flex flex-col bg-neutral-950',
+          isFullscreen && 'fixed inset-0 z-50'
+        )}
+        onClick={handleContainerClick}
+      >
+        {/* Header */}
+        <TerminalHeader
+          isReconnecting={isReconnecting}
+          reconnectAttempt={reconnectAttempt}
+          isConnected={isConnected}
+          isMobile={isMobile}
+          isFullscreen={isFullscreen}
+          onShowSessionManager={() => setShowSessionManager(true)}
+          onNewSession={handleNewSession}
+          onCopy={handleCopy}
+          onPaste={handlePaste}
+          onReconnect={handleReconnect}
+          onClear={handleClear}
+          onToggleFullscreen={toggleFullscreen}
         />
-      )}
 
-      {/* Terminal container */}
-      <div className="flex-1 overflow-hidden relative">
-        {/* Connection error overlay */}
-        {showConnectionError && !isConnected && (
-          <div className="absolute inset-0 flex items-center justify-center bg-neutral-950/90 z-10">
-            <div className="text-center p-6">
-              <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-              <p className="text-neutral-300 mb-4">Terminal connection failed</p>
-              <button
-                onClick={handleReconnect}
-                className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors"
-              >
-                Reconnect
-              </button>
+        {/* Tabs */}
+        {tabs.length > 0 && (
+          <TerminalTabs
+            tabs={tabs}
+            activeTabId={activeTabId || ''}
+            onTabSelect={handleTabSelect}
+            onTabClose={handleTabClose}
+            onNewTab={handleNewSession}
+          />
+        )}
+
+        {/* Terminal container */}
+        <div className="flex-1 overflow-hidden relative">
+          {/* Connection error overlay */}
+          {showConnectionError && !isConnected && (
+            <div className="absolute inset-0 flex items-center justify-center bg-neutral-950/90 z-10">
+              <div className="text-center p-6">
+                <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+                <p className="text-neutral-300 mb-4">Terminal connection failed</p>
+                <button
+                  onClick={handleReconnect}
+                  className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors"
+                >
+                  Reconnect
+                </button>
+              </div>
             </div>
+          )}
+
+          {/* xterm container */}
+          <div
+            ref={xtermContainerRef}
+            className="h-full w-full p-2"
+            style={{ minHeight: isMobile ? '200px' : '300px' }}
+          />
+        </div>
+
+        {/* Mobile keyboard toolbar */}
+        {isMobile && (
+          <div className="flex-shrink-0 safe-area-bottom">
+            <KeyboardToolbar onKey={handleKeyPress} />
           </div>
         )}
 
-        {/* xterm container */}
-        <div
-          ref={xtermContainerRef}
-          className="h-full w-full p-2"
-          style={{ minHeight: isMobile ? '200px' : '300px' }}
+        {/* Session Manager Modal */}
+        <SessionManager
+          isOpen={showSessionManager}
+          onClose={() => setShowSessionManager(false)}
+          onSelectSession={handleSelectSession}
+          currentSessionId={currentSessionId}
         />
       </div>
-
-      {/* Mobile keyboard toolbar */}
-      {isMobile && (
-        <div className="flex-shrink-0 safe-area-bottom">
-          <KeyboardToolbar onKey={handleKeyPress} />
-        </div>
-      )}
-
-      {/* Session Manager Modal */}
-      <SessionManager
-        isOpen={showSessionManager}
-        onClose={() => setShowSessionManager(false)}
-        onSelectSession={handleSelectSession}
-        currentSessionId={currentSessionId}
-      />
-    </div>
+    </ContextProvider>
   );
 }

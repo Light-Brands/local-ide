@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils';
 import { Send, Loader2, Rocket } from 'lucide-react';
 import { ChatAutocomplete, useAutocomplete, type AutocompleteMode } from './ChatAutocomplete';
 import { useToolingOptional } from '../../contexts/ToolingContext';
+import { useContextStateOptional } from '../context';
+import { ContextBadge, ContextDrawer } from '../context';
 import type { AutocompleteItem } from '@/lib/ide/tooling';
 
 interface ChatInputProps {
@@ -29,11 +31,18 @@ export function ChatInput({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const tooling = useToolingOptional();
+  const contextState = useContextStateOptional();
   const hasTooling = !!tooling;
   const [isFocused, setIsFocused] = useState(false);
   const [showBrowsePanel, setShowBrowsePanel] = useState(false);
 
   const { isOpen, setIsOpen, cursorPosition, setCursorPosition, handleSelect } = useAutocomplete();
+
+  // Context drawer state
+  const hasContext = contextState?.hasContext ?? false;
+  const contextItems = contextState?.items ?? [];
+  const isDrawerOpen = contextState?.isDrawerOpen ?? false;
+  const toggleDrawer = contextState?.toggleDrawer ?? (() => {});
 
   // Auto-resize textarea
   useEffect(() => {
@@ -111,9 +120,10 @@ export function ChatInput({
 
   return (
     <div ref={containerRef} className={cn('relative', className)}>
-      {/* Rocket Fuel button - positioned above input on the right */}
+      {/* Rocket Fuel row: button (pump) + badge (tank preview) */}
       {hasTooling && (
-        <div className="flex justify-end mb-1.5">
+        <div className="flex items-center justify-between mb-1.5">
+          {/* Left: Rocket Fuel button to add context */}
           <button
             type="button"
             onClick={() => {
@@ -133,6 +143,22 @@ export function ChatInput({
             <Rocket className="w-3.5 h-3.5" />
             <span>Rocket Fuel</span>
           </button>
+
+          {/* Right: Context badge showing what's loaded */}
+          {hasContext && contextState && (
+            <ContextBadge
+              items={contextItems}
+              isOpen={isDrawerOpen}
+              onClick={toggleDrawer}
+            />
+          )}
+        </div>
+      )}
+
+      {/* Context drawer (the "tank" - shows all loaded context) */}
+      {contextState && isDrawerOpen && (
+        <div className="mb-2">
+          <ContextDrawer />
         </div>
       )}
 

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { useTooling } from '../../contexts/ToolingContext';
+import { useContextStateOptional, type ContextItem } from '../context';
 import type { AutocompleteItem, Pillar } from '@/lib/ide/tooling';
 import {
   commandDictionary,
@@ -752,6 +753,7 @@ export function ChatAutocomplete({
 export function useAutocomplete() {
   const [isOpen, setIsOpen] = useState(false);
   const [cursorPosition, setCursorPosition] = useState(0);
+  const contextState = useContextStateOptional();
 
   const handleSelect = useCallback(
     (
@@ -761,6 +763,125 @@ export function useAutocomplete() {
       mode: AutocompleteMode,
       startIndex: number
     ) => {
+      // If context system is available, add items to context instead of inserting text
+      if (contextState) {
+        // Handle workflow selection - add to context
+        if (item.type === 'workflow' && item.strategyPrompt) {
+          contextState.addContext({
+            type: 'workflow',
+            name: item.name,
+            displayName: item.displayName,
+            description: item.description,
+            content: item.strategyPrompt,
+            color: item.color ? AGENT_HEX_COLORS[item.color] : undefined,
+            icon: (item as any).icon,
+            metadata: {
+              complexity: item.complexity,
+              estimatedTime: item.estimatedTime,
+              agents: item.agents,
+              commands: item.commands,
+              skills: item.skills,
+            },
+          });
+
+          // Clear the trigger from input
+          if (mode === 'workflow') {
+            const before = input.slice(0, startIndex);
+            const after = input.slice(cursorPosition);
+            setInput(before + after);
+            return before.length;
+          }
+          setInput('');
+          return 0;
+        }
+
+        // Handle agent selection - add to context
+        if (item.type === 'agent') {
+          // Get full agent content from tooling if available
+          const tooling = (window as any).__toolingContext;
+          const agent = tooling?.getAgent?.(item.name);
+
+          contextState.addContext({
+            type: 'agent',
+            name: item.name,
+            displayName: item.displayName,
+            description: item.description,
+            content: agent?.content || item.description,
+            color: item.color ? AGENT_HEX_COLORS[item.color] : undefined,
+            metadata: {
+              category: item.category,
+              pillar: item.pillar,
+            },
+          });
+
+          // Clear the trigger from input
+          if (mode === 'mention') {
+            const before = input.slice(0, startIndex);
+            const after = input.slice(cursorPosition);
+            setInput(before + after);
+            return before.length;
+          }
+          setInput('');
+          return 0;
+        }
+
+        // Handle command selection - add to context
+        if (item.type === 'command') {
+          const tooling = (window as any).__toolingContext;
+          const command = tooling?.getCommand?.(item.name);
+
+          contextState.addContext({
+            type: 'command',
+            name: item.name,
+            displayName: item.displayName,
+            description: item.description,
+            content: command?.content || item.description,
+            metadata: {
+              category: item.category,
+              pillar: item.pillar,
+            },
+          });
+
+          // Clear the trigger from input
+          if (mode === 'command') {
+            const before = input.slice(0, startIndex);
+            const after = input.slice(cursorPosition);
+            setInput(before + after);
+            return before.length;
+          }
+          setInput('');
+          return 0;
+        }
+
+        // Handle skill selection - add to context
+        if (item.type === 'skill') {
+          const tooling = (window as any).__toolingContext;
+          const skill = tooling?.getSkill?.(item.name);
+
+          contextState.addContext({
+            type: 'skill',
+            name: item.name,
+            displayName: item.displayName,
+            description: item.description,
+            content: skill?.content || item.description,
+            metadata: {
+              category: item.category,
+            },
+          });
+
+          // Clear the trigger from input
+          if (mode === 'command') {
+            const before = input.slice(0, startIndex);
+            const after = input.slice(cursorPosition);
+            setInput(before + after);
+            return before.length;
+          }
+          setInput('');
+          return 0;
+        }
+      }
+
+      // FALLBACK: If no context system, use original behavior
       // Handle workflow selection - insert the full strategy prompt with agents/commands
       if (item.type === 'workflow' && item.strategyPrompt) {
         // Build the workflow prompt with all the loaded context
@@ -814,7 +935,7 @@ ${item.strategyPrompt}
       // Return new cursor position after the inserted text
       return newCursorPos;
     },
-    [cursorPosition]
+    [cursorPosition, contextState]
   );
 
   return {
