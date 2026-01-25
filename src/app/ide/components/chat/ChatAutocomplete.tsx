@@ -39,6 +39,8 @@ import {
   Lightbulb,
   Package,
   Building,
+  ChevronDown,
+  Check,
 } from 'lucide-react';
 
 export type AutocompleteMode = 'none' | 'command' | 'mention' | 'browse' | 'workflow';
@@ -49,6 +51,8 @@ interface ChatAutocompleteProps {
   cursorPosition: number;
   onSelect: (item: AutocompleteItem, mode: AutocompleteMode, startIndex: number) => void;
   onClose: () => void;
+  /** Called when user clicks the collapse button - keeps selections but hides panel */
+  onCollapse?: () => void;
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
   anchorRef: React.RefObject<HTMLElement | null>;
@@ -250,6 +254,7 @@ export function ChatAutocomplete({
   cursorPosition,
   onSelect,
   onClose,
+  onCollapse,
   isOpen,
   setIsOpen,
   anchorRef,
@@ -626,7 +631,20 @@ export function ChatAutocomplete({
       className="absolute bottom-full left-0 right-0 mb-2 bg-neutral-900 border border-neutral-700 rounded-lg shadow-xl z-50 flex flex-col"
       style={{ maxHeight: 'min(70vh, 500px)' }}
     >
-      {/* Tabs - sticky at top */}
+      {/* Header with collapse button */}
+      <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-800 flex-shrink-0">
+        <span className="text-xs font-medium text-neutral-400">Add Context</span>
+        <button
+          onClick={onCollapse}
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-primary-500 hover:bg-primary-600 text-white transition-colors"
+        >
+          <Check className="w-3 h-3" />
+          Done
+          <ChevronDown className="w-3 h-3" />
+        </button>
+      </div>
+
+      {/* Tabs */}
       <div className="flex border-b border-neutral-800 flex-shrink-0">
         {tabs.map((tab) => (
           <button

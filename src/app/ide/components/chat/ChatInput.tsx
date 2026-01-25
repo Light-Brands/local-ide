@@ -206,7 +206,11 @@ export function ChatInput({
           cursorPosition={cursorPosition}
           onSelect={(item, mode, startIndex) => {
             handleAutocompleteSelect(item, mode, startIndex);
-            setShowBrowsePanel(false); // Close panel after selection
+            // Don't close panel - allow multiple selections
+          }}
+          onCollapse={() => {
+            setIsOpen(false);
+            setShowBrowsePanel(false);
           }}
           onClose={() => {
             setIsOpen(false);
@@ -232,7 +236,14 @@ export function ChatInput({
           onKeyDown={handleKeyDown}
           onSelect={handleSelectionChange}
           onClick={handleSelectionChange}
-          onFocus={() => setIsFocused(true)}
+          onFocus={() => {
+            setIsFocused(true);
+            // Collapse browse panel when focusing input
+            if (showBrowsePanel) {
+              setShowBrowsePanel(false);
+              setIsOpen(false);
+            }
+          }}
           onBlur={(e) => {
             // Delay blur to allow clicking on autocomplete items
             setTimeout(() => {
