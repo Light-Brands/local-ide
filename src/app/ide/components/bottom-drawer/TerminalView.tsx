@@ -6,6 +6,7 @@ import { useIDEStore } from '../../stores/ideStore';
 import { getTerminalService, resetTerminalService, getTerminalWebSocketUrl } from '@/lib/ide/services/terminal';
 import type { TerminalEvent } from '@/lib/ide/services/terminal';
 import { Trash2, Terminal, Wifi, WifiOff } from 'lucide-react';
+import { ToolingIndicator } from '@/app/ide/components/common/ToolingIndicator';
 
 // Session persistence key (same as useTerminal)
 const SESSION_STORAGE_KEY = 'local-ide-terminal-session';
@@ -358,6 +359,12 @@ export function TerminalView() {
               <span>Disconnected</span>
             </div>
           )}
+
+          {/* Divider */}
+          <div className="w-px h-3 bg-neutral-700" />
+
+          {/* Tooling indicator */}
+          <ToolingIndicator showLabel={false} compact />
         </div>
         <div className="flex items-center gap-1">
           {!isConnected && (

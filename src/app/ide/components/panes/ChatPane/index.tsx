@@ -18,7 +18,9 @@ import {
   AlertCircle,
   RefreshCw,
   MessageSquarePlus,
+  MessageSquare,
 } from 'lucide-react';
+import { ToolingIndicator } from '@/app/ide/components/common/ToolingIndicator';
 
 // ============================================================================
 // CHAT SESSION CONTENT - Inner component for a single session
@@ -290,6 +292,27 @@ function ChatSessionContent({ sessionId }: ChatSessionContentProps) {
 
   return (
     <>
+      {/* Header */}
+      <div className="flex-shrink-0 px-3 py-1.5 bg-neutral-900 border-b border-neutral-800">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="w-4 h-4 text-neutral-400" />
+          <span className="text-xs text-neutral-400 font-medium">Chat</span>
+
+          {/* Connection status */}
+          {isConnected ? (
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+          ) : (
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+          )}
+
+          {/* Divider */}
+          <div className="w-px h-3 bg-neutral-700" />
+
+          {/* Tooling indicator */}
+          <ToolingIndicator showLabel={false} compact />
+        </div>
+      </div>
+
       {/* Context panel (desktop) */}
       {!isMobile && showContext && (
         <ContextPanel

@@ -25,6 +25,7 @@ import {
   List,
   Play,
 } from 'lucide-react';
+import { ToolingIndicator } from '@/app/ide/components/common/ToolingIndicator';
 
 // =============================================================================
 // TYPES
@@ -913,6 +914,12 @@ export function TerminalPane() {
           ) : (
             <WifiOff className="w-3 h-3 text-red-400" />
           )}
+
+          {/* Divider */}
+          <div className="w-px h-3 bg-neutral-700" />
+
+          {/* Tooling indicator */}
+          <ToolingIndicator showLabel={false} compact />
         </div>
 
         <div className="flex items-center gap-1">

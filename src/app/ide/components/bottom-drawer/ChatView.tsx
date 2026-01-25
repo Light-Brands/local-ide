@@ -21,6 +21,7 @@ import {
   Bot,
   Slash,
 } from 'lucide-react';
+import { ToolingIndicator } from '@/app/ide/components/common/ToolingIndicator';
 
 // Parse commands and mentions from message content
 function parseMessageContent(content: string): React.ReactNode[] {
@@ -307,18 +308,9 @@ export function ChatView() {
       </div>
 
       {/* Tooling indicator */}
-      {tooling && (
-        <div className="px-4 py-1.5 border-b border-neutral-200/50 dark:border-neutral-800/50 flex items-center gap-2 text-[10px] text-neutral-500">
-          <span className="flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-            AI Tooling
-          </span>
-          <span className="text-neutral-400">•</span>
-          <span>{tooling.config.commands.length} cmds</span>
-          <span className="text-neutral-400">•</span>
-          <span>{tooling.config.agents.length} agents</span>
-        </div>
-      )}
+      <div className="px-4 py-1.5 border-b border-neutral-200/50 dark:border-neutral-800/50">
+        <ToolingIndicator showLabel compact />
+      </div>
 
       {/* Messages area - touch-action ensures native scrolling takes priority */}
       <div
