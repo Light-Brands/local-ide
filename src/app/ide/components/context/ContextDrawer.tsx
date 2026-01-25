@@ -56,8 +56,8 @@ export const ContextDrawer = memo(function ContextDrawer({
         )}
       </div>
 
-      {/* Content */}
-      <div className="max-h-[300px] overflow-y-auto">
+      {/* Content - allow expansion for editing */}
+      <div className="max-h-[70vh] overflow-y-auto">
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
             <Sparkles className="w-8 h-8 text-neutral-700 mb-3" />
