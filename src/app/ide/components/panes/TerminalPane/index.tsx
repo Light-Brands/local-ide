@@ -25,6 +25,7 @@ import {
   List,
   Play,
   Rocket,
+  Fuel,
 } from 'lucide-react';
 import { ToolingIndicator } from '@/app/ide/components/common/ToolingIndicator';
 import { useToolingOptional } from '../../../contexts/ToolingContext';
@@ -159,10 +160,10 @@ function TerminalHeader({
           {/* Tooling indicator */}
           <ToolingIndicator showLabel={false} compact />
 
-          {/* Divider before Rocket Fuel */}
+          {/* Divider before fuel buttons */}
           {hasTooling && <div className="w-px h-3 bg-neutral-700" />}
 
-          {/* Rocket Fuel button - unified with counter */}
+          {/* Fuel Tank button - view/edit what's loaded */}
           {hasTooling && (
             <button
               type="button"
@@ -170,7 +171,38 @@ function TerminalHeader({
               className={cn(
                 'flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-all duration-200',
                 hasContext
-                  ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/30 ring-1 ring-orange-400/50'
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/30 ring-1 ring-amber-400/50'
+                  : isDrawerOpen
+                    ? 'bg-gradient-to-r from-amber-500/80 to-orange-500/80 text-white shadow-sm shadow-amber-500/20'
+                    : 'bg-neutral-800/80 text-amber-400/70 hover:bg-neutral-700 hover:text-amber-400 border border-amber-500/20'
+              )}
+            >
+              <Fuel className={cn(
+                'w-3 h-3 transition-transform duration-200',
+                hasContext && 'animate-pulse'
+              )} />
+              <span>Tank</span>
+              {hasContext && (
+                <span className="flex items-center justify-center min-w-[14px] h-[14px] px-0.5 rounded-full bg-white/20 text-[9px] font-bold">
+                  {contextItems.length}
+                </span>
+              )}
+            </button>
+          )}
+
+          {/* Rocket Fuel button - add more context (compact in terminal) */}
+          {hasTooling && (
+            <button
+              type="button"
+              onClick={() => {
+                // TODO: Open browse panel for terminal
+                // For now, just toggle drawer if no browse panel available
+                if (!isDrawerOpen) toggleDrawer();
+              }}
+              className={cn(
+                'flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-all duration-200',
+                hasContext
+                  ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md shadow-orange-500/30 ring-1 ring-orange-400/50'
                   : 'bg-neutral-800/80 text-orange-400/70 hover:bg-neutral-700 hover:text-orange-400 border border-orange-500/20'
               )}
             >
@@ -179,11 +211,6 @@ function TerminalHeader({
                 hasContext && 'animate-pulse'
               )} />
               <span>Fuel</span>
-              {hasContext && (
-                <span className="flex items-center justify-center min-w-[14px] h-[14px] px-0.5 rounded-full bg-white/20 text-[9px] font-bold">
-                  {contextItems.length}
-                </span>
-              )}
             </button>
           )}
         </div>

@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
-import { Send, Loader2, Rocket } from 'lucide-react';
+import { Send, Loader2, Rocket, Fuel } from 'lucide-react';
 import { ChatAutocomplete, useAutocomplete, type AutocompleteMode } from './ChatAutocomplete';
 import { useToolingOptional } from '../../contexts/ToolingContext';
 import { useContextStateOptional, ContextDrawer } from '../context';
@@ -117,35 +117,69 @@ export function ChatInput({
     }
   };
 
-  // Handle Rocket Fuel button click - opens browse panel or toggles drawer
+  // Handle Rocket Fuel button click - opens browse panel to add context
   const handleRocketFuelClick = useCallback(() => {
-    if (hasContext) {
-      // If we have context, toggle the drawer to show/hide
-      toggleDrawer();
-    } else {
-      // If no context, open the browse panel to add some
-      const newState = !showBrowsePanel && !isOpen;
-      setShowBrowsePanel(newState);
-      if (!newState) {
-        setIsOpen(false);
-      }
+    const newState = !showBrowsePanel && !isOpen;
+    setShowBrowsePanel(newState);
+    if (!newState) {
+      setIsOpen(false);
     }
-  }, [hasContext, toggleDrawer, showBrowsePanel, isOpen, setIsOpen]);
+    // Close drawer when opening browse panel
+    if (newState && isDrawerOpen) {
+      contextState?.setDrawerOpen(false);
+    }
+  }, [showBrowsePanel, isOpen, setIsOpen, isDrawerOpen, contextState]);
+
+  // Handle Fuel Tank button click - toggles drawer to view/edit context
+  const handleFuelTankClick = useCallback(() => {
+    toggleDrawer();
+    // Close browse panel when opening drawer
+    if (!isDrawerOpen) {
+      setShowBrowsePanel(false);
+      setIsOpen(false);
+    }
+  }, [toggleDrawer, isDrawerOpen, setIsOpen]);
 
   return (
     <div ref={containerRef} className={cn('relative', className)}>
-      {/* Rocket Fuel button - positioned on the right */}
+      {/* Fuel Tank + Rocket Fuel buttons - positioned on the right */}
       {hasTooling && (
-        <div className="flex justify-end mb-1.5">
+        <div className="flex justify-end gap-1.5 mb-1.5">
+          {/* Fuel Tank button - view/edit what's loaded */}
+          <button
+            type="button"
+            onClick={handleFuelTankClick}
+            className={cn(
+              'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all duration-200',
+              hasContext
+                ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/30 ring-2 ring-amber-400/50'
+                : isDrawerOpen
+                  ? 'bg-gradient-to-r from-amber-500/80 to-orange-500/80 text-white shadow-md shadow-amber-500/20'
+                  : 'bg-neutral-800/80 text-amber-400/70 hover:bg-neutral-700 hover:text-amber-400 border border-amber-500/20'
+            )}
+          >
+            <Fuel className={cn(
+              'w-3.5 h-3.5 transition-transform duration-200',
+              hasContext && 'animate-pulse'
+            )} />
+            <span>Fuel Tank</span>
+            {hasContext && (
+              <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-white/20 text-[10px] font-bold">
+                {contextItems.length}
+              </span>
+            )}
+          </button>
+
+          {/* Rocket Fuel button - add more context */}
           <button
             type="button"
             onClick={handleRocketFuelClick}
             className={cn(
               'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all duration-200',
               hasContext
-                ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/30 ring-2 ring-orange-400/50'
+                ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30 ring-2 ring-orange-400/50'
                 : (showBrowsePanel || isOpen)
-                  ? 'bg-gradient-to-r from-orange-500/80 to-amber-500/80 text-white shadow-md shadow-orange-500/20'
+                  ? 'bg-gradient-to-r from-orange-500/80 to-red-500/80 text-white shadow-md shadow-orange-500/20'
                   : 'bg-neutral-800/80 text-orange-400/70 hover:bg-neutral-700 hover:text-orange-400 border border-orange-500/20'
             )}
           >
@@ -154,11 +188,6 @@ export function ChatInput({
               hasContext && 'animate-pulse'
             )} />
             <span>Rocket Fuel</span>
-            {hasContext && (
-              <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-white/20 text-[10px] font-bold">
-                {contextItems.length}
-              </span>
-            )}
           </button>
         </div>
       )}
