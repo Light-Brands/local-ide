@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { ToolingIndicator } from '@/app/ide/components/common/ToolingIndicator';
 import { useToolingOptional } from '../../../contexts/ToolingContext';
-import { ContextProvider, useContextStateOptional, ContextBadge, ContextDrawer } from '../../context';
+import { ContextProvider, useContextStateOptional, ContextDrawer } from '../../context';
 
 // =============================================================================
 // TYPES
@@ -128,7 +128,6 @@ function TerminalHeader({
   const tooling = useToolingOptional();
   const contextState = useContextStateOptional();
   const hasTooling = !!tooling;
-  const [showBrowsePanel, setShowBrowsePanel] = useState(false);
 
   const hasContext = contextState?.hasContext ?? false;
   const contextItems = contextState?.items ?? [];
@@ -163,31 +162,29 @@ function TerminalHeader({
           {/* Divider before Rocket Fuel */}
           {hasTooling && <div className="w-px h-3 bg-neutral-700" />}
 
-          {/* Rocket Fuel button */}
+          {/* Rocket Fuel button - unified with counter */}
           {hasTooling && (
             <button
               type="button"
-              onClick={() => setShowBrowsePanel(!showBrowsePanel)}
+              onClick={toggleDrawer}
               className={cn(
-                'flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-all',
-                showBrowsePanel
-                  ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/25'
-                  : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700 hover:text-neutral-200'
+                'flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-all duration-200',
+                hasContext
+                  ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/30 ring-1 ring-orange-400/50'
+                  : 'bg-neutral-800/80 text-orange-400/70 hover:bg-neutral-700 hover:text-orange-400 border border-orange-500/20'
               )}
             >
-              <Rocket className="w-3 h-3" />
+              <Rocket className={cn(
+                'w-3 h-3 transition-transform duration-200',
+                hasContext && 'animate-pulse'
+              )} />
               <span>Fuel</span>
+              {hasContext && (
+                <span className="flex items-center justify-center min-w-[14px] h-[14px] px-0.5 rounded-full bg-white/20 text-[9px] font-bold">
+                  {contextItems.length}
+                </span>
+              )}
             </button>
-          )}
-
-          {/* Context badge */}
-          {hasContext && contextState && (
-            <ContextBadge
-              items={contextItems}
-              isOpen={isDrawerOpen}
-              onClick={toggleDrawer}
-              compact
-            />
           )}
         </div>
 
