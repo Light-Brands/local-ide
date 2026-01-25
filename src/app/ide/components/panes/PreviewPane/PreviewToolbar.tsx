@@ -15,8 +15,17 @@ import {
   Globe,
   WifiOff,
   RotateCcw,
+  MousePointer2,
 } from 'lucide-react';
+import type { SelectorMode } from '@/lib/ide/componentSelector/types';
 import { DEVICE_PRESETS, DEVICE_CATEGORIES, type DeviceType, type Orientation } from './DeviceFrame';
+
+interface ComponentSelectorProps {
+  isEnabled: boolean;
+  mode: SelectorMode;
+  enable: (mode: SelectorMode) => void;
+  disable: () => void;
+}
 
 interface PreviewToolbarProps {
   mode: 'local' | 'deployed';
@@ -37,6 +46,7 @@ interface PreviewToolbarProps {
   canGoForward: boolean;
   onUrlSubmit: (e: React.FormEvent) => void;
   isMobile?: boolean;
+  componentSelector?: ComponentSelectorProps;
 }
 
 export const PreviewToolbar = memo(function PreviewToolbar({
@@ -58,6 +68,7 @@ export const PreviewToolbar = memo(function PreviewToolbar({
   canGoForward,
   onUrlSubmit,
   isMobile = false,
+  componentSelector,
 }: PreviewToolbarProps) {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -308,6 +319,56 @@ export const PreviewToolbar = memo(function PreviewToolbar({
               >
                 <RotateCcw className="w-4 h-4" />
               </button>
+            )}
+
+            {/* Component Selector dropdown */}
+            {componentSelector && (
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    if (componentSelector.isEnabled) {
+                      componentSelector.disable();
+                    } else {
+                      setOpenDropdown(openDropdown === 'selector' ? null : 'selector');
+                    }
+                  }}
+                  className={cn(
+                    'p-1.5 rounded-lg transition-colors flex items-center gap-0.5',
+                    componentSelector.isEnabled
+                      ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600'
+                      : 'hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-500'
+                  )}
+                  aria-label="Component selector"
+                  title={componentSelector.isEnabled ? 'Disable component selector' : 'Enable component selector'}
+                >
+                  <MousePointer2 className="w-4 h-4" />
+                  {!componentSelector.isEnabled && <ChevronDown className="w-3 h-3" />}
+                </button>
+                {openDropdown === 'selector' && !componentSelector.isEnabled && (
+                  <div className="absolute top-full left-0 mt-1 w-40 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 py-1 z-50">
+                    <button
+                      onClick={() => {
+                        componentSelector.enable('once');
+                        setOpenDropdown(null);
+                      }}
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-neutral-100 dark:hover:bg-neutral-700 flex flex-col"
+                    >
+                      <span className="font-medium">Once</span>
+                      <span className="text-xs text-neutral-400">Single select</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        componentSelector.enable('on');
+                        setOpenDropdown(null);
+                      }}
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-neutral-100 dark:hover:bg-neutral-700 flex flex-col"
+                    >
+                      <span className="font-medium">On</span>
+                      <span className="text-xs text-neutral-400">Multi-select</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         )}

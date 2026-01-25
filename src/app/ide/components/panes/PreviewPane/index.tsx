@@ -2,13 +2,15 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useIDEStore } from '../../../stores/ideStore';
-import { useMobileDetect } from '../../../hooks';
+import { useMobileDetect, useComponentSelector } from '../../../hooks';
 import { getProductionUrl, getStoredVercelToken } from '@/lib/ide/services/vercel';
 import { getWorkspaceService } from '@/lib/ide/services/workspace';
 import { Monitor, Globe, RefreshCw } from 'lucide-react';
 import { DeviceFrame, DeviceInfo, type DeviceType, type Orientation } from './DeviceFrame';
 import { PreviewToolbar } from './PreviewToolbar';
+import { ComponentSelectorOverlay } from './ComponentSelectorOverlay';
 import { cn } from '@/lib/utils';
+import type { ComponentData } from '@/lib/ide/componentSelector/types';
 
 export function PreviewPane() {
   const isMobile = useMobileDetect();
@@ -25,6 +27,38 @@ export function PreviewPane() {
   // Track when we're navigating history to prevent re-adding to history
   const isNavigatingRef = useRef(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Callback when element is selected - dispatch event for ChatPane to handle
+  const handleElementSelected = useCallback((data: ComponentData, formattedContext: string) => {
+    const elementName = data.componentName || data.elementTag || 'element';
+    const description = data.textContent
+      ? `${elementName}: "${data.textContent.slice(0, 50)}${data.textContent.length > 50 ? '...' : ''}"`
+      : `${elementName} element`;
+
+    // Dispatch custom event for ChatPane's ContextProvider to pick up
+    window.dispatchEvent(new CustomEvent('ide:element-selected', {
+      detail: {
+        type: 'element',
+        name: data.uniqueSelector || elementName,
+        displayName: elementName,
+        description,
+        content: formattedContext,
+        color: '#8b5cf6', // Purple for elements
+        icon: 'pointer',
+        metadata: {
+          selector: data.uniqueSelector,
+          searchHints: data.searchHints,
+          href: data.href,
+        },
+      }
+    }));
+  }, []);
+
+  // Component selector state
+  const componentSelector = useComponentSelector({
+    iframeRef,
+    onElementSelected: handleElementSelected,
+  });
 
   // Register iframe with workspace service for file sync refreshes
   useEffect(() => {
@@ -195,10 +229,24 @@ export function PreviewPane() {
         canGoForward={historyState.index < historyState.history.length - 1}
         onUrlSubmit={handleUrlSubmit}
         isMobile={isMobile}
+        componentSelector={{
+          isEnabled: componentSelector.isEnabled,
+          mode: componentSelector.mode,
+          enable: componentSelector.enable,
+          disable: componentSelector.disable,
+        }}
       />
 
       {/* Preview area */}
-      <div className="flex-1 flex items-center justify-center p-4 overflow-hidden">
+      <div className="flex-1 flex items-center justify-center p-4 overflow-hidden relative">
+        {/* Component Selector Overlay */}
+        <ComponentSelectorOverlay
+          isEnabled={componentSelector.isEnabled}
+          mode={componentSelector.mode}
+          hoveredComponent={componentSelector.hoveredComponent}
+          onDisable={componentSelector.disable}
+        />
+
         {previewUrl ? (
           <DeviceFrame device={deviceFrame} orientation={orientation}>
             <iframe

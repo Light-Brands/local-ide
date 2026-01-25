@@ -6,12 +6,13 @@ import React, {
   useCallback,
   useState,
   useMemo,
+  useEffect,
   type ReactNode,
 } from 'react';
 
 export interface ContextItem {
   id: string;
-  type: 'workflow' | 'agent' | 'command' | 'skill' | 'file';
+  type: 'workflow' | 'agent' | 'command' | 'skill' | 'file' | 'element';
   name: string;
   displayName?: string;
   description: string;
@@ -23,9 +24,12 @@ export interface ContextItem {
   metadata?: Record<string, unknown>;
 }
 
+export type ContextFilterType = 'file' | 'agent' | 'command' | 'skill' | 'workflow' | 'element' | null;
+
 export interface ContextState {
   items: ContextItem[];
   isDrawerOpen: boolean;
+  activeFilter: ContextFilterType;
   addContext: (item: Omit<ContextItem, 'id' | 'isEdited' | 'originalContent'>) => void;
   removeContext: (id: string) => void;
   updateContent: (id: string, content: string) => void;
@@ -33,8 +37,10 @@ export interface ContextState {
   clearAll: () => void;
   toggleDrawer: () => void;
   setDrawerOpen: (open: boolean) => void;
+  setActiveFilter: (filter: ContextFilterType) => void;
   buildPrompt: (userMessage: string) => string;
   getWorkflow: () => ContextItem | undefined;
+  getFilteredItems: () => ContextItem[];
   hasContext: boolean;
 }
 
@@ -49,6 +55,42 @@ function generateContextId(): string {
 export function ContextProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ContextItem[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [activeFilter, setActiveFilterState] = useState<ContextFilterType>(null);
+
+  // Listen for element-selected events from PreviewPane
+  useEffect(() => {
+    const handleElementSelected = (event: CustomEvent) => {
+      const item = event.detail;
+      if (item && item.type === 'element') {
+        console.log(`⛽ [ContextProvider] Received element from preview: ${item.name}`);
+        // Use the addContext logic inline to avoid stale closure
+        setItems((prev) => {
+          // Check for duplicates by name and type
+          const exists = prev.some(
+            (i) => i.type === item.type && i.name === item.name
+          );
+          if (exists) {
+            console.log(`   ⚠️ Duplicate element "${item.name}" - skipping`);
+            return prev;
+          }
+
+          console.log(`   📦 Added element to context (now ${prev.length + 1} items)`);
+          return [
+            ...prev,
+            {
+              ...item,
+              id: `ctx-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+              isEdited: false,
+              originalContent: item.content,
+            },
+          ];
+        });
+      }
+    };
+
+    window.addEventListener('ide:element-selected', handleElementSelected as EventListener);
+    return () => window.removeEventListener('ide:element-selected', handleElementSelected as EventListener);
+  }, []);
 
   const addContext = useCallback(
     (item: Omit<ContextItem, 'id' | 'isEdited' | 'originalContent'>) => {
@@ -132,11 +174,27 @@ export function ContextProvider({ children }: { children: ReactNode }) {
 
   const setDrawerOpen = useCallback((open: boolean) => {
     setIsDrawerOpen(open);
+    if (!open) {
+      setActiveFilterState(null);
+    }
+  }, []);
+
+  const setActiveFilter = useCallback((filter: ContextFilterType) => {
+    setActiveFilterState(filter);
   }, []);
 
   const getWorkflow = useCallback(() => {
     return items.find((item) => item.type === 'workflow');
   }, [items]);
+
+  const getFilteredItems = useCallback(() => {
+    if (!activeFilter) return items;
+    // Group elements with files for the "Elements" category
+    if (activeFilter === 'file') {
+      return items.filter((item) => item.type === 'file' || item.type === 'element');
+    }
+    return items.filter((item) => item.type === activeFilter);
+  }, [items, activeFilter]);
 
   const buildPrompt = useCallback(
     (userMessage: string) => {
@@ -150,6 +208,7 @@ export function ContextProvider({ children }: { children: ReactNode }) {
       const commands = items.filter((item) => item.type === 'command');
       const skills = items.filter((item) => item.type === 'skill');
       const files = items.filter((item) => item.type === 'file');
+      const elements = items.filter((item) => item.type === 'element');
 
       // Add workflow context first (primary orchestration)
       if (workflow) {
@@ -203,6 +262,14 @@ export function ContextProvider({ children }: { children: ReactNode }) {
         contextParts.push(fileDocs);
       }
 
+      // Add element context (selected UI components from preview)
+      if (elements.length > 0) {
+        const elementDocs = elements
+          .map((e) => `[Selected Element: ${e.name}]\n${e.content}`)
+          .join('\n\n');
+        contextParts.push(`[UI Elements to Modify]\n${elementDocs}`);
+      }
+
       // Combine all context with user message
       if (contextParts.length > 0) {
         return `${contextParts.join('\n\n')}\n\n[User Message]\n${userMessage}`;
@@ -219,6 +286,7 @@ export function ContextProvider({ children }: { children: ReactNode }) {
     () => ({
       items,
       isDrawerOpen,
+      activeFilter,
       addContext,
       removeContext,
       updateContent,
@@ -226,13 +294,16 @@ export function ContextProvider({ children }: { children: ReactNode }) {
       clearAll,
       toggleDrawer,
       setDrawerOpen,
+      setActiveFilter,
       buildPrompt,
       getWorkflow,
+      getFilteredItems,
       hasContext,
     }),
     [
       items,
       isDrawerOpen,
+      activeFilter,
       addContext,
       removeContext,
       updateContent,
@@ -240,8 +311,10 @@ export function ContextProvider({ children }: { children: ReactNode }) {
       clearAll,
       toggleDrawer,
       setDrawerOpen,
+      setActiveFilter,
       buildPrompt,
       getWorkflow,
+      getFilteredItems,
       hasContext,
     ]
   );

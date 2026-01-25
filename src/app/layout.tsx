@@ -103,6 +103,10 @@ export default function RootLayout({
             {children}
           </FeedbackSystem>
         </ThemeProvider>
+        {/* Component selector bridge for IDE preview */}
+        {process.env.NODE_ENV === 'development' && (
+          <script src="/component-selector-bridge.js" defer />
+        )}
       </body>
     </html>
   );
