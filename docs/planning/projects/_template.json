@@ -1,0 +1,148 @@
+{
+  "meta": {
+    "id": "project-name",
+    "name": "Project Name",
+    "description": "Brief description of the project",
+    "created": "2024-01-25",
+    "updated": "2024-01-25T00:00:00Z",
+    "status": "planning",
+    "version": "1.0.0"
+  },
+  "plan": {
+    "problem": "Describe the core problem this project solves",
+    "targetUsers": "Who are the primary users?",
+    "goals": [
+      {
+        "id": "goal-1",
+        "description": "First major goal",
+        "completed": false
+      },
+      {
+        "id": "goal-2",
+        "description": "Second major goal",
+        "completed": false
+      }
+    ],
+    "userStories": [
+      {
+        "id": "story-1",
+        "persona": "user",
+        "want": "to accomplish something",
+        "benefit": "I can achieve my goal",
+        "acceptanceCriteria": [
+          "Criterion 1",
+          "Criterion 2"
+        ]
+      }
+    ],
+    "constraints": [
+      "Technical constraint 1",
+      "Time constraint"
+    ],
+    "outOfScope": [
+      "Feature we're not building"
+    ],
+    "successCriteria": [
+      "Measurable outcome 1",
+      "Measurable outcome 2"
+    ],
+    "risks": [
+      {
+        "description": "Potential risk",
+        "impact": "medium",
+        "mitigation": "How we'll handle it"
+      }
+    ],
+    "approval": {
+      "approved": false,
+      "approvedBy": "",
+      "approvedAt": "",
+      "notes": ""
+    }
+  },
+  "brand": {
+    "colors": {
+      "primary": "#3B82F6",
+      "secondary": "#8B5CF6",
+      "accent": "#10B981",
+      "background": "#FFFFFF",
+      "foreground": "#1F2937",
+      "muted": "#6B7280",
+      "success": "#10B981",
+      "warning": "#F59E0B",
+      "error": "#EF4444"
+    },
+    "typography": {
+      "headingFont": "Inter",
+      "bodyFont": "Inter",
+      "codeFont": "JetBrains Mono",
+      "scale": {
+        "display": "4rem",
+        "h1": "2.5rem",
+        "h2": "2rem",
+        "h3": "1.5rem",
+        "body": "1rem",
+        "small": "0.875rem"
+      }
+    },
+    "tone": "professional",
+    "style": "modern",
+    "references": [],
+    "approval": {
+      "approved": false,
+      "approvedBy": "",
+      "approvedAt": ""
+    }
+  },
+  "epics": [
+    {
+      "id": "epic-foundation",
+      "name": "Foundation",
+      "description": "Core infrastructure and setup",
+      "phase": "foundation",
+      "status": "not-started",
+      "dependencies": [],
+      "tasks": {
+        "tables": [],
+        "endpoints": [],
+        "services": [],
+        "components": [],
+        "tests": [],
+        "config": []
+      }
+    }
+  ],
+  "routes": [],
+  "tooling": {
+    "commands": [
+      {
+        "name": "dev",
+        "command": "npm run dev",
+        "description": "Start development server"
+      },
+      {
+        "name": "build",
+        "command": "npm run build",
+        "description": "Build for production"
+      },
+      {
+        "name": "test",
+        "command": "npm test",
+        "description": "Run tests"
+      }
+    ],
+    "agents": [
+      {
+        "name": "Developer",
+        "invocation": "@developer",
+        "description": "Autonomous implementation"
+      },
+      {
+        "name": "Testing",
+        "invocation": "@testing",
+        "description": "Test generation"
+      }
+    ]
+  },
+  "activity": []
+}

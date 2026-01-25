@@ -8,6 +8,93 @@
 
 ## Route Detection Engine
 
+### Step 0: Plan First (MANDATORY)
+
+**Before ANY route detection occurs, the orchestrator MUST:**
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                      PLAN-FIRST GATE (MANDATORY)                    │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  STEP 0A: ASK FOR THEIR PLAN                                        │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │ "Do you have a plan for how you'd like this implemented?"   │   │
+│  │                                                             │   │
+│  │ - If YES: Share it and I'll ask follow-up questions        │   │
+│  │ - If NO: Let's build one together                          │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│                                                                     │
+│  IF THEY HAVE A PLAN:                                               │
+│  ├─ Let them share it completely                                   │
+│  ├─ Ask follow-up questions to understand deeply:                  │
+│  │   • "Tell me more about [specific part]?"                       │
+│  │   • "What's your thinking behind [decision]?"                   │
+│  │   • "How should [edge case] work?"                              │
+│  └─ Continue until 100% certain you understand                     │
+│                                                                     │
+│  IF THEY DON'T HAVE A PLAN:                                         │
+│  ├─ Help build one by asking:                                      │
+│  │   • "What problem are we solving?"                              │
+│  │   • "Who are the users?"                                        │
+│  │   • "What are the key features?"                                │
+│  │   • "What are the constraints?"                                 │
+│  ├─ Synthesize into a proposed plan                                │
+│  └─ Present for approval                                           │
+│                                                                     │
+│  STEP 0B: ASK FOR BRAND GUIDELINES                                  │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │ "Do you have brand guidelines I should follow?"             │   │
+│  │                                                             │   │
+│  │ - If YES: Please share them                                 │   │
+│  │ - If NO: Let's establish some basic guidelines together     │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│                                                                     │
+│  IF THEY DON'T HAVE BRAND GUIDELINES:                               │
+│  ├─ Help establish basics:                                         │
+│  │   • Colors (primary, secondary, accent)                         │
+│  │   • Typography preferences                                      │
+│  │   • Tone and voice                                              │
+│  │   • Visual style (modern, classic, playful, professional)      │
+│  │   • Any existing assets or references                          │
+│  └─ Document for consistent use                                    │
+│                                                                     │
+│  STEP 0C: SAVE TO PROJECT JSON (MANDATORY - SINGLE SOURCE OF TRUTH)│
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │ Create/update the project JSON file:                        │   │
+│  │                                                             │   │
+│  │ Location: /docs/planning/projects/[project-id].json         │   │
+│  │                                                             │   │
+│  │ This file contains EVERYTHING:                              │   │
+│  │ • meta: Project info, status, dates                         │   │
+│  │ • plan: Problem, goals, user stories, constraints           │   │
+│  │ • brand: Colors, typography, tone, style                    │   │
+│  │ • epics: All features broken into tasks                     │   │
+│  │ • routes: API endpoints                                     │   │
+│  │ • activity: Change log                                      │   │
+│  │                                                             │   │
+│  │ Template: /docs/planning/projects/_template.json            │   │
+│  │ Schema: /docs/planning/PROJECT-SCHEMA.json                  │   │
+│  │                                                             │   │
+│  │ This powers the Dev Dashboard at /admin/dev/tracker         │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│                                                                     │
+│  STEP 0D: CREATE INITIAL EPICS & TASKS                              │
+│  ├─ Break the plan into epics (major feature areas)                │
+│  ├─ Break epics into tasks (tables, endpoints, services, etc.)     │
+│  ├─ Set initial status: "pending" for all tasks                    │
+│  └─ Add to the epics array in project.json                         │
+│                                                                     │
+│  CONFIRM BEFORE PROCEEDING:                                         │
+│  ├─ Share: "I've saved the project to /docs/planning/projects/X"   │
+│  ├─ Get explicit approval                                          │
+│  └─ "Does this capture what you want? Should I proceed?"          │
+│                                                                     │
+│  ONLY AFTER USER CONFIRMS → Proceed to Step 1                      │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
 ### Step 1: Complexity Classification
 
 The orchestrator first determines task complexity:
@@ -116,6 +203,15 @@ complexity: quick
 duration: 10-30 minutes
 
 sequence:
+  0. clarification:
+      action: "Enter planning mode, ask clarifying questions"
+      questions:
+        - "What should the loading state look like visually?"
+        - "Should the button be disabled while loading?"
+        - "What triggers the loading state?"
+        - "How long should loading typically last?"
+      gate: "User confirms understanding before proceeding"
+
   1. developer:
       action: "Implement loading state"
       phase: [scaffold, ui, logic]
@@ -137,6 +233,17 @@ complexity: balanced
 duration: 30 min - 2 hours
 
 sequence:
+  0. clarification:
+      action: "Enter planning mode, ask clarifying questions until 100% certain"
+      questions:
+        - "What user data should be displayed on the profile?"
+        - "What settings should be editable?"
+        - "How should validation work for profile updates?"
+        - "Are there any privacy considerations?"
+        - "Should there be a profile picture upload?"
+        - "What happens on save - immediate or confirmation?"
+      gate: "User confirms understanding before proceeding"
+
   1. pm:
       action: "Create quick spec"
       output: "/docs/features/user-profile.md"
@@ -172,6 +279,20 @@ complexity: deep
 duration: 2+ hours
 
 sequence:
+  0. clarification:
+      action: "Enter planning mode, ask extensive clarifying questions until 100% certain"
+      questions:
+        - "What types of notifications are needed (in-app, email, push)?"
+        - "What events should trigger notifications?"
+        - "How should users manage notification preferences?"
+        - "What is the expected notification volume?"
+        - "Should notifications be real-time or batched?"
+        - "How should read/unread state be managed?"
+        - "What about notification history and archiving?"
+        - "Are there any rate limiting requirements?"
+        - "How should offline/reconnect scenarios be handled?"
+      gate: "User confirms complete understanding before proceeding"
+
   1. analyst:
       action: "Research notification patterns"
       output: "/docs/research/notifications-discovery.md"
@@ -224,6 +345,17 @@ trigger: "The submit button isn't working on the contact form"
 complexity: auto-detect
 
 sequence:
+  0. clarification:
+      action: "Enter planning mode, ask clarifying questions"
+      questions:
+        - "What exactly happens when you click the button?"
+        - "Does it show any error messages?"
+        - "When did this start happening?"
+        - "Does it happen consistently or intermittently?"
+        - "Have any recent changes been made to this area?"
+        - "What is the expected behavior?"
+      gate: "User confirms understanding of the bug before proceeding"
+
   1. debugger:
       action: "Diagnose issue"
       output:
@@ -261,6 +393,17 @@ trigger: "Clean up the authentication module"
 complexity: balanced
 
 sequence:
+  0. clarification:
+      action: "Enter planning mode, ask clarifying questions until 100% certain"
+      questions:
+        - "What specific pain points are you experiencing with this code?"
+        - "Are there any behaviors that must NOT change?"
+        - "What is the desired end state?"
+        - "Are there any performance concerns to address?"
+        - "Should this be done incrementally or all at once?"
+        - "Are there tests in place to verify behavior is preserved?"
+      gate: "User confirms scope and constraints before proceeding"
+
   1. auditor:
       action: "Analyze current structure"
       output:
@@ -300,6 +443,15 @@ trigger: "Review PR #42"
 complexity: auto-detect from PR size
 
 sequence:
+  0. clarification:
+      action: "Ask clarifying questions about review scope"
+      questions:
+        - "What areas should I focus on most?"
+        - "Are there specific concerns you want me to check?"
+        - "Should I prioritize security, performance, or correctness?"
+        - "What level of detail do you want in the review?"
+      gate: "User confirms review focus before proceeding"
+
   parallel_dispatch:
     always:
       - consistency_reviewer:
@@ -337,6 +489,19 @@ trigger: "Design the database schema for the new feature"
 complexity: deep
 
 sequence:
+  0. clarification:
+      action: "Enter planning mode, ask extensive clarifying questions until 100% certain"
+      questions:
+        - "What entities/data need to be stored?"
+        - "What are the relationships between entities?"
+        - "What queries will be most common?"
+        - "What are the expected data volumes?"
+        - "Are there any compliance requirements (GDPR, etc.)?"
+        - "What are the scalability expectations?"
+        - "Are there existing patterns we should follow?"
+        - "What about data migration from existing systems?"
+      gate: "User confirms all requirements before proceeding"
+
   1. analyst:
       action: "Research patterns"
       output: "Technology options and tradeoffs"
@@ -379,6 +544,16 @@ trigger: "Add tests for the checkout flow"
 complexity: balanced
 
 sequence:
+  0. clarification:
+      action: "Enter planning mode, ask clarifying questions"
+      questions:
+        - "What are the critical paths that must be tested?"
+        - "What is the target coverage percentage?"
+        - "Should I include E2E tests or just unit/integration?"
+        - "Are there specific edge cases you want covered?"
+        - "What test frameworks are already in use?"
+      gate: "User confirms test scope before proceeding"
+
   1. testing:
       action: "Analyze coverage gaps"
       output: "Test plan"
@@ -409,6 +584,16 @@ trigger: "Document the API endpoints"
 complexity: balanced
 
 sequence:
+  0. clarification:
+      action: "Enter planning mode, ask clarifying questions"
+      questions:
+        - "What format should the documentation be in?"
+        - "Who is the target audience (developers, end-users)?"
+        - "Should I include code examples?"
+        - "Are there existing documentation standards to follow?"
+        - "Which endpoints are highest priority?"
+      gate: "User confirms documentation scope before proceeding"
+
   1. analyst:
       action: "Gather information"
       sources:
@@ -433,6 +618,16 @@ trigger: "Why is the dashboard loading slowly?"
 complexity: quick
 
 sequence:
+  0. clarification:
+      action: "Enter planning mode, ask clarifying questions"
+      questions:
+        - "How slow is it (specific load times)?"
+        - "Is it slow on initial load, navigation, or both?"
+        - "Does it happen in all browsers?"
+        - "Are there specific components that seem slow?"
+        - "When did you first notice the slowdown?"
+      gate: "User confirms investigation context before proceeding"
+
   1. debugger:
       action: "Profile performance"
       tools:

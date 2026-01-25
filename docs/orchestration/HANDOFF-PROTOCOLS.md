@@ -6,6 +6,43 @@
 
 ---
 
+## CRITICAL: Mandatory Clarification Before Any Handoff
+
+**Before ANY workflow begins and at each major handoff:**
+
+### The Clarification Requirement
+
+Every agent MUST follow this protocol:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                  MANDATORY CLARIFICATION PROTOCOL                   │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  1. ENTER PLANNING MODE                                             │
+│     ├─ Pause before taking action                                  │
+│     └─ Analyze the full scope of the task                          │
+│                                                                     │
+│  2. ASK QUALIFYING QUESTIONS UNTIL 100% CERTAIN                     │
+│     ├─ Do NOT make assumptions                                      │
+│     ├─ Ask about: requirements, edge cases, integration, UX        │
+│     ├─ Continue asking until you have complete clarity             │
+│     └─ "Please ask me qualifying questions until you are 100%      │
+│         certain you understand what I am requesting"               │
+│                                                                     │
+│  3. CONFIRM UNDERSTANDING                                           │
+│     ├─ Summarize your understanding back to the user/previous agent│
+│     ├─ List all assumptions explicitly                             │
+│     └─ Wait for confirmation before proceeding                     │
+│                                                                     │
+│  4. DOCUMENT IN HANDOFF                                             │
+│     └─ Include clarifications received in handoff packet           │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## The Handoff Packet
 
 Every agent transition uses a standardized handoff packet. This ensures:
@@ -50,6 +87,12 @@ handoff:
 
   # Context
   context:
+    clarifications_received:
+      - question: "What clarifying question was asked"
+        answer: "User's response"
+      - question: "Another clarifying question"
+        answer: "User's response"
+
     decisions:
       - decision: "What was decided"
         rationale: "Why"
@@ -60,7 +103,7 @@ handoff:
       - "Constraint 2"
 
     assumptions:
-      - "Assumption 1"
+      - "Assumption 1 (confirmed by user)"
 
   # State
   state:

@@ -1,0 +1,259 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Project Development Schema",
+  "description": "Single source of truth for project planning, tracking, and development dashboard",
+  "type": "object",
+  "required": ["meta", "plan", "brand", "epics"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "description": "Project metadata",
+      "required": ["id", "name", "created", "status"],
+      "properties": {
+        "id": { "type": "string", "description": "Unique project identifier (kebab-case)" },
+        "name": { "type": "string", "description": "Human-readable project name" },
+        "description": { "type": "string", "description": "Brief project description" },
+        "created": { "type": "string", "format": "date", "description": "Creation date (YYYY-MM-DD)" },
+        "updated": { "type": "string", "format": "date-time", "description": "Last update timestamp" },
+        "status": { "type": "string", "enum": ["planning", "in-progress", "paused", "complete"], "description": "Overall project status" },
+        "version": { "type": "string", "description": "Schema version", "default": "1.0.0" }
+      }
+    },
+    "plan": {
+      "type": "object",
+      "description": "Project plan - the 'what' and 'why'",
+      "required": ["problem", "goals"],
+      "properties": {
+        "problem": { "type": "string", "description": "What problem are we solving?" },
+        "targetUsers": { "type": "string", "description": "Who are the primary users?" },
+        "goals": {
+          "type": "array",
+          "description": "Project goals",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "description": { "type": "string" },
+              "completed": { "type": "boolean", "default": false }
+            }
+          }
+        },
+        "userStories": {
+          "type": "array",
+          "description": "User stories in 'As a X, I want Y, so that Z' format",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "persona": { "type": "string" },
+              "want": { "type": "string" },
+              "benefit": { "type": "string" },
+              "acceptanceCriteria": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
+        "constraints": {
+          "type": "array",
+          "description": "Technical, time, or resource constraints",
+          "items": { "type": "string" }
+        },
+        "outOfScope": {
+          "type": "array",
+          "description": "Explicitly out of scope items",
+          "items": { "type": "string" }
+        },
+        "successCriteria": {
+          "type": "array",
+          "description": "How we measure success",
+          "items": { "type": "string" }
+        },
+        "risks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "description": { "type": "string" },
+              "impact": { "type": "string", "enum": ["low", "medium", "high"] },
+              "mitigation": { "type": "string" }
+            }
+          }
+        },
+        "approval": {
+          "type": "object",
+          "properties": {
+            "approved": { "type": "boolean", "default": false },
+            "approvedBy": { "type": "string" },
+            "approvedAt": { "type": "string", "format": "date-time" },
+            "notes": { "type": "string" }
+          }
+        }
+      }
+    },
+    "brand": {
+      "type": "object",
+      "description": "Brand guidelines for consistent design",
+      "properties": {
+        "colors": {
+          "type": "object",
+          "properties": {
+            "primary": { "type": "string", "description": "Primary brand color (hex)" },
+            "secondary": { "type": "string", "description": "Secondary color (hex)" },
+            "accent": { "type": "string", "description": "Accent color (hex)" },
+            "background": { "type": "string" },
+            "foreground": { "type": "string" },
+            "muted": { "type": "string" },
+            "success": { "type": "string" },
+            "warning": { "type": "string" },
+            "error": { "type": "string" }
+          }
+        },
+        "typography": {
+          "type": "object",
+          "properties": {
+            "headingFont": { "type": "string" },
+            "bodyFont": { "type": "string" },
+            "codeFont": { "type": "string" },
+            "scale": {
+              "type": "object",
+              "properties": {
+                "display": { "type": "string" },
+                "h1": { "type": "string" },
+                "h2": { "type": "string" },
+                "h3": { "type": "string" },
+                "body": { "type": "string" },
+                "small": { "type": "string" }
+              }
+            }
+          }
+        },
+        "tone": {
+          "type": "string",
+          "enum": ["formal", "casual", "professional", "playful", "technical", "approachable"],
+          "description": "Voice and tone"
+        },
+        "style": {
+          "type": "string",
+          "enum": ["modern", "classic", "minimal", "bold", "clean", "decorative"],
+          "description": "Visual style"
+        },
+        "references": {
+          "type": "array",
+          "description": "Reference designs or inspiration URLs",
+          "items": { "type": "string" }
+        },
+        "approval": {
+          "type": "object",
+          "properties": {
+            "approved": { "type": "boolean", "default": false },
+            "approvedBy": { "type": "string" },
+            "approvedAt": { "type": "string", "format": "date-time" }
+          }
+        }
+      }
+    },
+    "epics": {
+      "type": "array",
+      "description": "Development epics containing all tasks",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "phase", "status"],
+        "properties": {
+          "id": { "type": "string", "description": "Unique epic identifier" },
+          "name": { "type": "string", "description": "Epic name" },
+          "description": { "type": "string" },
+          "phase": { "type": "string", "enum": ["foundation", "mvp", "growth", "scale"], "description": "Development phase" },
+          "status": { "type": "string", "enum": ["not-started", "in-progress", "blocked", "complete"] },
+          "dependencies": { "type": "array", "items": { "type": "string" }, "description": "Epic IDs this depends on" },
+          "tasks": {
+            "type": "object",
+            "properties": {
+              "tables": { "type": "array", "items": { "$ref": "#/definitions/task" } },
+              "endpoints": { "type": "array", "items": { "$ref": "#/definitions/task" } },
+              "services": { "type": "array", "items": { "$ref": "#/definitions/task" } },
+              "components": { "type": "array", "items": { "$ref": "#/definitions/task" } },
+              "tests": { "type": "array", "items": { "$ref": "#/definitions/task" } },
+              "config": { "type": "array", "items": { "$ref": "#/definitions/task" } }
+            }
+          }
+        }
+      }
+    },
+    "routes": {
+      "type": "array",
+      "description": "API routes and endpoints",
+      "items": {
+        "type": "object",
+        "properties": {
+          "method": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
+          "path": { "type": "string" },
+          "description": { "type": "string" },
+          "auth": { "type": "boolean", "default": false },
+          "status": { "type": "string", "enum": ["pending", "in-progress", "complete"] }
+        }
+      }
+    },
+    "tooling": {
+      "type": "object",
+      "description": "Development tooling configuration",
+      "properties": {
+        "commands": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "command": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        },
+        "agents": {
+          "type": "array",
+          "description": "AI agents available for this project",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "invocation": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "activity": {
+      "type": "array",
+      "description": "Activity log for tracking changes",
+      "items": {
+        "type": "object",
+        "properties": {
+          "timestamp": { "type": "string", "format": "date-time" },
+          "agent": { "type": "string", "description": "Who made the change (user or agent name)" },
+          "action": { "type": "string" },
+          "details": { "type": "string" },
+          "affectedItems": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "task": {
+      "type": "object",
+      "required": ["id", "name", "status"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "in-progress", "complete", "blocked"] },
+        "priority": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+        "filePath": { "type": "string", "description": "Path to the implementation file" },
+        "acceptanceCriteria": { "type": "array", "items": { "type": "string" } },
+        "relatedTests": { "type": "array", "items": { "type": "string" } },
+        "assignee": { "type": "string", "description": "Agent or person assigned" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "completedAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

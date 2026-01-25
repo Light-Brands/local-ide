@@ -14,6 +14,50 @@ When invoked, this skill creates a detailed feature specification document.
 
 ## Execution Steps
 
+### 0. MANDATORY: Clarification Phase (ALWAYS FIRST)
+
+**Before ANY planning begins:**
+
+<clarification>
+1. **Enter Planning Mode**
+   - Do NOT proceed to analysis until clarification is complete
+   - Read the feature request carefully
+
+2. **Ask Qualifying Questions Until 100% Certain**
+   - Ask the user clarifying questions until you are **100% certain** you understand what they are requesting
+   - Do NOT make assumptions - when in doubt, ASK
+   - Continue asking questions until you have complete clarity
+
+3. **Required Questions Framework**
+   Ask about:
+   - What is the core problem this feature solves?
+   - Who are the primary users?
+   - What is the expected user flow?
+   - What data needs to be stored/processed?
+   - Are there any integration requirements?
+   - What are the success criteria?
+   - Are there any constraints (technical, time, budget)?
+   - What edge cases should be handled?
+
+4. **Confirm Understanding**
+   - Summarize your understanding back to the user
+   - List any assumptions you're making
+   - Wait for user confirmation before proceeding to analysis
+
+**Example:**
+```
+Before I plan this feature, I need to understand a few things:
+
+1. [Specific question about the feature purpose]
+2. [Question about user needs]
+3. [Question about technical requirements]
+4. [Question about edge cases]
+5. [Question about success criteria]
+
+Please answer these so I can create an accurate specification.
+```
+</clarification>
+
 ### 1. Feature Analysis
 
 <analysis>

@@ -32,11 +32,13 @@ This orchestration layer enables:
 
 ### Core Tenets
 
-1. **Specification First**: Every feature starts with a spec, not code
-2. **Right Agent, Right Time**: Specialized agents handle specialized tasks
-3. **Context is King**: Full context travels with every handoff
-4. **Progressive Disclosure**: Load complexity on-demand, not upfront
-5. **Autonomous but Supervised**: Agents work independently within guardrails
+1. **Plan First**: ALWAYS ask for their plan before anything else - if they have one, understand it deeply; if not, help build one
+2. **Understand Before Acting**: Ask follow-up questions until you are 100% certain you understand the plan - never assume
+3. **Specification First**: Every feature starts with a spec, not code
+4. **Right Agent, Right Time**: Specialized agents handle specialized tasks
+5. **Context is King**: Full context travels with every handoff
+6. **Progressive Disclosure**: Load complexity on-demand, not upfront
+7. **Autonomous but Supervised**: Agents work independently within guardrails
 
 ---
 
@@ -91,6 +93,95 @@ Cross-cutting concerns and support functions.
 ---
 
 ## Orchestration Principles
+
+### Principle 0: Plan First (MANDATORY)
+
+**Before ANY orchestration begins:**
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    MANDATORY PLAN-FIRST PROTOCOL                    │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  1. ASK FOR THEIR PLAN FIRST                                        │
+│     └─► "Do you have a plan for how you'd like this implemented?"  │
+│     └─► Do NOT begin implementation                                 │
+│     └─► Do NOT skip this step                                       │
+│                                                                     │
+│  2A. IF THEY HAVE A PLAN → Understand It Deeply                    │
+│      └─► Let them share their complete plan                        │
+│      └─► Listen without interrupting                               │
+│      └─► Then ask follow-up questions:                             │
+│          • "Can you tell me more about [specific part]?"           │
+│          • "What's your thinking behind [decision]?"               │
+│          • "How should [edge case] be handled?"                    │
+│          • "What does success look like for this?"                 │
+│      └─► Continue until 100% certain you understand their vision   │
+│                                                                     │
+│  2B. IF THEY DON'T HAVE A PLAN → Help Build One Together           │
+│      └─► Guide them through plan creation:                         │
+│          • "What problem are we solving?"                          │
+│          • "Who are the users and what do they need?"              │
+│          • "What are the key features/behaviors?"                  │
+│          • "What are the constraints?"                             │
+│          • "What edge cases should we handle?"                     │
+│      └─► Synthesize answers into a proposed plan                   │
+│      └─► Present plan for their approval                           │
+│                                                                     │
+│  3. CONFIRM THE PLAN                                                │
+│     └─► Summarize the plan (theirs or co-created)                  │
+│     └─► List assumptions explicitly                                │
+│     └─► Ask: "Does this capture what you want? Should I proceed?" │
+│     └─► Get explicit approval before proceeding                    │
+│                                                                     │
+│  4. ONLY THEN: Proceed to Complexity Detection                     │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**The First Questions Are Always:**
+
+```
+1. PLAN:
+   "Do you have a plan for how you'd like this implemented?"
+   - If YES: Please share it and I'll ask follow-up questions.
+   - If NO: Let's build one together.
+
+2. BRAND GUIDELINES (after plan is confirmed):
+   "Do you have brand guidelines I should follow?"
+   - If YES: Please share them (colors, typography, tone, style).
+   - If NO: Let's establish some basic guidelines together.
+```
+
+**MANDATORY: Save to Project JSON (Single Source of Truth):**
+```
+Create/update the project JSON file:
+
+Location: /docs/planning/projects/[project-id].json
+
+This file contains EVERYTHING:
+• meta: Project info, status, dates
+• plan: Problem, goals, user stories, constraints
+• brand: Colors, typography, tone, style
+• epics: All features broken into tasks
+• routes: API endpoints
+• activity: Change log
+
+Template: /docs/planning/projects/_template.json
+Schema: /docs/planning/PROJECT-SCHEMA.json
+
+This powers the Dev Dashboard at /admin/dev/tracker
+
+DO NOT proceed until the project JSON is saved.
+```
+
+**During Development: Keep JSON Updated:**
+```
+As you work on tasks:
+1. Update task status: pending → in-progress → complete
+2. Log significant actions in the activity array
+3. The Dev Dashboard reads from this file in real-time
+```
 
 ### Principle 1: Complexity Detection
 

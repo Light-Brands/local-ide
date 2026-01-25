@@ -6,6 +6,47 @@
 
 ---
 
+## CRITICAL: Universal Plan-First Requirement
+
+**EVERY agent in this registry MUST follow the Mandatory Plan-First Protocol before beginning work.**
+
+### Universal Agent Protocol (ALL AGENTS)
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│              MANDATORY PLAN-FIRST PROTOCOL (ALL AGENTS)            │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  BEFORE ANY AGENT BEGINS WORK:                                      │
+│                                                                     │
+│  1. ASK FOR THEIR PLAN                                              │
+│     └─ "Do you have a plan for this?"                              │
+│     └─ If YES: Let them share it, then ask follow-up questions    │
+│     └─ If NO: Help them build one together                        │
+│                                                                     │
+│  2. ASK FOR BRAND GUIDELINES                                        │
+│     └─ "Do you have brand guidelines?"                             │
+│     └─ If YES: Let them share                                      │
+│     └─ If NO: Help establish basic guidelines                      │
+│                                                                     │
+│  3. SAVE BOTH TO FILES (MANDATORY)                                  │
+│     └─ Plan → /docs/planning/[project-name]-plan.md               │
+│     └─ Brand → /docs/planning/[project-name]-brand-guidelines.md  │
+│     └─ DO NOT proceed until files are saved                        │
+│                                                                     │
+│  4. CONFIRM BEFORE PROCEEDING                                       │
+│     └─ Share file locations with user                              │
+│     └─ Get explicit approval to proceed                            │
+│                                                                     │
+│  5. ONLY THEN: Execute agent capabilities                          │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+This protocol applies to **every agent invocation**, regardless of tier or complexity.
+
+---
+
 ## Registry Structure
 
 Each agent entry includes:
@@ -15,6 +56,7 @@ Each agent entry includes:
 - **Outputs**: What it produces
 - **Handoffs**: Which agents it receives from and passes to
 - **Quality Gates**: What must pass before handoff
+- **Clarification Questions**: Domain-specific questions to ask (NEW)
 
 ---
 
@@ -69,6 +111,14 @@ quality_gates:
     - "User needs clearly identified"
     - "At least 3 options considered"
     - "Recommendations justified"
+
+clarification_questions:
+  must_ask:
+    - "What specific problem are we trying to solve?"
+    - "Who are the primary users affected?"
+    - "What does success look like for this feature?"
+    - "Are there existing solutions we should learn from?"
+    - "What constraints (technical, budget, time) should I know about?"
 ```
 
 ---
@@ -126,6 +176,14 @@ quality_gates:
     - "Priority clearly defined"
     - "Scope boundaries documented"
     - "Dependencies identified"
+
+clarification_questions:
+  must_ask:
+    - "What is the core user need this addresses?"
+    - "What are the must-have vs nice-to-have features?"
+    - "What are the acceptance criteria for each user story?"
+    - "Who needs to approve this before development?"
+    - "What is the priority relative to other work?"
 ```
 
 ---
@@ -185,6 +243,14 @@ quality_gates:
     - "Component boundaries clear"
     - "Integration points documented"
     - "ADRs created for key decisions"
+
+clarification_questions:
+  must_ask:
+    - "What is the expected data volume and growth rate?"
+    - "What are the performance requirements (latency, throughput)?"
+    - "Are there existing systems this must integrate with?"
+    - "What are the security and compliance requirements?"
+    - "Should this follow existing patterns or establish new ones?"
 ```
 
 ---
@@ -239,6 +305,14 @@ quality_gates:
     - "Accessibility WCAG AA planned"
     - "Responsive design specified"
     - "Design tokens referenced"
+
+clarification_questions:
+  must_ask:
+    - "Who are the primary users and what are their goals?"
+    - "What is the expected user flow from start to finish?"
+    - "Are there any accessibility requirements to consider?"
+    - "What devices/screen sizes are most important?"
+    - "Are there reference designs or competitors to learn from?"
 ```
 
 ---
@@ -293,6 +367,14 @@ quality_gates:
     - "Dependencies mapped"
     - "Sprint goal defined"
     - "DoD established"
+
+clarification_questions:
+  must_ask:
+    - "What is the timeline for this work?"
+    - "Are there dependencies on other teams or work?"
+    - "What are the blockers or risks we should track?"
+    - "How should we communicate progress?"
+    - "What is the definition of done?"
 ```
 
 ---
@@ -360,6 +442,14 @@ quality_gates:
     - "ESLint/Prettier passed"
     - "Unit tests passing"
     - "95%+ coverage achieved"
+
+clarification_questions:
+  must_ask:
+    - "What is the expected behavior for each user interaction?"
+    - "How should errors be handled and displayed?"
+    - "Are there specific edge cases I should handle?"
+    - "What existing patterns should I follow?"
+    - "What is the testing approach for this component?"
 ```
 
 ---
@@ -420,6 +510,14 @@ quality_gates:
     - "All tests passing"
     - "Accessibility tests included"
     - "Edge cases covered"
+
+clarification_questions:
+  must_ask:
+    - "What are the critical paths that must work correctly?"
+    - "Are there specific edge cases you want me to cover?"
+    - "What coverage level are you targeting?"
+    - "Should I include E2E tests or just unit/integration?"
+    - "Are there known bugs or regressions to test for?"
 ```
 
 ---
@@ -472,6 +570,14 @@ quality_gates:
     - "No high-severity issues"
     - "All findings above confidence threshold"
     - "Remediation clear"
+
+clarification_questions:
+  must_ask:
+    - "What is the security context (public, authenticated, admin)?"
+    - "What sensitive data is being handled?"
+    - "Are there specific threats or concerns to focus on?"
+    - "What is the risk tolerance for this feature?"
+    - "Are there compliance requirements (GDPR, HIPAA, etc.)?"
 ```
 
 ---
@@ -527,6 +633,14 @@ quality_gates:
     - "Lighthouse 95+ achieved"
     - "No critical performance issues"
     - "Bundle size acceptable"
+
+clarification_questions:
+  must_ask:
+    - "What are the performance targets (load time, etc.)?"
+    - "What devices/network conditions are most important?"
+    - "Are there specific bottlenecks you've noticed?"
+    - "What is the expected user volume?"
+    - "Are there baseline metrics to compare against?"
 ```
 
 ---
@@ -578,6 +692,14 @@ quality_gates:
     - "No circular dependencies"
     - "Coupling within bounds"
     - "No god objects"
+
+clarification_questions:
+  must_ask:
+    - "What architectural patterns should this follow?"
+    - "Are there specific areas of concern?"
+    - "What is the tolerance for technical debt?"
+    - "Should I focus on specific modules or entire codebase?"
+    - "What patterns should be considered anti-patterns here?"
 ```
 
 ---
@@ -644,6 +766,14 @@ quality_gates:
     - "Responsive tested"
     - "Animations smooth"
     - "Accessibility maintained"
+
+clarification_questions:
+  must_ask:
+    - "What specific visual issues are you seeing?"
+    - "Do you have reference designs to match?"
+    - "Should I focus on spacing, colors, animations, or all?"
+    - "Are there elements that should NOT change?"
+    - "What screen sizes are most critical?"
 ```
 
 ---
@@ -698,6 +828,14 @@ quality_gates:
     - "Existing tests still pass"
     - "Complexity reduced"
     - "No functionality changed"
+
+clarification_questions:
+  must_ask:
+    - "What specific complexity issues are you seeing?"
+    - "Are there behaviors that must NOT change?"
+    - "What is the target simplification level?"
+    - "Should I preserve existing APIs/interfaces?"
+    - "Are there patterns you want me to extract?"
 ```
 
 ---
@@ -753,6 +891,14 @@ quality_gates:
     - "Root cause identified"
     - "Fix clearly described"
     - "Regression test proposed"
+
+clarification_questions:
+  must_ask:
+    - "What exactly happens when the bug occurs?"
+    - "Does it happen consistently or intermittently?"
+    - "When did this start happening?"
+    - "Have any recent changes been made?"
+    - "What is the expected behavior?"
 ```
 
 ---

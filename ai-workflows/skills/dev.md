@@ -8,6 +8,41 @@
 /dev [file-or-component] [phase]
 ```
 
+## MANDATORY: Clarification Before Each Phase
+
+**Before starting ANY phase:**
+
+### Pre-Phase Clarification Protocol
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    MANDATORY CLARIFICATION                          │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  1. ENTER PLANNING MODE                                             │
+│     └─ Review the current phase requirements                       │
+│                                                                     │
+│  2. ASK QUALIFYING QUESTIONS UNTIL 100% CERTAIN                     │
+│     └─ "Before I begin the [phase] phase, I need to confirm:"      │
+│     └─ Ask specific questions relevant to the phase                │
+│     └─ Do NOT assume - when in doubt, ASK                          │
+│                                                                     │
+│  3. CONFIRM UNDERSTANDING                                           │
+│     └─ Summarize what you will do in this phase                    │
+│     └─ Wait for user confirmation                                  │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Phase-Specific Questions:**
+- **scaffold**: What file structure do you expect? Any specific naming conventions?
+- **ui**: What should this look like? Any specific design requirements?
+- **logic**: What behaviors are expected? What are the edge cases?
+- **animation**: What animations do you want? Any specific timing/easing?
+- **integration**: What API endpoints? How should errors be handled?
+- **test**: What scenarios are most critical to test?
+- **polish**: What areas need the most attention?
+
 ## Phases
 
 ### Phase: `scaffold`

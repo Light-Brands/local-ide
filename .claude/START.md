@@ -7,6 +7,86 @@
 
 ---
 
+## CRITICAL: Plan First (MANDATORY)
+
+**Before ANY work begins, the following MUST happen:**
+
+### Step 0: Request Their Plan (ALWAYS FIRST)
+
+When you receive ANY development request:
+
+1. **Ask For Their Plan First**
+   ```
+   Before we begin, do you have a plan for how you'd like this implemented?
+
+   - If YES: Please share your plan and I'll ask follow-up questions to make sure I fully understand it.
+   - If NO: No problem! Let's build one together. I'll ask you some questions to help us create a solid plan.
+   ```
+
+2. **If They Have a Plan → Understand It Deeply**
+   - Let them share their complete plan first
+   - DO NOT interrupt or start working
+   - Once they've shared it, ask follow-up questions:
+     - "Can you tell me more about [specific part of their plan]?"
+     - "What's your thinking behind [specific decision]?"
+     - "How do you envision [specific interaction/flow]?"
+     - "What should happen when [edge case]?"
+   - Continue asking questions until you are **100% certain** you understand their vision
+
+3. **If They Don't Have a Plan → Help Build One**
+   - Guide them through creating a plan by asking:
+     - "What problem are we trying to solve?"
+     - "Who are the users and what do they need?"
+     - "What does success look like?"
+     - "What are the key features or behaviors?"
+     - "What are the constraints (technical, time, etc.)?"
+     - "What edge cases should we handle?"
+   - Synthesize their answers into a proposed plan
+   - Present the plan back to them for approval
+
+4. **Ask For Brand Guidelines**
+   ```
+   Do you have brand guidelines I should follow?
+
+   - If YES: Please share them (colors, typography, tone, visual style)
+   - If NO: Let's establish some basic guidelines together so everything stays consistent.
+   ```
+
+5. **If They Don't Have Brand Guidelines → Help Create Them**
+   - Guide them through establishing basics:
+     - Primary, secondary, and accent colors
+     - Typography preferences (fonts, sizes)
+     - Tone and voice (formal, casual, playful, professional)
+     - Visual style (modern, minimal, bold, classic)
+     - Any reference sites or designs they like
+   - Document these for consistent use throughout the project
+
+6. **Save to Project JSON (MANDATORY - Single Source of Truth)**
+   - ALWAYS create/update the project JSON file before any implementation:
+     - Location: `/docs/planning/projects/[project-id].json`
+   - This single file contains EVERYTHING:
+     - `meta`: Project name, status, dates
+     - `plan`: Problem, goals, user stories, constraints
+     - `brand`: Colors, typography, tone, style
+     - `epics`: All features broken into tasks
+     - `activity`: Change log
+   - Use the template: `/docs/planning/projects/_template.json`
+   - Use the schema: `/docs/planning/PROJECT-SCHEMA.json`
+   - This powers the Dev Dashboard at `/admin/dev/tracker`
+
+7. **Confirm Everything Before Proceeding**
+   - Share the project.json file location with the user
+   - Summarize: "I've saved the project to `/docs/planning/projects/[project-id].json`"
+   - Get explicit approval: "Does this capture what you want? Should I proceed?"
+   - DO NOT begin implementation until they confirm
+
+8. **During Development: Keep Project JSON Updated**
+   - As you work, update task statuses in the JSON
+   - Log significant actions in the `activity` array
+   - This keeps the Dev Dashboard in sync with actual progress
+
+---
+
 ## How to Use
 
 ### Option 1: Natural Language (Recommended)
@@ -22,11 +102,14 @@ Simply describe what you want:
 ```
 
 The orchestrator will:
-1. Detect complexity (quick/balanced/deep)
-2. Identify task type (feature/bugfix/refactor/review/architecture)
-3. Route through the optimal agent sequence
-4. Handle all handoffs automatically
-5. Ensure quality gates pass
+1. **FIRST: Ask if you have a plan** (MANDATORY)
+2. **If no plan: Help you build one together**
+3. **If plan exists: Ask follow-up questions to understand it deeply**
+4. Detect complexity (quick/balanced/deep)
+5. Identify task type (feature/bugfix/refactor/review/architecture)
+6. Route through the optimal agent sequence
+7. Handle all handoffs automatically
+8. Ensure quality gates pass
 
 ### Option 2: Explicit Commands
 
