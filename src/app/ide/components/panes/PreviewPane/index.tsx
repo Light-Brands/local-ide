@@ -9,8 +9,14 @@ import { Monitor, Globe, RefreshCw } from 'lucide-react';
 import { DeviceFrame, DeviceInfo, type DeviceType, type Orientation } from './DeviceFrame';
 import { PreviewToolbar } from './PreviewToolbar';
 import { ComponentSelectorOverlay } from './ComponentSelectorOverlay';
+import { ComponentEnhancementPopup } from './ComponentEnhancementPopup';
 import { cn } from '@/lib/utils';
 import type { ComponentData } from '@/lib/ide/componentSelector/types';
+
+interface PendingComponentData {
+  data: ComponentData;
+  formattedContext: string;
+}
 
 export function PreviewPane() {
   const isMobile = useMobileDetect();
@@ -24,18 +30,32 @@ export function PreviewPane() {
   });
   const [orientation, setOrientation] = useState<Orientation>('portrait');
 
+  // Enhancement popup state
+  const [showEnhancementPopup, setShowEnhancementPopup] = useState(false);
+  const [pendingComponentData, setPendingComponentData] = useState<PendingComponentData | null>(null);
+
   // Track when we're navigating history to prevent re-adding to history
   const isNavigatingRef = useRef(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Callback when element is selected - dispatch event for ChatPane to handle
+  // Callback when element is selected - show popup instead of immediately adding context
   const handleElementSelected = useCallback((data: ComponentData, formattedContext: string) => {
+    // Store the component data and show popup
+    setPendingComponentData({ data, formattedContext });
+    setShowEnhancementPopup(true);
+  }, []);
+
+  // Handle enhancement popup submission
+  const handleEnhancementSubmit = useCallback((enhancementRequest: string) => {
+    if (!pendingComponentData) return;
+
+    const { data, formattedContext } = pendingComponentData;
     const elementName = data.componentName || data.elementTag || 'element';
     const description = data.textContent
       ? `${elementName}: "${data.textContent.slice(0, 50)}${data.textContent.length > 50 ? '...' : ''}"`
       : `${elementName} element`;
 
-    // Dispatch custom event for ChatPane's ContextProvider to pick up
+    // Dispatch custom event with enhancement request included
     window.dispatchEvent(new CustomEvent('ide:element-selected', {
       detail: {
         type: 'element',
@@ -50,15 +70,27 @@ export function PreviewPane() {
           searchHints: data.searchHints,
           href: data.href,
         },
+        enhancementRequest, // Include the user's enhancement request
       }
     }));
-  }, []);
+
+    // Clear pending data but keep popup open for next selection
+    setPendingComponentData(null);
+  }, [pendingComponentData]);
 
   // Component selector state
   const componentSelector = useComponentSelector({
     iframeRef,
     onElementSelected: handleElementSelected,
   });
+
+  // Handle enhancement popup cancel (defined after componentSelector)
+  const handleEnhancementCancel = useCallback(() => {
+    setPendingComponentData(null);
+    setShowEnhancementPopup(false);
+    // Disable component selector when canceling
+    componentSelector.disable();
+  }, [componentSelector]);
 
   // Register iframe with workspace service for file sync refreshes
   useEffect(() => {
@@ -245,6 +277,15 @@ export function PreviewPane() {
           mode={componentSelector.mode}
           hoveredComponent={componentSelector.hoveredComponent}
           onDisable={componentSelector.disable}
+        />
+
+        {/* Component Enhancement Popup */}
+        <ComponentEnhancementPopup
+          isOpen={showEnhancementPopup}
+          componentData={pendingComponentData?.data ?? null}
+          formattedContext={pendingComponentData?.formattedContext ?? ''}
+          onSubmit={handleEnhancementSubmit}
+          onCancel={handleEnhancementCancel}
         />
 
         {previewUrl ? (

@@ -9,6 +9,7 @@ import React, {
   useEffect,
   type ReactNode,
 } from 'react';
+import { getWorkflow as getWorkflowDefinition } from '@/lib/ide/tooling';
 
 export interface ContextItem {
   id: string;
@@ -115,9 +116,17 @@ export function ContextProvider({ children }: { children: ReactNode }) {
   // Listen for element-selected events from PreviewPane
   useEffect(() => {
     const handleElementSelected = (event: CustomEvent) => {
-      const item = event.detail;
+      const { enhancementRequest, ...item } = event.detail;
       if (item && item.type === 'element') {
         console.log(`⛽ [ContextProvider] Received element from preview: ${item.name}`);
+
+        // Build content with enhancement request if present
+        let content = item.content;
+        if (enhancementRequest) {
+          content += `\n\n---\n**Enhancement Request:**\n${enhancementRequest}`;
+          console.log(`   ✨ Enhancement request: ${enhancementRequest.slice(0, 50)}...`);
+        }
+
         // Use the addContext logic inline to avoid stale closure
         setItems((prev) => {
           // Check for duplicates by name and type
@@ -134,12 +143,49 @@ export function ContextProvider({ children }: { children: ReactNode }) {
             ...prev,
             {
               ...item,
+              content, // Use the enhanced content
               id: `ctx-${Date.now()}-${Math.random().toString(36).slice(2)}`,
               isEdited: false,
-              originalContent: item.content,
+              originalContent: content,
             },
           ];
         });
+
+        // Auto-load quick-fix workflow and prime chat input when enhancement request is present
+        if (enhancementRequest) {
+          const workflow = getWorkflowDefinition('quick-fix');
+          if (workflow) {
+            console.log(`   🚀 Auto-loading quick-fix workflow`);
+            // Add workflow to context (workflows replace existing)
+            setItems((prev) => {
+              const filtered = prev.filter((i) => i.type !== 'workflow');
+              return [
+                ...filtered,
+                {
+                  type: 'workflow' as const,
+                  name: workflow.name,
+                  displayName: workflow.displayName,
+                  description: workflow.description,
+                  content: workflow.strategyPrompt,
+                  color: workflow.color,
+                  id: `ctx-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+                  isEdited: false,
+                  originalContent: workflow.strategyPrompt,
+                },
+              ];
+            });
+          }
+
+          // Prime the chat input
+          console.log(`   💬 Priming chat input`);
+          window.dispatchEvent(new CustomEvent('ide:prime-chat-input', {
+            detail: {
+              message: "I've selected a component and described what I'd like to change. Can you run the quick-fix workflow to update this component for me?",
+              focusInput: true,
+              pulseSubmit: true,
+            }
+          }));
+        }
       }
     };
 

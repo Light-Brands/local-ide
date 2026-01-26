@@ -37,6 +37,9 @@ export function ChatInput({
 
   const { isOpen, setIsOpen, cursorPosition, setCursorPosition, handleSelect } = useAutocomplete();
 
+  // Pulse animation state for send button
+  const [shouldPulseSubmit, setShouldPulseSubmit] = useState(false);
+
   // Context drawer state
   const hasContext = contextState?.hasContext ?? false;
   const contextItems = contextState?.items ?? [];
@@ -75,6 +78,31 @@ export function ChatInput({
     window.addEventListener('chat:trigger-autocomplete', handleTriggerAutocomplete);
     return () => window.removeEventListener('chat:trigger-autocomplete', handleTriggerAutocomplete);
   }, [setCursorPosition]);
+
+  // Listen for chat input priming events (from component enhancement popup)
+  useEffect(() => {
+    const handlePrimeChatInput = (event: CustomEvent) => {
+      const { message, focusInput, pulseSubmit } = event.detail;
+
+      if (message) {
+        onChange(message);
+      }
+
+      if (focusInput && inputRef.current) {
+        // Small delay to ensure state is updated
+        setTimeout(() => {
+          inputRef.current?.focus();
+        }, 50);
+      }
+
+      if (pulseSubmit) {
+        setShouldPulseSubmit(true);
+      }
+    };
+
+    window.addEventListener('ide:prime-chat-input', handlePrimeChatInput as EventListener);
+    return () => window.removeEventListener('ide:prime-chat-input', handlePrimeChatInput as EventListener);
+  }, [onChange]);
 
   // Update cursor position on selection change
   const handleSelectionChange = useCallback(() => {
@@ -286,62 +314,99 @@ export function ChatInput({
       )}
 
       {/* Input area */}
-      <div className="flex items-end gap-2">
-        {/* Textarea */}
-        <textarea
-          ref={inputRef}
-          data-chat-input
-          value={value}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          onSelect={handleSelectionChange}
-          onClick={handleSelectionChange}
-          onFocus={() => {
-            setIsFocused(true);
-            // Collapse browse panel when focusing input
-            if (showBrowsePanel) {
-              setShowBrowsePanel(false);
-              setIsOpen(false);
-            }
-          }}
-          onBlur={(e) => {
-            // Delay blur to allow clicking on autocomplete items
-            setTimeout(() => {
-              if (!containerRef.current?.contains(document.activeElement)) {
-                setIsFocused(false);
-              }
-            }, 150);
-          }}
-          placeholder={placeholder}
-          disabled={disabled || isLoading}
-          className={cn(
-            'flex-1 max-h-[150px] p-2 bg-neutral-800 text-neutral-200 rounded-lg',
-            'text-sm resize-none outline-none',
-            'focus:ring-1 focus:ring-primary-500',
-            'placeholder:text-neutral-500',
-            'disabled:opacity-50 disabled:cursor-not-allowed'
-          )}
-          rows={1}
-        />
+      {(() => {
+        // Calculate word count for pulse activation
+        const wordCount = value.trim().split(/\s+/).filter(Boolean).length;
+        const showPulse = shouldPulseSubmit && wordCount >= 5 && !isLoading;
 
-        {/* Submit button */}
-        <button
-          type="button"
-          onClick={onSubmit}
-          disabled={disabled || isLoading || !value.trim()}
-          className={cn(
-            'flex-shrink-0 p-2 bg-primary-500 text-white rounded-lg',
-            'disabled:opacity-50 disabled:cursor-not-allowed',
-            'hover:bg-primary-600 transition-colors'
-          )}
-        >
-          {isLoading ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : (
-            <Send className="w-5 h-5" />
-          )}
-        </button>
-      </div>
+        // Handle submit with pulse reset
+        const handleSubmitWithReset = () => {
+          setShouldPulseSubmit(false);
+          onSubmit();
+        };
+
+        return (
+          <>
+            {/* Ready to go hint */}
+            {showPulse && (
+              <div className="flex items-center justify-end mb-1.5">
+                <span className="text-xs text-emerald-400 animate-pulse font-medium">
+                  Ready to go! Hit send to run the update.
+                </span>
+              </div>
+            )}
+
+            <div className="flex items-end gap-2">
+              {/* Textarea */}
+              <textarea
+                ref={inputRef}
+                data-chat-input
+                value={value}
+                onChange={handleChange}
+                onKeyDown={(e) => {
+                  // Submit on Enter (without Shift) - with pulse reset
+                  if (e.key === 'Enter' && !e.shiftKey && !isOpen) {
+                    e.preventDefault();
+                    if (!disabled && !isLoading && value.trim()) {
+                      handleSubmitWithReset();
+                    }
+                    return;
+                  }
+                  handleKeyDown(e);
+                }}
+                onSelect={handleSelectionChange}
+                onClick={handleSelectionChange}
+                onFocus={() => {
+                  setIsFocused(true);
+                  // Collapse browse panel when focusing input
+                  if (showBrowsePanel) {
+                    setShowBrowsePanel(false);
+                    setIsOpen(false);
+                  }
+                }}
+                onBlur={(e) => {
+                  // Delay blur to allow clicking on autocomplete items
+                  setTimeout(() => {
+                    if (!containerRef.current?.contains(document.activeElement)) {
+                      setIsFocused(false);
+                    }
+                  }, 150);
+                }}
+                placeholder={placeholder}
+                disabled={disabled || isLoading}
+                className={cn(
+                  'flex-1 max-h-[150px] p-2 bg-neutral-800 text-neutral-200 rounded-lg',
+                  'text-sm resize-none outline-none',
+                  'focus:ring-1 focus:ring-primary-500',
+                  'placeholder:text-neutral-500',
+                  'disabled:opacity-50 disabled:cursor-not-allowed'
+                )}
+                rows={1}
+              />
+
+              {/* Submit button */}
+              <button
+                type="button"
+                onClick={handleSubmitWithReset}
+                disabled={disabled || isLoading || !value.trim()}
+                className={cn(
+                  'flex-shrink-0 p-2 text-white rounded-lg transition-all duration-200',
+                  'disabled:opacity-50 disabled:cursor-not-allowed',
+                  showPulse
+                    ? 'bg-emerald-500 hover:bg-emerald-400 ring-2 ring-emerald-400 ring-offset-2 ring-offset-neutral-900 animate-pulse'
+                    : 'bg-primary-500 hover:bg-primary-600'
+                )}
+              >
+                {isLoading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <Send className="w-5 h-5" />
+                )}
+              </button>
+            </div>
+          </>
+        );
+      })()}
     </div>
   );
 }
