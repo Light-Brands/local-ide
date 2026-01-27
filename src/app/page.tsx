@@ -181,11 +181,11 @@ export default function Home() {
       <main className="relative">
         <HeroCentered
           badge={{ text: 'Self-Evolving Platform', href: '/ide' }}
-          title="Build Apps That Build Themselves"
+          title="Build Apps That Build Themselves!!!!"
           titleHighlight="Build Themselves"
           description="A complete foundation for building modern applications with an intelligent IDE built right in. Deploy a single time, develop from anywhere, and watch your app evolve on its own."
           primaryCta={{ label: 'Open IDE', href: '/ide' }}
-          secondaryCta={{ label: 'View Admin', href: '/admin', icon: 'arrow' }}
+          secondaryCta={{ label: 'TESTING', href: '/admin', icon: 'arrow' }}
           trustedBy={{
             label: 'Powered by',
             logos: [
@@ -259,7 +259,7 @@ export default function Home() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
               {[
                 { value: '90+', label: 'Lighthouse Score', suffix: '' },
-                { value: '50+', label: 'Components', suffix: '' },
+                { value: '55+', label: 'Components', suffix: '' },
                 { value: '∞', label: 'Evolution Potential', suffix: '' },
                 { value: '1', label: 'Deploy', suffix: '' },
               ].map((stat, index) => (
