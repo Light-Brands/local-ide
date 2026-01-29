@@ -422,7 +422,7 @@ export default function Home() {
                 transition={{ duration: 0.5, delay: 0.1 }}
                 className="text-3xl md:text-4xl lg:text-[2.75rem] font-bold tracking-tight text-neutral-900 dark:text-white mb-4"
               >
-                Simple, transparent pricing
+                Simple and Complex
               </motion.h2>
               <motion.p
                 initial={{ opacity: 0, y: 20 }}

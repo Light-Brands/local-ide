@@ -24,12 +24,11 @@ import {
   Plus,
   List,
   Play,
-  Rocket,
-  Fuel,
 } from 'lucide-react';
 import { ToolingIndicator } from '@/app/ide/components/common/ToolingIndicator';
-import { useToolingOptional } from '../../../contexts/ToolingContext';
-import { ContextProvider, useContextStateOptional, ContextDrawer } from '../../context';
+import { ContextProvider, useContextState } from '../../context';
+import { ChatInput } from '../../chat/ChatInput';
+import { TerminalSkin } from './TerminalSkin';
 
 // =============================================================================
 // TYPES
@@ -42,6 +41,7 @@ interface TerminalInstance {
   sessionId: string;
   isConnected: boolean;
   outputBuffer: string;
+  jsonMode: boolean; // Whether this session uses JSON output format
 }
 
 // =============================================================================
@@ -126,15 +126,6 @@ function TerminalHeader({
   onClear,
   onToggleFullscreen,
 }: TerminalHeaderProps) {
-  const tooling = useToolingOptional();
-  const contextState = useContextStateOptional();
-  const hasTooling = !!tooling;
-
-  const hasContext = contextState?.hasContext ?? false;
-  const contextItems = contextState?.items ?? [];
-  const isDrawerOpen = contextState?.isDrawerOpen ?? false;
-  const toggleDrawer = contextState?.toggleDrawer ?? (() => {});
-
   return (
     <>
       <div className="flex items-center justify-between px-3 py-1.5 bg-neutral-900 border-b border-neutral-800">
@@ -159,60 +150,6 @@ function TerminalHeader({
 
           {/* Tooling indicator */}
           <ToolingIndicator showLabel={false} compact />
-
-          {/* Divider before fuel buttons */}
-          {hasTooling && <div className="w-px h-3 bg-neutral-700" />}
-
-          {/* Fuel Tank button - view/edit what's loaded */}
-          {hasTooling && (
-            <button
-              type="button"
-              onClick={toggleDrawer}
-              className={cn(
-                'flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-all duration-200',
-                hasContext
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/30 ring-1 ring-amber-400/50'
-                  : isDrawerOpen
-                    ? 'bg-gradient-to-r from-amber-500/80 to-orange-500/80 text-white shadow-sm shadow-amber-500/20'
-                    : 'bg-neutral-800/80 text-amber-400/70 hover:bg-neutral-700 hover:text-amber-400 border border-amber-500/20'
-              )}
-            >
-              <Fuel className={cn(
-                'w-3 h-3 transition-transform duration-200',
-                hasContext && 'animate-pulse'
-              )} />
-              <span>Tank</span>
-              {hasContext && (
-                <span className="flex items-center justify-center min-w-[14px] h-[14px] px-0.5 rounded-full bg-white/20 text-[9px] font-bold">
-                  {contextItems.length}
-                </span>
-              )}
-            </button>
-          )}
-
-          {/* Rocket Fuel button - add more context (compact in terminal) */}
-          {hasTooling && (
-            <button
-              type="button"
-              onClick={() => {
-                // TODO: Open browse panel for terminal
-                // For now, just toggle drawer if no browse panel available
-                if (!isDrawerOpen) toggleDrawer();
-              }}
-              className={cn(
-                'flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-all duration-200',
-                hasContext
-                  ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md shadow-orange-500/30 ring-1 ring-orange-400/50'
-                  : 'bg-neutral-800/80 text-orange-400/70 hover:bg-neutral-700 hover:text-orange-400 border border-orange-500/20'
-              )}
-            >
-              <Rocket className={cn(
-                'w-3 h-3 transition-transform duration-200',
-                hasContext && 'animate-pulse'
-              )} />
-              <span>Fuel</span>
-            </button>
-          )}
         </div>
 
         <div className="flex items-center gap-1">
@@ -279,14 +216,113 @@ function TerminalHeader({
           )}
         </div>
       </div>
-
-      {/* Context drawer (shown below header when expanded) */}
-      {contextState && isDrawerOpen && (
-        <div className="px-2 py-2 bg-neutral-900 border-b border-neutral-800">
-          <ContextDrawer />
-        </div>
-      )}
     </>
+  );
+}
+
+// =============================================================================
+// TERMINAL INPUT WRAPPER - Accesses context inside ContextProvider
+// =============================================================================
+
+interface TerminalInputWrapperProps {
+  value: string;
+  onChange: (value: string) => void;
+  onSubmit: () => void;
+  isLoading: boolean;
+  isConnected: boolean;
+  contextStateRef: React.MutableRefObject<ReturnType<typeof useContextState> | null>;
+}
+
+function TerminalInputWrapper({
+  value,
+  onChange,
+  onSubmit,
+  isLoading,
+  isConnected,
+  contextStateRef,
+}: TerminalInputWrapperProps) {
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [shouldPulseSubmit, setShouldPulseSubmit] = useState(false);
+
+  // Access context state inside ContextProvider
+  const contextState = useContextState();
+
+  // Store in ref so parent can access it
+  useEffect(() => {
+    contextStateRef.current = contextState;
+  }, [contextState, contextStateRef]);
+
+  // Auto-focus the input on mount - this is the default input method
+  // Users can click on the terminal area to type directly in CLI
+  useEffect(() => {
+    const focusInput = () => {
+      const textarea = document.querySelector('[data-terminal-input] textarea') as HTMLTextAreaElement;
+      textarea?.focus();
+    };
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(focusInput, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Listen for terminal input priming events (from element selection in preview)
+  useEffect(() => {
+    const handlePrimeTerminalInput = (event: CustomEvent) => {
+      const { message, focusInput, pulseSubmit } = event.detail;
+
+      if (message) {
+        onChange(message);
+      }
+
+      if (focusInput) {
+        // Focus the chat input's textarea (accessed via parent)
+        setTimeout(() => {
+          const textarea = document.querySelector('[data-terminal-input] textarea') as HTMLTextAreaElement;
+          textarea?.focus();
+        }, 50);
+      }
+
+      if (pulseSubmit) {
+        setShouldPulseSubmit(true);
+        // Auto-clear pulse after 5 seconds
+        setTimeout(() => setShouldPulseSubmit(false), 5000);
+      }
+    };
+
+    window.addEventListener('ide:prime-terminal-input', handlePrimeTerminalInput as EventListener);
+    return () => window.removeEventListener('ide:prime-terminal-input', handlePrimeTerminalInput as EventListener);
+  }, [onChange]);
+
+  // Clear pulse when input changes
+  useEffect(() => {
+    if (value.length === 0) {
+      setShouldPulseSubmit(false);
+    }
+  }, [value]);
+
+  return (
+    <div
+      className={cn(
+        "flex-shrink-0 p-2 border-t border-neutral-800 bg-neutral-900 transition-all duration-300",
+        shouldPulseSubmit && "ring-2 ring-primary-500/50 bg-primary-500/5"
+      )}
+      data-terminal-input
+    >
+      <ChatInput
+        value={value}
+        onChange={onChange}
+        onSubmit={onSubmit}
+        placeholder="Type command or use / @ ~ for autocomplete..."
+        disabled={isLoading || !isConnected}
+        isLoading={isLoading}
+      />
+      <div className="mt-1 text-[10px] text-neutral-600 text-center">
+        <kbd className="px-1 py-0.5 rounded bg-neutral-800 text-blue-400 font-mono">/</kbd> commands
+        <span className="mx-1">·</span>
+        <kbd className="px-1 py-0.5 rounded bg-neutral-800 text-purple-400 font-mono">@</kbd> agents
+        <span className="mx-1">·</span>
+        <kbd className="px-1 py-0.5 rounded bg-neutral-800 text-orange-400 font-mono">~</kbd> workflows
+      </div>
+    </div>
   );
 }
 
@@ -331,6 +367,15 @@ export function TerminalPane() {
   const [isValidatingSession, setIsValidatingSession] = useState(true);
   const [showSessionManager, setShowSessionManager] = useState(false);
   const [hasNoSessions, setHasNoSessions] = useState(false);
+
+  // Rich input state for terminal
+  const [terminalInput, setTerminalInput] = useState('');
+  const [isTerminalInputLoading, setIsTerminalInputLoading] = useState(false);
+
+  // Chat skin state
+  const [skinVisible, setSkinVisible] = useState(false);
+  const [outputBuffer, setOutputBuffer] = useState('');
+  const [currentJsonMode, setCurrentJsonMode] = useState(false);
 
   // Debug: Log whenever terminalTabs changes
   useEffect(() => {
@@ -411,6 +456,7 @@ export function TerminalPane() {
         },
         allowProposedApi: true,
         scrollback: 100000,
+        scrollOnUserInput: false, // Don't auto-scroll to bottom when typing (allows reviewing history)
       });
 
       const fitAddon = new FitAddon();
@@ -421,13 +467,16 @@ export function TerminalPane() {
 
       // Create terminal service with session ID
       // Server will check if tmux session exists - only start Claude if explicitly requested AND no tmux
+      // ALWAYS use JSON mode for new sessions - enables proper skin parsing
       const baseWsUrl = getTerminalWebSocketUrl();
-      const terminalWsUrl = `${baseWsUrl}?session=${sessionId}&startClaude=${startClaude}`;
+      const useJsonMode = startClaude; // Use JSON mode whenever starting Claude (new sessions)
+      const terminalWsUrl = `${baseWsUrl}?session=${sessionId}&startClaude=${startClaude}&jsonMode=${useJsonMode}`;
 
       console.log(`[TerminalPane] Creating terminal instance:`, {
         tabId,
         sessionId,
         startClaude,
+        jsonMode: useJsonMode,
         wsUrl: terminalWsUrl,
       });
 
@@ -441,6 +490,7 @@ export function TerminalPane() {
         sessionId,
         isConnected: false,
         outputBuffer: '',
+        jsonMode: useJsonMode,
       };
 
       // Handle terminal output
@@ -449,6 +499,10 @@ export function TerminalPane() {
           terminal.write(event.data);
           instance.outputBuffer += event.data;
           detectPorts(event.data);
+          // Update component-level buffer for skin
+          if (activeInstanceRef.current === instance) {
+            setOutputBuffer(instance.outputBuffer);
+          }
         }
       });
 
@@ -493,7 +547,9 @@ export function TerminalPane() {
         }
       });
 
-      // Handle user input - but intercept paste events for better handling
+      // Handle user input - users can type directly in xterm OR use the ChatInput below
+      // Direct typing: click in terminal and type (traditional CLI experience)
+      // ChatInput: use autocomplete, context injection, agents/commands (@, /, ~)
       terminal.onData((data: string) => {
         // Check if this looks like a large paste (xterm sends pasted content through onData)
         // For large pastes, we want to chunk them
@@ -627,6 +683,8 @@ export function TerminalPane() {
         instance.terminal.open(container);
         activeInstanceRef.current = instance;
         setIsConnected(instance.isConnected);
+        setCurrentJsonMode(instance.jsonMode);
+        setOutputBuffer(instance.outputBuffer);
 
         // Fit after a short delay
         setTimeout(() => {
@@ -668,6 +726,7 @@ export function TerminalPane() {
 
         instancesRef.current.set(activeTabId, instance);
         activeInstanceRef.current = instance;
+        setCurrentJsonMode(instance.jsonMode);
 
         // Open terminal in container
         instance.terminal.open(container);
@@ -793,6 +852,48 @@ export function TerminalPane() {
     return () => container.removeEventListener('paste', handleNativePaste, true);
   }, [isInitialized]);
 
+  // Handle wheel events to scroll terminal history (not command history)
+  // This intercepts scroll events and manually scrolls the terminal buffer
+  // Note: When Claude CLI is in "alternate screen" mode (like vim/less), scrollback is limited
+  // The full scrollback (100k lines) is available when CLI returns to normal mode
+  useEffect(() => {
+    const container = xtermContainerRef.current;
+    if (!container) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      const instance = activeInstanceRef.current;
+      if (!instance) return;
+
+      // Prevent default to stop any application-level scroll handling
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Calculate scroll amount based on delta mode
+      let scrollLines: number;
+      if (e.deltaMode === WheelEvent.DOM_DELTA_LINE) {
+        // Already in lines - multiply for faster scrolling
+        scrollLines = Math.round(e.deltaY * 3);
+      } else if (e.deltaMode === WheelEvent.DOM_DELTA_PAGE) {
+        // In pages, convert to lines
+        scrollLines = Math.round(e.deltaY * 30);
+      } else {
+        // DOM_DELTA_PIXEL (trackpad) - more responsive scrolling
+        scrollLines = Math.round(e.deltaY / 10);
+      }
+
+      // Clamp to reasonable range but allow faster scrolling
+      scrollLines = Math.max(-30, Math.min(30, scrollLines));
+
+      // Scroll the terminal buffer
+      if (scrollLines !== 0) {
+        instance.terminal.scrollLines(scrollLines);
+      }
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleWheel);
+  }, [isInitialized]);
+
   // Handlers
   const handleKeyPress = useCallback((key: string) => {
     activeInstanceRef.current?.service.send(key);
@@ -890,6 +991,66 @@ export function TerminalPane() {
   const handleContainerClick = useCallback(() => {
     activeInstanceRef.current?.terminal.focus();
   }, []);
+
+  // Ref to store context state for use in submit handler
+  const contextStateRef = useRef<ReturnType<typeof useContextState> | null>(null);
+
+  // Handle submit from the rich terminal input
+  const handleTerminalInputSubmit = useCallback(() => {
+    const instance = activeInstanceRef.current;
+    if (!instance || !terminalInput.trim()) return;
+
+    setIsTerminalInputLoading(true);
+
+    try {
+      // Build prompt with context if available
+      let textToSend = terminalInput.trim();
+      const contextState = contextStateRef.current;
+
+      if (contextState?.hasContext) {
+        // Build enhanced prompt with context
+        textToSend = contextState.buildPrompt(terminalInput.trim());
+        // Clear context after using it
+        contextState.clearAll();
+      }
+
+      console.log('[TerminalPane] Sending rich input:', textToSend.length, 'chars');
+
+      // Send to terminal with bracketed paste mode for proper handling
+      const CHUNK_SIZE = 4096;
+
+      if (textToSend.length <= CHUNK_SIZE) {
+        // Small content - send directly
+        instance.service.send('\x1b[200~' + textToSend + '\x1b[201~');
+      } else {
+        // Large content - chunk it
+        instance.service.send('\x1b[200~');
+        for (let i = 0; i < textToSend.length; i += CHUNK_SIZE) {
+          instance.service.send(textToSend.slice(i, i + CHUNK_SIZE));
+        }
+        instance.service.send('\x1b[201~');
+      }
+
+      // Send Enter to confirm paste (Claude CLI paste detection)
+      instance.service.send('\r');
+
+      // Send another Enter after a short delay to execute the command
+      // Claude CLI shows "[Pasted text #1 +X lines]" and waits for confirmation
+      setTimeout(() => {
+        instance.service.send('\r');
+      }, 100);
+
+      // Clear input
+      setTerminalInput('');
+
+      // Focus terminal
+      instance.terminal.focus();
+    } catch (err) {
+      console.error('[TerminalPane] Submit failed:', err);
+    } finally {
+      setIsTerminalInputLoading(false);
+    }
+  }, [terminalInput]);
 
   // Tab management
   const handleTabSelect = useCallback((id: string) => {
@@ -1097,7 +1258,6 @@ export function TerminalPane() {
           'h-full flex flex-col bg-neutral-950',
           isFullscreen && 'fixed inset-0 z-50'
         )}
-        onClick={handleContainerClick}
       >
         {/* Header */}
         <TerminalHeader
@@ -1144,13 +1304,37 @@ export function TerminalPane() {
             </div>
           )}
 
-          {/* xterm container */}
+          {/* xterm container - click here to focus terminal for direct typing */}
           <div
             ref={xtermContainerRef}
-            className="h-full w-full p-2"
+            className={cn(
+              'h-full w-full p-2 cursor-text transition-all duration-300',
+              skinVisible && 'opacity-50'
+            )}
             style={{ minHeight: isMobile ? '200px' : '300px' }}
+            onClick={handleContainerClick}
+          />
+
+          {/* Chat skin overlay - AI interpreting AI */}
+          <TerminalSkin
+            isVisible={skinVisible}
+            onToggle={() => setSkinVisible(!skinVisible)}
+            outputBuffer={outputBuffer}
+            terminalSessionId={currentSessionId || ''}
+            isConnected={isConnected}
+            jsonMode={currentJsonMode}
           />
         </div>
+
+        {/* Rich input with autocomplete */}
+        <TerminalInputWrapper
+          value={terminalInput}
+          onChange={setTerminalInput}
+          onSubmit={handleTerminalInputSubmit}
+          isLoading={isTerminalInputLoading}
+          isConnected={isConnected}
+          contextStateRef={contextStateRef}
+        />
 
         {/* Mobile keyboard toolbar */}
         {isMobile && (

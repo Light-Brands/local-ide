@@ -15,6 +15,15 @@ export interface ChatConfig {
   reconnectDelay?: number;
 }
 
+// Claude CLI visual state indicators
+export type ClaudeState =
+  | 'idle'           // Ready for input
+  | 'thinking'       // Thinking/Precipitating
+  | 'responding'     // Generating response
+  | 'tool_running'   // Running a tool
+  | 'waiting_confirm' // Waiting for paste confirmation
+  | 'unknown';
+
 export type ChatEventType =
   | 'connected'
   | 'text'
@@ -27,7 +36,9 @@ export type ChatEventType =
   | 'history'
   | 'output-buffer'
   | 'close'
-  | 'reconnecting';
+  | 'reconnecting'
+  | 'status'         // Status update with Claude state
+  | 'state-change';  // Claude state changed
 
 export interface ChatEvent {
   type: ChatEventType;
@@ -43,6 +54,12 @@ export interface ChatEvent {
   messages?: ChatMessage[];
   data?: string;
   attempt?: number;
+  // Status update fields
+  claudeState?: ClaudeState;
+  currentTool?: string | null;
+  lastActivity?: number;
+  isStuck?: boolean;
+  stuckDuration?: number;
 }
 
 export interface ChatMessage {
@@ -234,6 +251,33 @@ export class ChatService {
   ping(): void {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify({ type: 'ping' }));
+    }
+  }
+
+  /**
+   * Send Enter key to confirm paste (for when Claude CLI is waiting)
+   */
+  sendEnter(): void {
+    if (this.ws?.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'send-enter' }));
+    }
+  }
+
+  /**
+   * Kill and restart the chat session
+   */
+  killSession(): void {
+    if (this.ws?.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'kill-session' }));
+    }
+  }
+
+  /**
+   * Request current session status
+   */
+  getStatus(): void {
+    if (this.ws?.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'get-status' }));
     }
   }
 

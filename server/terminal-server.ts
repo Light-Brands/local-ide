@@ -25,6 +25,7 @@ interface ActiveSession {
   projectPath: string;
   outputBuffer: string;
   lastActivity: number;
+  jsonMode?: boolean; // Use JSON output format for skin mode
 }
 
 interface TerminalMessage {
@@ -416,6 +417,12 @@ wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
   const cols = parseInt(query.cols as string, 10) || DEFAULT_COLS;
   const rows = parseInt(query.rows as string, 10) || DEFAULT_ROWS;
   const startClaude = query.startClaude === 'true';
+  const jsonMode = query.jsonMode === 'true'; // Use --output-format stream-json for skin mode
+
+  // Claude command with optional JSON output
+  const claudeCommand = jsonMode
+    ? 'claude --dangerously-skip-permissions --output-format stream-json\n'
+    : 'claude --dangerously-skip-permissions\n';
 
   let sessionId: string;
   let isReconnection = false;
@@ -433,6 +440,7 @@ wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
     console.log(`[Terminal]   - existingDb: ${!!existingDb}`);
     console.log(`[Terminal]   - tmuxExists: ${tmuxExists} (${tmuxName})`);
     console.log(`[Terminal]   - startClaude: ${startClaude}`);
+    console.log(`[Terminal]   - jsonMode: ${jsonMode}`);
 
     if (existingActive) {
       // Check if PTY is still alive
@@ -496,13 +504,13 @@ wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
             // tmux session was gone, start fresh
             if (startClaude) {
               setTimeout(() => {
-                ptyProcess.write('claude --dangerously-skip-permissions\n');
+                ptyProcess.write(claudeCommand);
               }, 500);
             }
           }
         } else {
           // No tmux, create new regular session
-          session = createNewSession(sessionId, existingActive.projectPath, cols, rows, ws, startClaude);
+          session = createNewSession(sessionId, existingActive.projectPath, cols, rows, ws, startClaude, jsonMode);
         }
       }
     } else if (existingDb) {
@@ -550,7 +558,7 @@ wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
         // Only start Claude on NEW tmux sessions, not when reattaching
         if (!isExistingTmux && startClaude) {
           setTimeout(() => {
-            ptyProcess.write('claude --dangerously-skip-permissions\n');
+            ptyProcess.write(claudeCommand);
           }, 500);
         }
       } else {
@@ -581,12 +589,12 @@ wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
     } else {
       // Session not found, create new one with requested ID
       sessionId = requestedSessionId;
-      session = createNewSession(sessionId, projectPath, cols, rows, ws, startClaude);
+      session = createNewSession(sessionId, projectPath, cols, rows, ws, startClaude, jsonMode);
     }
   } else {
     // Create new session
     sessionId = generateSessionId();
-    session = createNewSession(sessionId, projectPath, cols, rows, ws, startClaude);
+    session = createNewSession(sessionId, projectPath, cols, rows, ws, startClaude, jsonMode);
   }
 
   console.log(`[Terminal] Connection established: session=${sessionId}, reconnect=${isReconnection}`);
@@ -634,7 +642,10 @@ wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
           // Send Ctrl+C to kill current process, then start Claude
           currentSession.pty.write('\x03'); // Ctrl+C
           setTimeout(() => {
-            currentSession.pty.write('claude --dangerously-skip-permissions\n');
+            const cmd = currentSession.jsonMode
+              ? 'claude --dangerously-skip-permissions --output-format stream-json\n'
+              : 'claude --dangerously-skip-permissions\n';
+            currentSession.pty.write(cmd);
           }, 100);
           break;
 
@@ -682,7 +693,8 @@ function createNewSession(
   cols: number,
   rows: number,
   ws: WebSocket,
-  startClaude: boolean
+  startClaude: boolean,
+  jsonMode: boolean = false
 ): ActiveSession {
   // Create in database first
   db.createSession(sessionId, projectPath, cols, rows);
@@ -717,6 +729,7 @@ function createNewSession(
     projectPath,
     outputBuffer: '',
     lastActivity: Date.now(),
+    jsonMode,
   };
 
   activeSessions.set(sessionId, session);
@@ -724,8 +737,11 @@ function createNewSession(
 
   // Start Claude CLI if requested AND this is not an existing tmux session
   if (startClaude && !isExistingTmux) {
+    const claudeCmd = jsonMode
+      ? 'claude --dangerously-skip-permissions --output-format stream-json\n'
+      : 'claude --dangerously-skip-permissions\n';
     setTimeout(() => {
-      ptyProcess.write('claude --dangerously-skip-permissions\n');
+      ptyProcess.write(claudeCmd);
     }, 500);
   }
 

@@ -10,6 +10,7 @@ import React, {
   type ReactNode,
 } from 'react';
 import { getWorkflow as getWorkflowDefinition } from '@/lib/ide/tooling';
+import { useIDEStore } from '../../stores/ideStore';
 
 export interface ContextItem {
   id: string;
@@ -176,9 +177,12 @@ export function ContextProvider({ children }: { children: ReactNode }) {
             });
           }
 
-          // Prime the chat input
-          console.log(`   💬 Priming chat input`);
-          window.dispatchEvent(new CustomEvent('ide:prime-chat-input', {
+          // Prime the active input (chat or terminal based on current drawer tab)
+          // Access store directly since we can't use hooks in event handlers
+          const activeTab = useIDEStore.getState().drawer.tab;
+          const eventName = activeTab === 'terminal' ? 'ide:prime-terminal-input' : 'ide:prime-chat-input';
+          console.log(`   💬 Priming ${activeTab} input (${eventName})`);
+          window.dispatchEvent(new CustomEvent(eventName, {
             detail: {
               message: "I've selected a component and described what I'd like to change. Can you run the quick-fix workflow to update this component for me?",
               focusInput: true,

@@ -17,6 +17,15 @@ import * as db from './database';
 // TYPES
 // =============================================================================
 
+// Claude CLI visual state indicators
+type ClaudeState =
+  | 'idle'           // Ready for input (⏵⏵ bypass permissions)
+  | 'thinking'       // Thinking/Precipitating
+  | 'responding'     // Generating response (⏺)
+  | 'tool_running'   // Running a tool (Search, Edit, etc.)
+  | 'waiting_confirm' // Waiting for paste confirmation
+  | 'unknown';
+
 interface ActiveChatSession {
   claudePty: pty.IPty;
   ws: WebSocket | null;
@@ -25,16 +34,23 @@ interface ActiveChatSession {
   messages: db.ChatMessage[];   // Conversation history
   isResponding: boolean;        // Claude generating response
   lastActivity: number;
+  // New fields for enhanced tracking
+  claudeState: ClaudeState;     // Current Claude CLI state
+  lastStateChange: number;      // Timestamp of last state change
+  pasteConfirmTimers: NodeJS.Timeout[]; // Timers for paste confirmation backoff
+  lastOutputTime: number;       // Last time we received output
+  currentTool: string | null;   // Currently running tool name
 }
 
 interface ChatClientMessage {
-  type: 'input' | 'abort' | 'ping' | 'get-history';
+  type: 'input' | 'abort' | 'ping' | 'get-history' | 'send-enter' | 'kill-session' | 'get-status';
   data?: string;
 }
 
 interface ChatServerMessage {
   type: 'connected' | 'text' | 'thinking' | 'tool_use_start' | 'tool_use_end' |
-        'tool_use_output' | 'done' | 'error' | 'history' | 'output-buffer' | 'pong';
+        'tool_use_output' | 'done' | 'error' | 'history' | 'output-buffer' | 'pong' |
+        'status' | 'state-change';
   sessionId?: string;
   reconnected?: boolean;
   content?: string;
@@ -46,6 +62,12 @@ interface ChatServerMessage {
   error?: string;
   messages?: db.ChatMessage[];
   data?: string;
+  // New fields for status updates
+  claudeState?: ClaudeState;
+  currentTool?: string | null;
+  lastActivity?: number;
+  isStuck?: boolean;
+  stuckDuration?: number;
 }
 
 // =============================================================================
@@ -57,6 +79,131 @@ const PING_INTERVAL = 30000; // 30 seconds
 const SESSION_TIMEOUT = 600000; // 10 minutes of inactivity
 const OUTPUT_BUFFER_MAX = 100000; // Keep last 100KB of output per session
 const OUTPUT_SAVE_INTERVAL = 5000; // Save output to DB every 5 seconds
+
+// Paste confirmation backoff timers (in ms)
+const PASTE_CONFIRM_BACKOFF = [3000, 5000, 10000, 20000];
+// Stuck detection threshold (no output for this long = stuck)
+const STUCK_THRESHOLD = 30000; // 30 seconds
+
+// =============================================================================
+// CLAUDE CLI STATE PARSING
+// =============================================================================
+
+/**
+ * Parse Claude CLI visual output to determine current state.
+ * Claude CLI shows different indicators for different states:
+ * - ⏺ = Claude is responding/generating
+ * - ✻ Thinking... / Precipitating... = Claude is thinking
+ * - ⏵⏵ bypass permissions = Ready for input
+ * - [Pasted text #N +X lines] = Waiting for paste confirmation
+ * - Tool names like Search(), Edit(), Read(), Write() = Tool running
+ */
+function parseClaudeState(output: string): { state: ClaudeState; tool?: string } {
+  // Check the last ~500 chars of output for state indicators
+  const recent = output.slice(-500);
+
+  // Check for paste confirmation waiting
+  if (recent.includes('[Pasted text #') && recent.includes('lines]')) {
+    return { state: 'waiting_confirm' };
+  }
+
+  // Check for ready state (bypass permissions prompt)
+  if (recent.includes('⏵⏵') || recent.includes('bypass permissions')) {
+    return { state: 'idle' };
+  }
+
+  // Check for thinking state
+  if (recent.includes('Thinking') || recent.includes('Precipitating') ||
+      recent.includes('thinking)') || recent.includes('✻')) {
+    return { state: 'thinking' };
+  }
+
+  // Check for tool running - look for tool patterns
+  const toolPatterns = [
+    /⏺\s*(Search|Grep|Glob)\s*\(/i,
+    /⏺\s*(Read|Write|Edit)\s*\(/i,
+    /⏺\s*(Bash|Task)\s*\(/i,
+    /⏺\s*(\w+)\s*\([^)]*\)/,
+  ];
+
+  for (const pattern of toolPatterns) {
+    const match = recent.match(pattern);
+    if (match) {
+      return { state: 'tool_running', tool: match[1] };
+    }
+  }
+
+  // Check for responding state (⏺ without tool)
+  if (recent.includes('⏺')) {
+    return { state: 'responding' };
+  }
+
+  return { state: 'unknown' };
+}
+
+/**
+ * Clear all paste confirmation timers for a session
+ */
+function clearPasteConfirmTimers(session: ActiveChatSession): void {
+  for (const timer of session.pasteConfirmTimers) {
+    clearTimeout(timer);
+  }
+  session.pasteConfirmTimers = [];
+}
+
+/**
+ * Schedule paste confirmation Enter keys with exponential backoff
+ */
+function schedulePasteConfirmation(sessionId: string, session: ActiveChatSession): void {
+  // Clear any existing timers
+  clearPasteConfirmTimers(session);
+
+  // Schedule Enter keys at backoff intervals
+  for (const delay of PASTE_CONFIRM_BACKOFF) {
+    const timer = setTimeout(() => {
+      // Only send Enter if still waiting for confirmation
+      if (session.claudeState === 'waiting_confirm' || session.claudeState === 'unknown') {
+        console.log(`[Chat] Sending paste confirmation Enter for ${sessionId} (after ${delay}ms)`);
+        session.claudePty.write('\n');
+      }
+    }, delay);
+    session.pasteConfirmTimers.push(timer);
+  }
+}
+
+/**
+ * Update session state and notify client
+ */
+function updateSessionState(
+  sessionId: string,
+  session: ActiveChatSession,
+  newState: ClaudeState,
+  tool?: string
+): void {
+  const oldState = session.claudeState;
+
+  if (oldState !== newState || session.currentTool !== tool) {
+    session.claudeState = newState;
+    session.currentTool = tool || null;
+    session.lastStateChange = Date.now();
+
+    console.log(`[Chat] State change for ${sessionId}: ${oldState} -> ${newState}${tool ? ` (${tool})` : ''}`);
+
+    // Notify client of state change
+    if (session.ws?.readyState === WebSocket.OPEN) {
+      sendToClient(session.ws, {
+        type: 'state-change',
+        claudeState: newState,
+        currentTool: tool || null,
+      });
+    }
+
+    // If Claude started responding, clear paste confirmation timers
+    if (newState !== 'waiting_confirm' && newState !== 'unknown' && newState !== 'idle') {
+      clearPasteConfirmTimers(session);
+    }
+  }
+}
 
 // =============================================================================
 // SESSION MANAGEMENT
@@ -72,6 +219,9 @@ function generateSessionId(): string {
 function cleanupSession(sessionId: string, removeFromDb: boolean = false, killTmux: boolean = false): void {
   const session = activeSessions.get(sessionId);
   if (session) {
+    // Clear any pending paste confirmation timers
+    clearPasteConfirmTimers(session);
+
     // Save final output before cleanup
     if (session.outputBuffer) {
       db.saveChatOutput(sessionId, session.outputBuffer);
@@ -126,6 +276,29 @@ setInterval(() => {
     console.log(`[Chat] Cleaned up ${cleaned} old sessions from database`);
   }
 }, 60000);
+
+// Check for stuck sessions periodically and notify clients
+setInterval(() => {
+  const now = Date.now();
+  for (const [sessionId, session] of activeSessions) {
+    if (session.isResponding && session.ws?.readyState === WebSocket.OPEN) {
+      const timeSinceOutput = now - session.lastOutputTime;
+      const isStuck = timeSinceOutput > STUCK_THRESHOLD;
+
+      if (isStuck) {
+        console.log(`[Chat] Session ${sessionId} appears stuck (${Math.round(timeSinceOutput / 1000)}s since last output)`);
+        sendToClient(session.ws, {
+          type: 'status',
+          claudeState: session.claudeState,
+          currentTool: session.currentTool,
+          lastActivity: session.lastOutputTime,
+          isStuck: true,
+          stuckDuration: timeSinceOutput,
+        });
+      }
+    }
+  }
+}, 5000); // Check every 5 seconds
 
 // =============================================================================
 // TMUX SESSION MANAGEMENT
@@ -547,6 +720,11 @@ wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
             messages: existingActive.messages,
             isResponding: false,
             lastActivity: Date.now(),
+            claudeState: 'idle',
+            lastStateChange: Date.now(),
+            pasteConfirmTimers: [],
+            lastOutputTime: Date.now(),
+            currentTool: null,
           };
 
           activeSessions.set(sessionId, session);
@@ -580,6 +758,11 @@ wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
           messages: savedMessages,
           isResponding: false,
           lastActivity: Date.now(),
+          claudeState: 'idle',
+          lastStateChange: Date.now(),
+          pasteConfirmTimers: [],
+          lastOutputTime: Date.now(),
+          currentTool: null,
         };
 
         activeSessions.set(sessionId, session);
@@ -601,6 +784,11 @@ wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
           messages: savedMessages,
           isResponding: false,
           lastActivity: Date.now(),
+          claudeState: 'idle',
+          lastStateChange: Date.now(),
+          pasteConfirmTimers: [],
+          lastOutputTime: Date.now(),
+          currentTool: null,
         };
 
         activeSessions.set(sessionId, session);
@@ -650,6 +838,11 @@ wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
             // Send user message to Claude CLI
             currentSession.claudePty.write(msg.data + '\n');
             currentSession.isResponding = true;
+            currentSession.claudeState = 'unknown'; // Will be updated by output parsing
+
+            // Schedule paste confirmation with exponential backoff
+            // This handles Claude CLI's paste detection for long messages
+            schedulePasteConfirmation(sessionId, currentSession);
 
             // Save user message to history
             db.saveChatMessage(sessionId, 'user', msg.data);
@@ -667,6 +860,8 @@ wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
           // Send Ctrl+C to abort Claude response
           currentSession.claudePty.write('\x03');
           currentSession.isResponding = false;
+          clearPasteConfirmTimers(currentSession);
+          updateSessionState(sessionId, currentSession, 'idle');
           break;
 
         case 'ping':
@@ -678,6 +873,38 @@ wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
             type: 'history',
             messages: currentSession.messages,
           });
+          break;
+
+        case 'send-enter':
+          // Manually send Enter (for paste confirmation)
+          console.log(`[Chat] Manual Enter sent for ${sessionId}`);
+          currentSession.claudePty.write('\n');
+          break;
+
+        case 'kill-session':
+          // Kill and restart the session
+          console.log(`[Chat] Kill session requested for ${sessionId}`);
+          clearPasteConfirmTimers(currentSession);
+          cleanupSession(sessionId, true, true);
+          sendToClient(ws, { type: 'done' });
+          break;
+
+        case 'get-status':
+          // Return current session status
+          {
+            const now = Date.now();
+            const timeSinceOutput = now - currentSession.lastOutputTime;
+            const isStuck = currentSession.isResponding && timeSinceOutput > STUCK_THRESHOLD;
+
+            sendToClient(ws, {
+              type: 'status',
+              claudeState: currentSession.claudeState,
+              currentTool: currentSession.currentTool,
+              lastActivity: currentSession.lastOutputTime,
+              isStuck,
+              stuckDuration: isStuck ? timeSinceOutput : 0,
+            });
+          }
           break;
 
         default:
@@ -746,6 +973,12 @@ function createNewSession(
     messages: [],
     isResponding: false,
     lastActivity: Date.now(),
+    // New fields for enhanced tracking
+    claudeState: 'idle',
+    lastStateChange: Date.now(),
+    pasteConfirmTimers: [],
+    lastOutputTime: Date.now(),
+    currentTool: null,
   };
 
   activeSessions.set(sessionId, session);
@@ -773,6 +1006,10 @@ function setupPtyHandlers(sessionId: string, ptyProcess: pty.IPty, initialWs: We
     const session = activeSessions.get(sessionId);
     if (!session) return;
 
+    // Update activity tracking
+    session.lastOutputTime = Date.now();
+    session.lastActivity = Date.now();
+
     // Append to output buffer
     session.outputBuffer += data;
     if (session.outputBuffer.length > OUTPUT_BUFFER_MAX) {
@@ -780,6 +1017,10 @@ function setupPtyHandlers(sessionId: string, ptyProcess: pty.IPty, initialWs: We
     }
 
     dirtyOutputSessions.add(sessionId);
+
+    // Parse Claude CLI visual state from terminal output
+    const { state: newState, tool } = parseClaudeState(session.outputBuffer);
+    updateSessionState(sessionId, session, newState, tool);
 
     // Try to parse as JSON stream from Claude CLI
     buffer += data;
@@ -801,6 +1042,7 @@ function setupPtyHandlers(sessionId: string, ptyProcess: pty.IPty, initialWs: We
         // Check for message_stop to save assistant response
         if (json.type === 'message_stop' || json.type === 'result') {
           session.isResponding = false;
+          updateSessionState(sessionId, session, 'idle');
         }
       } catch {
         // Not JSON - might be raw terminal output, ignore for chat

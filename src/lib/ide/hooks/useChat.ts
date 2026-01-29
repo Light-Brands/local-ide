@@ -14,7 +14,7 @@
 
 import { useCallback, useRef, useReducer, useEffect } from 'react';
 import { IDE_FEATURES } from '../features';
-import { ChatService, getChatService, getChatWebSocketUrl } from '../services/chat';
+import { ChatService, getChatService, getChatWebSocketUrl, ClaudeState } from '../services/chat';
 import type {
   Message,
   ContentBlock,
@@ -35,6 +35,11 @@ type ChatState = {
   messages: Message[];
   isLoading: boolean;
   error: string | null;
+  // Claude CLI state tracking
+  claudeState: ClaudeState;
+  currentTool: string | null;
+  isStuck: boolean;
+  stuckDuration: number;
 };
 
 type ChatAction =
@@ -44,7 +49,9 @@ type ChatAction =
   | { type: 'SET_LOADING'; isLoading: boolean }
   | { type: 'SET_ERROR'; error: string | null }
   | { type: 'CLEAR_MESSAGES' }
-  | { type: 'SET_MESSAGES'; messages: Message[] };
+  | { type: 'SET_MESSAGES'; messages: Message[] }
+  | { type: 'SET_CLAUDE_STATE'; claudeState: ClaudeState; currentTool?: string | null }
+  | { type: 'SET_STUCK'; isStuck: boolean; stuckDuration?: number };
 
 // =============================================================================
 // REDUCER
@@ -84,10 +91,27 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
       return { ...state, error: action.error };
 
     case 'CLEAR_MESSAGES':
-      return { ...state, messages: [], error: null };
+      return { ...state, messages: [], error: null, isStuck: false, stuckDuration: 0 };
 
     case 'SET_MESSAGES':
       return { ...state, messages: action.messages };
+
+    case 'SET_CLAUDE_STATE':
+      return {
+        ...state,
+        claudeState: action.claudeState,
+        currentTool: action.currentTool ?? state.currentTool,
+        // Clear stuck state when Claude state changes
+        isStuck: false,
+        stuckDuration: 0,
+      };
+
+    case 'SET_STUCK':
+      return {
+        ...state,
+        isStuck: action.isStuck,
+        stuckDuration: action.stuckDuration ?? 0,
+      };
 
     default:
       return state;
@@ -148,6 +172,14 @@ export interface UseChatReturn {
   isConnected: boolean;
   /** Current error message */
   error: string | null;
+  /** Current Claude CLI state */
+  claudeState: ClaudeState;
+  /** Currently running tool name */
+  currentTool: string | null;
+  /** Whether Claude appears stuck (no output for a while) */
+  isStuck: boolean;
+  /** How long Claude has been stuck (ms) */
+  stuckDuration: number;
   /** Send a message */
   sendMessage: (content: string) => Promise<void>;
   /** Clear all messages */
@@ -160,6 +192,12 @@ export interface UseChatReturn {
   toggleThinking: (messageId: string, blockIndex: number) => void;
   /** Check connection status */
   checkConnection: () => Promise<{ connected: boolean; error?: string }>;
+  /** Send Enter key to confirm paste */
+  sendEnter: () => void;
+  /** Kill and restart the session */
+  killSession: () => void;
+  /** Request status update */
+  getStatus: () => void;
 }
 
 export function useChat(options: UseChatOptions = {}): UseChatReturn {
@@ -190,6 +228,10 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
     messages: initialMessages,
     isLoading: false,
     error: null,
+    claudeState: 'idle' as ClaudeState,
+    currentTool: null,
+    isStuck: false,
+    stuckDuration: 0,
   });
 
   // Track connection status
@@ -429,6 +471,33 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
       // Handle buffered output on reconnect
       if (e.data) {
         console.log('[useChat] Received buffered output:', e.data.length, 'chars');
+      }
+    }));
+
+    // Handle Claude state changes
+    cleanups.push(service.on('state-change', (e) => {
+      console.log('[useChat] Claude state changed:', e.claudeState, e.currentTool);
+      dispatch({
+        type: 'SET_CLAUDE_STATE',
+        claudeState: e.claudeState || 'unknown',
+        currentTool: e.currentTool,
+      });
+    }));
+
+    // Handle status updates (including stuck detection)
+    cleanups.push(service.on('status', (e) => {
+      console.log('[useChat] Status update:', e.claudeState, 'stuck:', e.isStuck);
+      dispatch({
+        type: 'SET_CLAUDE_STATE',
+        claudeState: e.claudeState || 'unknown',
+        currentTool: e.currentTool,
+      });
+      if (e.isStuck) {
+        dispatch({
+          type: 'SET_STUCK',
+          isStuck: true,
+          stuckDuration: e.stuckDuration,
+        });
       }
     }));
 
@@ -787,16 +856,46 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
     });
   }, [updateMessages]);
 
+  // Send Enter key to confirm paste
+  const sendEnter = useCallback(() => {
+    if (chatServiceRef.current?.isConnected) {
+      chatServiceRef.current.sendEnter();
+    }
+  }, []);
+
+  // Kill and restart session
+  const killSession = useCallback(() => {
+    if (chatServiceRef.current?.isConnected) {
+      chatServiceRef.current.killSession();
+      dispatch({ type: 'SET_LOADING', isLoading: false });
+      dispatch({ type: 'SET_CLAUDE_STATE', claudeState: 'idle', currentTool: null });
+    }
+  }, []);
+
+  // Request status update
+  const getStatus = useCallback(() => {
+    if (chatServiceRef.current?.isConnected) {
+      chatServiceRef.current.getStatus();
+    }
+  }, []);
+
   return {
     messages,
     isLoading: state.isLoading,
     isConnected: isConnectedRef.current,
     error: state.error,
+    claudeState: state.claudeState,
+    currentTool: state.currentTool,
+    isStuck: state.isStuck,
+    stuckDuration: state.stuckDuration,
     sendMessage,
     clearMessages,
     abort,
     setMessages,
     toggleThinking,
     checkConnection,
+    sendEnter,
+    killSession,
+    getStatus,
   };
 }

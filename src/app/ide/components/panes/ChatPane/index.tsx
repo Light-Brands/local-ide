@@ -20,6 +20,15 @@ import {
   RefreshCw,
   MessageSquarePlus,
   MessageSquare,
+  RotateCcw,
+  Send,
+  Zap,
+  Search,
+  FileEdit,
+  Terminal,
+  Brain,
+  Clock,
+  XCircle,
 } from 'lucide-react';
 import { ToolingIndicator } from '@/app/ide/components/common/ToolingIndicator';
 
@@ -97,9 +106,16 @@ function ChatSessionContent({ sessionId }: ChatSessionContentProps) {
     isLoading,
     isConnected,
     error,
+    claudeState,
+    currentTool,
+    isStuck,
+    stuckDuration,
     sendMessage,
     toggleThinking,
     checkConnection,
+    sendEnter,
+    killSession,
+    abort,
   } = useChat({
     workspacePath,
     externalMessages: sessionMessages,
@@ -325,6 +341,31 @@ function ChatSessionContent({ sessionId }: ChatSessionContentProps) {
     );
   }
 
+  // Helper to get state icon and label
+  const getStateDisplay = () => {
+    switch (claudeState) {
+      case 'thinking':
+        return { icon: Brain, label: 'Thinking', color: 'text-purple-400' };
+      case 'responding':
+        return { icon: Zap, label: 'Responding', color: 'text-green-400' };
+      case 'tool_running':
+        const toolIcon = currentTool?.toLowerCase().includes('search') ? Search
+          : currentTool?.toLowerCase().includes('edit') ? FileEdit
+          : currentTool?.toLowerCase().includes('bash') ? Terminal
+          : Zap;
+        return { icon: toolIcon, label: currentTool || 'Tool', color: 'text-blue-400' };
+      case 'waiting_confirm':
+        return { icon: Clock, label: 'Waiting...', color: 'text-yellow-400' };
+      case 'idle':
+        return { icon: MessageSquare, label: 'Ready', color: 'text-neutral-500' };
+      default:
+        return { icon: MessageSquare, label: 'Unknown', color: 'text-neutral-500' };
+    }
+  };
+
+  const stateDisplay = getStateDisplay();
+  const StateIcon = stateDisplay.icon;
+
   return (
     <>
       {/* Header */}
@@ -345,8 +386,73 @@ function ChatSessionContent({ sessionId }: ChatSessionContentProps) {
 
           {/* Tooling indicator */}
           <ToolingIndicator showLabel={false} compact />
+
+          {/* Spacer */}
+          <div className="flex-1" />
+
+          {/* Claude State indicator */}
+          {isLoading && (
+            <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-neutral-800 ${stateDisplay.color}`}>
+              <StateIcon className="w-3 h-3 animate-pulse" />
+              <span className="text-[10px] font-medium">{stateDisplay.label}</span>
+            </div>
+          )}
+
+          {/* Control buttons */}
+          {isLoading && (
+            <div className="flex items-center gap-1">
+              {/* Abort button */}
+              <button
+                onClick={abort}
+                className="p-1 rounded hover:bg-neutral-800 text-neutral-500 hover:text-red-400 transition-colors"
+                title="Abort (Ctrl+C)"
+              >
+                <XCircle className="w-3.5 h-3.5" />
+              </button>
+              {/* Send Enter button */}
+              <button
+                onClick={sendEnter}
+                className="p-1 rounded hover:bg-neutral-800 text-neutral-500 hover:text-blue-400 transition-colors"
+                title="Send Enter (confirm paste)"
+              >
+                <Send className="w-3.5 h-3.5" />
+              </button>
+              {/* Kill/Restart button */}
+              <button
+                onClick={killSession}
+                className="p-1 rounded hover:bg-neutral-800 text-neutral-500 hover:text-orange-400 transition-colors"
+                title="Kill & Restart Session"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Stuck warning banner */}
+      {isStuck && (
+        <div className="flex-shrink-0 px-3 py-2 bg-yellow-500/10 border-b border-yellow-500/20">
+          <div className="flex items-center gap-2 text-xs text-yellow-400">
+            <Clock className="w-3.5 h-3.5 animate-pulse" />
+            <span className="flex-1">
+              Claude appears stuck ({Math.round(stuckDuration / 1000)}s no response)
+            </span>
+            <button
+              onClick={sendEnter}
+              className="px-2 py-1 rounded bg-yellow-500/20 hover:bg-yellow-500/30 transition-colors"
+            >
+              Send Enter
+            </button>
+            <button
+              onClick={killSession}
+              className="px-2 py-1 rounded bg-orange-500/20 hover:bg-orange-500/30 transition-colors text-orange-400"
+            >
+              Restart
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Context panel (desktop) */}
       {!isMobile && showContext && (
