@@ -5,6 +5,35 @@
 
 ---
 
+## Services Architecture
+
+This project runs **4 services** locally. Start them all with:
+
+```bash
+npm run dev
+```
+
+| Service | Port | Script | Purpose |
+|---------|------|--------|---------|
+| **App Server** | 3000 | `npm run app` | Public-facing Next.js site |
+| **IDE Server** | 4000 | `npm run ide` | Visual IDE with code editor and Claude integration |
+| **Terminal Server** | 4001 | `npm run terminal` | WebSocket PTY terminal (`server/terminal-server.ts`) |
+| **Chat Server** | 4002 | `npm run chat` | WebSocket Claude CLI chat (`server/chat-server.ts`) |
+
+**Prerequisites:** tmux (recommended for session persistence), Claude CLI (for chat features).
+**Database:** SQLite auto-created at `.local-ide/data/terminal.db` — no setup needed.
+**Config:** `.env.local` (copy from `.env.example`).
+
+**Environment commands:**
+- `npm run establish` — validates environment after clone (Node version, deps, native modules, .env.local, data dir, tmux, Claude CLI, ports)
+- `npm run health` — checks running services (pings all 4 endpoints)
+- If services fail, run `npm run establish` to diagnose.
+
+Other run modes:
+- `npm run dev:local` — App + IDE only (no backend servers)
+- `npm run servers` — Terminal + Chat servers only
+- `npm run dev:tunnel` — All services + Cloudflare tunnel
+
 ## Tech Stack Summary
 
 ```yaml
@@ -14,9 +43,10 @@ Styling: Tailwind CSS v4 + Custom Design Tokens
 Animation: Framer Motion + GSAP
 Icons: Lucide React
 Images: Sharp optimization
-Database: Supabase (PostgreSQL)
+Database: Supabase (PostgreSQL) + SQLite (local terminal/chat)
 Auth: Supabase Auth (Email + OAuth)
 Storage: Supabase Storage
+Server: Node.js WebSocket servers (node-pty, ws, better-sqlite3)
 ```
 
 ## Design Tokens Quick Reference

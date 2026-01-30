@@ -51,6 +51,22 @@ This will:
 
 ---
 
+## Services Architecture
+
+This project runs **4 local services** via `npm run dev`:
+
+| Service | Port | Purpose |
+|---------|------|---------|
+| App Server | 3000 | Public Next.js site |
+| IDE Server | 4000 | Visual IDE + Claude integration |
+| Terminal Server | 4001 | WebSocket PTY terminal (`server/terminal-server.ts`) |
+| Chat Server | 4002 | WebSocket Claude CLI chat (`server/chat-server.ts`) |
+
+When the user says "start the server" or "run the project", use `npm run dev` to start all services.
+
+**Setup:** Run `npm run establish` after cloning to validate the environment (Node version, deps, native modules, .env.local, tmux, Claude CLI, ports).
+**Troubleshooting:** Run `npm run establish` to diagnose issues. Run `npm run health` to check if services are running.
+
 ## Project Context
 
 This is a premium Next.js 14+ boilerplate optimized for AI-assisted development. All development MUST follow the design system tokens and principles defined in `/src/design-system/`.

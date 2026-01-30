@@ -63,20 +63,61 @@ See `PASTE-TO-CLAUDE.md` for the full prompt, or `KICKOFF.md` for comprehensive 
 ## Quick Start
 
 ```bash
-# Install dependencies
+git clone <repo> && cd local-ide
 npm install
-
-# Run development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Start production server
-npm start
+npm run establish    # Validates environment, creates .env.local
+npm run dev          # Starts all 4 services
+npm run health       # Check service health (separate terminal)
 ```
 
 Open [http://localhost:3000](http://localhost:3000) to see the example landing page.
+
+---
+
+## Services Architecture
+
+`npm run dev` starts **4 services** concurrently. All are required for full functionality.
+`npm run establish` checks all prerequisites automatically (Node version, native modules, tmux, Claude CLI, ports).
+
+| Service | Port | Script | Purpose |
+|---------|------|--------|---------|
+| **App Server** | 3000 | `npm run app` | Public-facing Next.js site |
+| **IDE Server** | 4000 | `npm run ide` | Visual IDE with code editor and Claude integration |
+| **Terminal Server** | 4001 | `npm run terminal` | WebSocket server for real PTY terminal sessions |
+| **Chat Server** | 4002 | `npm run chat` | WebSocket server for Claude CLI chat sessions |
+
+### Run Modes
+
+```bash
+npm run dev          # All 4 services (recommended)
+npm run dev:local    # App + IDE only (no terminal/chat servers)
+npm run servers      # Terminal + Chat servers only
+npm run dev:tunnel   # All 4 services + Cloudflare tunnel
+```
+
+### Prerequisites
+
+| Dependency | Required? | Purpose |
+|------------|-----------|---------|
+| **Node.js** | Yes | Runtime for all services |
+| **npm install** | Yes | Installs `node-pty`, `ws`, `better-sqlite3`, etc. |
+| **tmux** | Recommended | Session persistence — terminal/chat sessions survive page reloads |
+| **Claude CLI** | For chat | Chat server spawns Claude CLI in tmux sessions |
+| **Supabase** | Optional | Database, auth, admin features (runs in demo mode without it) |
+
+### Local Database
+
+A **SQLite** database is auto-created at `.local-ide/data/terminal.db` on first run. It stores terminal sessions, chat history, and output buffers. No setup required.
+
+### Environment Variables
+
+Copy `.env.example` to `.env.local` and configure:
+
+```bash
+cp .env.example .env.local
+```
+
+See `.env.example` for all available options including port overrides, WebSocket URLs, feature flags, and optional service credentials.
 
 ---
 
